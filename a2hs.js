@@ -409,6 +409,19 @@
     var externalUrl = installPageUrl();
     var target = null;
 
+    // iOS는 앱마다 다른 "외부 브라우저로 전환" 스킴이 없다 — 카카오/라인/네이버용
+    // 커스텀 스킴은 전부 안드로이드 전용이거나 동작하지 않아 location.href 가 조용히
+    // 무시되고 "아무 반응 없음"처럼 보인다(네이버 인앱 iOS에서 실제 확인된 증상).
+    // iOS에서는 플랫폼 자체에 사파리 강제 실행 방법이 없으므로, 어떤 인앱이든
+    // window.open 시도 → 실패 시 사용자가 직접 메뉴에서 열도록 안내한다.
+    if (isIOS) {
+      var w = window.open(externalUrl, "_blank");
+      if (!w) {
+        showDialog({ variant: "warn", title: "사파리로 열어 주세요", message: "오른쪽 위 메뉴(···)에서 '사파리로 열기'를 눌러 주세요." });
+      }
+      return;
+    }
+
     if (inApp.kakao) {
       target = "kakaotalk://web/openExternal?url=" + encodeURIComponent(externalUrl);
     } else if (inApp.line) {
@@ -421,13 +434,6 @@
       target = "intent://" + externalUrl.replace(/^https?:\/\//, "") +
                "#Intent;scheme=" + (location.protocol.replace(":", "") || "https") +
                ";package=com.android.chrome;end";
-    } else if (isIOS) {
-      // iOS 인스타/페북 인앱: 사파리로 보낼 공식 스킴 없음
-      var w = window.open(externalUrl, "_blank");
-      if (!w) {
-        showDialog({ variant: "warn", title: "사파리로 열어 주세요", message: "오른쪽 위 메뉴(···)에서 '사파리로 열기'를 눌러 주세요." });
-      }
-      return;
     }
 
     if (target) {
