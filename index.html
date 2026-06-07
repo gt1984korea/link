@@ -771,7 +771,7 @@
         }
       }
 
-      /* 성당/예배당 분위기의 웅장한 파이프 오르간 찬송가 스타일 배경음악 합성 함수 */
+      /* 성당/예배당 분위기의 은은한 어쿠스틱 피아노 찬송가 스타일 배경음악 합성 함수 */
       function startBgm() {
         ensureAudioContext();
         if (!audioCtx || !convolver) return;
@@ -780,100 +780,103 @@
           // 이미 BGM이 켜져 있으면 무시
           if (bgmInterval || bgmOscs.length > 0) return;
 
-          // BGM 전체 볼륨 (웅장함을 더하기 위해 18% 크기로 설정)
+          // BGM 전체 볼륨 (목소리를 방해하지 않으면서도 피아노 소리가 선명히 들리도록 20% 크기로 설정)
           bgmVolume = audioCtx.createGain();
           bgmVolume.gain.setValueAtTime(0.0, audioCtx.currentTime);
-          bgmVolume.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 3.5); // 3.5초 동안 아주 자연스럽게 페이드인
+          bgmVolume.gain.linearRampToValueAtTime(0.20, audioCtx.currentTime + 3.0); // 3초 동안 서서히 페이드인
 
-          // 웅장한 오르간 음색의 밝기와 무게감을 살리는 로우패스 필터 (750Hz)
+          // 피아노 타건(Attack)의 맑은 톤과 자연스러운 감쇄를 묘사하는 로우패스 필터
           bgmFilter = audioCtx.createBiquadFilter();
           bgmFilter.type = 'lowpass';
-          bgmFilter.frequency.setValueAtTime(750, audioCtx.currentTime);
+          bgmFilter.frequency.setValueAtTime(1200, audioCtx.currentTime);
 
           bgmFilter.connect(bgmVolume);
-          // 대성당 공간 이펙트에 전달하여 웅장한 입체감 형성
+          // 성당 공간 이펙트에 전달하여 웅장하고 풍부한 잔향 형성
           bgmVolume.connect(convolver);
           bgmVolume.connect(audioCtx.destination);
 
-          // 전통적인 교회 찬송가 스타일의 엄숙하고 웅장한 코드 진행 (C -> F -> G -> C)
-          // 4부 성가대(Soprano, Alto, Tenor, Bass) 배치 및 페달 베이스 음역 추가
+          // 전통적인 교회 찬송가 스타일의 경건한 코드 진행 (C -> F -> G -> C)
+          // 피아노 보이싱 (묵직한 왼손 베이스와 오른손 3부 화음 조합)
           const chords = [
             [130.81, 196.00, 261.63, 329.63], // C3, G3, C4, E4 (C major - I)
             [87.31, 220.00, 261.63, 349.23],  // F2, A3, C4, F4 (F major - IV)
             [98.00, 246.94, 293.66, 392.00],  // G2, B3, D4, G4 (G major - V)
-            [130.81, 196.00, 261.63, 329.63]  // C3, G3, C4, E4 (C major - I 종지)
+            [130.81, 196.00, 261.63, 329.63]  // C3, G3, C4, E4 (C major - I 해결)
           ];
 
           let currentChordIdx = 0;
 
-          function playChord(frequencies, isFirst = false) {
+          function playChord(frequencies) {
             if (!audioCtx) return;
             const now = audioCtx.currentTime;
-            const fadeTime = isFirst ? 0.3 : 3.8; // 파이프 오르간 특유의 부드럽고 묵직한 건반 페달 교차 느낌 구현
 
-            // 기존 파이프 소리 서서히 음량 제거
+            // 이전 타건음이 아직 울리고 있다면 부드럽게 0.2초 페이드아웃 후 정지
             bgmGains.forEach(g => {
               g.gain.cancelScheduledValues(now);
-              g.gain.linearRampToValueAtTime(0.0, now + fadeTime);
+              g.gain.linearRampToValueAtTime(0.0, now + 0.2);
             });
             const oldOscs = bgmOscs;
             setTimeout(() => {
               oldOscs.forEach(o => { try { o.stop(); } catch (e) {} });
-            }, fadeTime * 1000 + 500);
+            }, 500);
 
             bgmOscs = [];
             bgmGains = [];
 
-            // 배음(Harmonics) 가산 합성 기법을 통한 리얼 파이프 오르간 사운드 재현
-            frequencies.forEach(freq => {
-              // 1) 기본음 2개 미세 디튜닝 (Celeste 코러스 스톱 효과)
-              // 2) 0.5배 주파수 (웅장한 페달 서브-베이스 스톱 효과)
-              // 3) 2.0배 주파수 (밝고 명료한 옥타브 스톱 효과)
-              // 4) 1.5배 주파수 (하모니를 풍성하게 해주는 5도/Quint 스톱 효과)
-              const ranks = [
-                { f: freq, detune: -4, gain: 0.15 },
-                { f: freq, detune: 4, gain: 0.15 },
-                { f: freq * 0.5, detune: 0, gain: 0.22 }, // 서브 베이스
-                { f: freq * 2.0, detune: 2, gain: 0.10 }, // 옥타브
-                { f: freq * 1.5, detune: -2, gain: 0.05 } // 5도 음색 추가
+            // 피아노 연주자가 실제로 연주하듯 화음을 낮음 음부터 높은 음까지 미세한 시간차를 두고 굴림 (Arpeggiando / Rolled Chord)
+            frequencies.forEach((freq, idx) => {
+              const strikeTime = now + (idx * 0.08); // 각 음마다 80ms 간격으로 타건
+
+              // 배음 합성을 통해 어쿠스틱 피아노의 타건 질감 구현
+              // 1) Fundamental String (Sine) - 맑고 순수한 현의 긴 울림
+              // 2) Hammer Strike (Triangle) - 타건 시 나무 망치가 현을 때리는 묵직한 질감
+              // 3) Metallic Transient (Sine, 2.0x freq) - 타건 순간의 금속성 찰나의 배음
+              const partials = [
+                { f: freq, type: 'sine', gain: 0.50, decay: 3.5 },
+                { f: freq, type: 'triangle', gain: 0.35, decay: 1.5 },
+                { f: freq * 2.0, type: 'sine', gain: 0.15, decay: 0.6 }
               ];
 
-              ranks.forEach(rank => {
+              partials.forEach(p => {
                 const osc = audioCtx.createOscillator();
-                osc.type = 'triangle'; // 부드럽고 중후한 삼각파 기반
-                osc.frequency.setValueAtTime(rank.f, now);
-                osc.detune.setValueAtTime(rank.detune, now);
+                osc.type = p.type;
+                osc.frequency.setValueAtTime(p.f, strikeTime);
 
                 const gainNode = audioCtx.createGain();
-                gainNode.gain.setValueAtTime(0.0, now);
-                // 음량 클리핑을 막기 위해 가중치 비례 분배
-                gainNode.gain.linearRampToValueAtTime((rank.gain * 0.42) / frequencies.length, now + fadeTime);
+                gainNode.gain.setValueAtTime(0.0, strikeTime);
+                
+                // 타건 순간 음량이 급격히 피크에 도달 (Attack: 8ms)
+                gainNode.gain.linearRampToValueAtTime((p.gain * 0.45) / frequencies.length, strikeTime + 0.008);
+                // 지수형 감쇄를 통해 현이 서서히 댐핑되는 피아노 고유의 소멸 엔벨로프 적용
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, strikeTime + p.decay);
 
                 osc.connect(gainNode);
                 gainNode.connect(bgmFilter);
 
-                osc.start(now);
+                osc.start(strikeTime);
+                osc.stop(strikeTime + p.decay);
+
                 bgmOscs.push(osc);
                 bgmGains.push(gainNode);
               });
             });
 
-            // 필터의 컷오프 주파수를 웅장하게 서서히 조절 (550Hz ~ 850Hz 범위)
+            // 타건 시에는 필터가 열려 맑은 음색이 나다가, 시간이 흐름에 따라 어두워지는 자연스러운 댐퍼 물리 현상 시뮬레이션
             bgmFilter.frequency.cancelScheduledValues(now);
-            bgmFilter.frequency.setValueAtTime(bgmFilter.frequency.value, now);
-            bgmFilter.frequency.linearRampToValueAtTime(550 + Math.random() * 300, now + 7.5);
+            bgmFilter.frequency.setValueAtTime(1200, now);
+            bgmFilter.frequency.exponentialRampToValueAtTime(450, now + 3.0);
           }
 
-          playChord(chords[currentChordIdx], true);
+          playChord(chords[currentChordIdx]);
 
           bgmInterval = setInterval(() => {
             if (!audioCtx || audioCtx.state === 'suspended') return;
             currentChordIdx = (currentChordIdx + 1) % chords.length;
             playChord(chords[currentChordIdx]);
-          }, 9500); // 찬송가의 느긋한 템포 (9.5초) 반영
+          }, 5000); // 5초 간격으로 잔잔하게 새 코드를 타건 (인트로 5초 딜레이와 대칭)
 
         } catch (e) {
-          console.warn('[BGM] Failed to play procedural background pad:', e);
+          console.warn('[BGM] Failed to play procedural background piano:', e);
         }
       }
 
@@ -885,7 +888,7 @@
         const now = audioCtx ? audioCtx.currentTime : 0;
         if (bgmVolume && audioCtx) {
           bgmVolume.gain.cancelScheduledValues(now);
-          bgmVolume.gain.linearRampToValueAtTime(0.0, now + 2.0); // 2초에 걸쳐 아주 서서히 페이드아웃
+          bgmVolume.gain.linearRampToValueAtTime(0.0, now + 1.5); // 1.5초 동안 서서히 페이드아웃
         }
         const oldOscs = bgmOscs;
         bgmOscs = [];
@@ -894,7 +897,7 @@
           oldOscs.forEach(o => { try { o.stop(); } catch (e) {} });
           bgmVolume = null;
           bgmFilter = null;
-        }, 2200);
+        }, 1800);
       }
 
       function getFullText() {
