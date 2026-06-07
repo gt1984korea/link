@@ -235,16 +235,16 @@
     .btn-danger { background: #fff; color: var(--danger); border-color: #f3c7c7; }
     .btn-danger:hover { background: #fff5f5; }
 
-    /* PC 레이아웃: 좌측 등록된 구절 목록 / 우측 등록 폼 2단 구성 */
+    /* PC 레이아웃: 좌측 등록 폼 / 우측 등록된 구절 목록, 정확히 절반씩 2단 구성 */
     @media (min-width: 1024px) {
       .wrap { max-width: 1240px; }
       .admin-grid {
         display: grid;
-        grid-template-columns: 380px 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         grid-template-areas:
-          "list editor"
-          "list audio"
-          "list preview";
+          "editor  list"
+          "audio   list"
+          "preview list";
         gap: 20px;
         align-items: start;
       }
