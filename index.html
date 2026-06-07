@@ -652,59 +652,103 @@
       const ICON_STOP = `<rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" stroke="none"/>`;
 
       let active = false;
+      let lineIndex = 0;
+      let lines = [];
 
+      /* ── 고품질 한국어 남성 목소리 우선 선택 ── */
       function getVoice() {
-        const voices = window.speechSynthesis.getVoices();
-        // 한국어 남성 목소리 우선, 없으면 한국어 아무거나
-        return voices.find(v => v.lang.startsWith('ko') && /male|남/i.test(v.name))
-            || voices.find(v => v.lang.startsWith('ko'))
-            || null;
+        const all = window.speechSynthesis.getVoices();
+        const ko  = all.filter(v => v.lang.startsWith('ko'));
+
+        // 우선순위: 알려진 자연스러운 남성 목소리
+        const priority = [
+          v => /google.*한국어|google.*korean/i.test(v.name),   // Android Chrome — 가장 자연스러움
+          v => /microsoft.*injoon/i.test(v.name),               // Windows 남성
+          v => /microsoft.*kangkang/i.test(v.name),             // Windows 남성2
+          v => /yuna/i.test(v.name),                            // macOS/iOS Yuna
+          v => /male|남성|남자/i.test(v.name),
+        ];
+
+        for (const test of priority) {
+          const found = ko.find(test);
+          if (found) return found;
+        }
+        return ko[0] || null;  // 한국어 아무거나
       }
 
-      function buildUtterance() {
+      /* ── 텍스트를 줄 단위로 쪼개기 (자연스러운 쉼표 역할) ── */
+      function buildLines() {
         const text = (document.getElementById('verseText').textContent || '').trim();
         const ref  = (document.getElementById('verseRef').textContent  || '').trim();
-        if (!text) return null;
-        const utt = new SpeechSynthesisUtterance(text + (ref ? '\n' + ref : ''));
-        utt.lang   = 'ko-KR';
-        utt.rate   = 0.78;   // 느리고 근엄하게
-        utt.pitch  = 0.70;   // 낮은 음성
-        utt.volume = 1;
-        const v = getVoice();
-        if (v) utt.voice = v;
-        return utt;
+        if (!text) return [];
+
+        // 줄바꿈 & 마침표·쉼표로 끊기
+        const chunks = text
+          .split(/\n|(?<=[。.!?])\s*/)
+          .map(s => s.trim())
+          .filter(Boolean);
+
+        if (ref) chunks.push(ref);
+        return chunks;
       }
 
-      function speak() {
+      /* ── 한 줄 읽기 (재귀 반복) ── */
+      function readLine() {
         if (!active) return;
-        const utt = buildUtterance();
-        if (!utt) return;
+
+        if (lineIndex >= lines.length) {
+          // 전체 완독 → 2초 쉬고 처음부터 반복
+          lineIndex = 0;
+          setTimeout(readLine, 2000);
+          return;
+        }
+
+        const utt = new SpeechSynthesisUtterance(lines[lineIndex]);
+        utt.lang   = 'ko-KR';
+        utt.rate   = 0.92;   // 사람과 비슷한 자연스러운 속도
+        utt.pitch  = 0.88;   // 약간 낮되 로봇 느낌 없는 남성 톤
+        utt.volume = 1;
+
+        const v = getVoice();
+        if (v) utt.voice = v;
+
         utt.onend = function () {
-          if (active) setTimeout(speak, 1200); // 한 번 읽은 후 1.2초 쉬고 반복
+          if (!active) return;
+          lineIndex++;
+          // 줄 사이 자연스러운 호흡 (짧은 줄은 더 길게)
+          const pause = lines[lineIndex - 1].length < 10 ? 600 : 350;
+          setTimeout(readLine, pause);
         };
         utt.onerror = function () {
-          if (active) setTimeout(speak, 2000);
+          if (active) { lineIndex++; setTimeout(readLine, 500); }
         };
+
         window.speechSynthesis.speak(utt);
       }
 
+      /* ── 시작 ── */
       function startTTS() {
         window.speechSynthesis.cancel();
+        lines = buildLines();
+        if (!lines.length) return;
+        lineIndex = 0;
         active = true;
         btn.classList.add('playing');
         label.textContent = '멈추기';
         icon.innerHTML = ICON_STOP;
-        // 음성 목록 로드 대기 후 시작
+
+        // 음성 목록 로드 대기
         if (window.speechSynthesis.getVoices().length === 0) {
           window.speechSynthesis.onvoiceschanged = function () {
             window.speechSynthesis.onvoiceschanged = null;
-            speak();
+            readLine();
           };
         } else {
-          speak();
+          readLine();
         }
       }
 
+      /* ── 멈춤 ── */
       function stopTTS() {
         active = false;
         window.speechSynthesis.cancel();
@@ -717,11 +761,12 @@
         if (active) stopTTS(); else startTTS();
       });
 
-      // 페이지 숨김 시 자동 중지
+      // 화면 숨김 시 자동 중지
       document.addEventListener('visibilitychange', function () {
         if (document.hidden && active) stopTTS();
       });
     })();
   </script>
+
 </body>
 </html>
