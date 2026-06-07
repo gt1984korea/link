@@ -5,3 +5,4 @@ _*.png
 Thumbs.db
 docs/.bkit-memory.json
 docs/.pdca-status.json
+.firebase/
