@@ -193,7 +193,8 @@
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function (res) {
         if (res && res.outcome === "accepted") {
-          setLs(K.installed, "1");
+          // 주의: accepted 는 "사용자가 OK 눌렀다"일 뿐, 실제 설치 완료가 아님.
+          // 진짜 완료는 'appinstalled' 이벤트에서 확정한다.
           closeBanner();
           emit("a2hs:result", { outcome: "accepted" });
         } else {
