@@ -705,6 +705,10 @@
       let bgmVolume   = null;
       let playSessionId = 0;
 
+      /* 중후한 목소리 보정을 위한 이퀄라이저(EQ) 필터 노드 */
+      let voiceBassBoost = null;
+      let voiceTrebleCut = null;
+
       function ensureAudioContext() {
         if (audioCtx) {
           if (audioCtx.state === 'suspended') {
@@ -721,6 +725,17 @@
           if (audioCtx.state === 'suspended') {
             audioCtx.resume();
           }
+
+          // 중후한 목소리 톤 보정용 필터 노드 생성 (EQ)
+          voiceBassBoost = audioCtx.createBiquadFilter();
+          voiceBassBoost.type = 'lowshelf';
+          voiceBassBoost.frequency.value = 160; // 160Hz 이하의 풍부한 저음 부스트 (묵직한 가슴 공명음 강화)
+          voiceBassBoost.gain.value = 5.0; // 5dB 증폭
+
+          voiceTrebleCut = audioCtx.createBiquadFilter();
+          voiceTrebleCut.type = 'highshelf';
+          voiceTrebleCut.frequency.value = 4000; // 4kHz 이상의 날카로운 고음 감쇄 (시빌런스 및 미세 잡음 제어)
+          voiceTrebleCut.gain.value = -3.5; // 3.5dB 감쇄
 
           // Direct 음성과 Reverb 음성 조절 Gain 노드 생성
           dryGain = audioCtx.createGain();
@@ -765,8 +780,13 @@
         try {
           // HTMLMediaElement 소스 노드 생성 후 이펙터 체인에 연결
           const source = audioCtx.createMediaElementSource(audioElement);
-          source.connect(dryGain);
-          source.connect(convolver);
+          
+          // 소스(낭독 음성) -> 저음 보스트 -> 고음 컷 -> 리버브/볼륨 노드로 연결
+          source.connect(voiceBassBoost);
+          voiceBassBoost.connect(voiceTrebleCut);
+
+          voiceTrebleCut.connect(dryGain);
+          voiceTrebleCut.connect(convolver);
         } catch (e) {
           console.warn('[WebAudio] Source connection failed:', e);
         }
@@ -810,10 +830,19 @@
           if (audioCtx.state === 'suspended') {
             audioCtx.resume();
           }
+
+          // 노래의 하이라이트 부분(약 48초)이 먼저 나오도록 타임스탬프 설정
+          if (bgmAudio.currentTime === 0) {
+            bgmAudio.currentTime = 48;
+          }
+
           bgmAudio.play().catch(e => {
             console.warn('BGM play failed, retrying on window click:', e);
             // 사용자 제스처가 간혹 분실되었을 때를 대비한 백업 핸들러 등록
             const retryPlay = () => {
+              if (bgmAudio.currentTime === 0) {
+                bgmAudio.currentTime = 48;
+              }
               bgmAudio.play().then(() => {
                 window.removeEventListener('click', retryPlay);
               }).catch(err => console.warn('BGM retry failed:', err));
@@ -835,7 +864,7 @@
         setTimeout(() => {
           if (!active && bgmAudio) {
             bgmAudio.pause();
-            bgmAudio.currentTime = 0; // 시작 지점으로 되감기
+            bgmAudio.currentTime = 48; // 정지 후 되감기 시에도 하이라이트(48초)로 설정
           }
         }, 1600);
       }
@@ -959,7 +988,7 @@
         const utt = new SpeechSynthesisUtterance(text);
         utt.lang  = 'ko-KR';
         utt.rate  = 0.92;
-        utt.pitch = 0.88;
+        utt.pitch = 0.78; // 기본 음성도 더욱 중후하고 엄숙하게 목소리 톤 다운
         
         const voices = window.speechSynthesis.getVoices();
         const koVoices = voices.filter(v => v.lang.startsWith('ko'));
