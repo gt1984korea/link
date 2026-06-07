@@ -1,0 +1,13 @@
+{
+  "name": "victory-church-tests",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Playwright tests for Victory Church PWA",
+  "scripts": {
+    "install:browsers": "playwright install webkit chromium",
+    "test:ios": "node ios-screenshots.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}
