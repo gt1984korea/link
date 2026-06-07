@@ -780,15 +780,15 @@
           // 이미 BGM이 켜져 있으면 무시
           if (bgmInterval || bgmOscs.length > 0) return;
 
-          // BGM 전체 볼륨 (목소리를 방해하지 않는 3.5% 크기로 조절)
+          // BGM 전체 볼륨 (은은하게 잘 들릴 수 있도록 15% 크기로 상향 조절)
           bgmVolume = audioCtx.createGain();
           bgmVolume.gain.setValueAtTime(0.0, audioCtx.currentTime);
-          bgmVolume.gain.linearRampToValueAtTime(0.035, audioCtx.currentTime + 3.0); // 3초 동안 서서히 페이드인
+          bgmVolume.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 3.0); // 3초 동안 서서히 페이드인
 
-          // 고음역대를 완전히 깎아 아날로그 신디사이저 패드처럼 부드럽고 따뜻하게 가공
+          // 고음역대 하모닉스만 깎아 따뜻한 신디사이저 패드 느낌으로 필터링 (600Hz로 상향하여 코드 주파수가 들리도록 조정)
           bgmFilter = audioCtx.createBiquadFilter();
           bgmFilter.type = 'lowpass';
-          bgmFilter.frequency.setValueAtTime(260, audioCtx.currentTime);
+          bgmFilter.frequency.setValueAtTime(600, audioCtx.currentTime);
 
           bgmFilter.connect(bgmVolume);
           // 성당 울림 이펙트에도 믹스하여 잔향감 극대화
@@ -823,7 +823,7 @@
             bgmOscs = [];
             bgmGains = [];
 
-            // 새 진행음 오실레이터 생성 (따뜻한 삼각파 사용)
+            // 새 진행음 오실레이터 생성 (따뜻한 삼각파 사용, 개별 음량 상향)
             frequencies.forEach(freq => {
               const osc = audioCtx.createOscillator();
               osc.type = 'triangle';
@@ -831,7 +831,7 @@
 
               const gainNode = audioCtx.createGain();
               gainNode.gain.setValueAtTime(0.0, now);
-              gainNode.gain.linearRampToValueAtTime(0.18 / frequencies.length, now + fadeTime);
+              gainNode.gain.linearRampToValueAtTime(0.32 / frequencies.length, now + fadeTime);
 
               osc.connect(gainNode);
               gainNode.connect(bgmFilter);
@@ -841,10 +841,10 @@
               bgmGains.push(gainNode);
             });
 
-            // 필터의 컷오프 주파수를 미세하게 변동시켜 입체감 형성
+            // 필터의 컷오프 주파수를 미세하게 변동시켜 입체감 형성 (500Hz ~ 700Hz 범위)
             bgmFilter.frequency.cancelScheduledValues(now);
             bgmFilter.frequency.setValueAtTime(bgmFilter.frequency.value, now);
-            bgmFilter.frequency.linearRampToValueAtTime(210 + Math.random() * 80, now + 7.0);
+            bgmFilter.frequency.linearRampToValueAtTime(500 + Math.random() * 200, now + 7.0);
           }
 
           playChord(chords[currentChordIdx], true);
