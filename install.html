@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>바로가기 설치 — Victory Church</title>
+
+  <link rel="manifest" href="manifest.webmanifest?v=2">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=2">
+  <link rel="apple-touch-icon" href="icon-192.png?v=2">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png?v=2">
+  <meta name="apple-mobile-web-app-title" content="Victory Church">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+
+  <style>
+    :root {
+      --bg:       #ffffff;
+      --text:     #111827;
+      --text-2:   #6b7280;
+      --text-3:   #9ca3af;
+      --brand:    #2bb673;
+      --brand-d:  #25a266;
+      --brand-l:  #e7f6ef;
+      --navy:     #101a3f;
+      --line:     #e9eaee;
+      --warn:     #f59e0b;
+      --warn-l:   #fffbeb;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+                   'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      letter-spacing: -0.01em;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 460px;
+      margin: 0 auto;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding:
+        calc(env(safe-area-inset-top) + 40px)
+        24px
+        calc(env(safe-area-inset-bottom) + 28px);
+    }
+
+    /* 상단: 로고 + 타이틀 */
+    .hero { text-align: center; flex: 0 0 auto; }
+    .logo {
+      width: 104px; height: 104px;
+      margin: 0 auto 22px;
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 10px 30px -10px rgba(16,26,63,.25);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .logo img { width: 86%; height: auto; }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .sub {
+      font-size: 15px;
+      color: var(--text-2);
+      margin: 0 0 28px;
+      line-height: 1.55;
+    }
+    .sub b { color: var(--text); }
+
+    /* 중앙: CTA 버튼 */
+    .cta-wrap { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+    .cta {
+      width: 100%;
+      background: var(--brand);
+      color: #fff;
+      border: 0;
+      border-radius: 16px;
+      font-family: inherit;
+      font-size: 19px;
+      font-weight: 800;
+      padding: 20px 18px;
+      cursor: pointer;
+      box-shadow: 0 14px 30px -10px rgba(43,182,115,.55);
+      transition: transform .1s ease, background .15s ease;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .cta:hover { background: var(--brand-d); }
+    .cta:active { transform: scale(.98); }
+    .cta svg { width: 22px; height: 22px; }
+    .cta-help {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-3);
+      margin-top: 14px;
+    }
+
+    /* iOS 안내 카드 (iOS에서만 표시) */
+    .ios-note {
+      display: none;
+      margin-top: 18px;
+      background: var(--warn-l);
+      border: 1px solid #fde68a;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #92400e;
+      line-height: 1.55;
+    }
+    .ios-note b { color: #78350f; }
+
+    /* iOS 가이드 시트 (iOS 전용) */
+    .ios-sheet {
+      position: fixed; inset: 0; z-index: 9999;
+      display: none;
+      font-family: inherit;
+    }
+    .ios-sheet.show { display: block; }
+    .ios-dim {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.5);
+      animation: fadeIn .3s ease;
+    }
+    .ios-card {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      background: #fff; color: #111;
+      border-radius: 22px 22px 0 0;
+      padding: 24px 22px calc(24px + env(safe-area-inset-bottom));
+      max-height: 90vh; overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform .35s cubic-bezier(.22,1,.36,1);
+    }
+    .ios-sheet.show .ios-card { transform: translateY(0); }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+    .ios-h {
+      font-size: 21px; font-weight: 800; margin: 0 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .ios-sub { font-size: 14px; color: var(--text-2); margin: 0 0 18px; line-height: 1.55; }
+    .ios-sub b { color: var(--text); }
+
+    .ios-intro {
+      display: flex; align-items: center; gap: 12px;
+      background: #f3f4f6; border-radius: 14px;
+      padding: 12px 14px; margin-bottom: 18px;
+    }
+    .ios-intro .ic {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: #fff; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex: 0 0 auto;
+    }
+    .ios-intro .ic img { width: 90%; height: auto; }
+    .ios-intro .nm { font-weight: 700; font-size: 15px; }
+    .ios-intro .sub2 { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+
+    .ios-step {
+      padding: 18px 0;
+      border-top: 1px solid #eee;
+    }
+    .ios-step:first-of-type { border-top: 0; padding-top: 4px; }
+    .ios-step .head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .ios-step .badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #2563eb; color: #fff;
+      font-weight: 800; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      flex: 0 0 auto;
+    }
+    .ios-step .ttl { font-size: 16px; font-weight: 800; }
+    .ios-step .desc {
+      font-size: 13.5px; color: #4b5563;
+      line-height: 1.55; margin: 0 0 12px 40px;
+    }
+    .ios-step .desc b { color: #1d4ed8; }
+    .ios-step .phone {
+      margin: 0 0 0 40px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex; justify-content: center; align-items: center;
+    }
+    .ios-step .phone svg { display: block; max-width: 100%; height: auto; }
+
+    .ios-close {
+      display: block; width: 100%;
+      margin-top: 16px;
+      background: #111; color: #fff;
+      border: 0; border-radius: 14px;
+      font-size: 16px; font-weight: 800;
+      padding: 16px; cursor: pointer;
+      font-family: inherit;
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1); opacity: .7; }
+      70%  { transform: scale(1.6); opacity: 0; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .a2hs-pulse { transform-origin: center; animation: pulse 1.6s ease-out infinite; }
+
+    /* 하단 푸터 */
+    .foot {
+      margin-top: 28px; text-align: center;
+      font-size: 12px; color: var(--text-3);
+    }
+    .foot a {
+      color: var(--text-2); text-decoration: none; font-weight: 500;
+      border-bottom: 1px solid var(--line);
+    }
+
+    /* 설치 완료 상태 */
+    .done .cta {
+      background: var(--brand-l);
+      color: var(--brand);
+      box-shadow: none;
+    }
+    .done .cta:hover { background: var(--brand-l); }
+
+    /* 로딩 */
+    .cta.loading { cursor: progress; position: relative; }
+    .cta.loading .label { opacity: .5; }
+    .cta.loading::after {
+      content: "";
+      position: absolute; right: 22px; top: 50%;
+      width: 20px; height: 20px; margin-top: -10px;
+      border: 2.5px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <main class="wrap" id="root">
+
+    <div class="hero">
+      <div class="logo">
+        <img src="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png" alt="Victory Church">
+      </div>
+      <h1 id="title">바로가기 설치</h1>
+      <p class="sub" id="subtitle">
+        <b>Victory Church</b> 를 홈 화면에 추가하면<br>
+        다음엔 한 번에 열 수 있어요.
+      </p>
+    </div>
+
+    <div class="cta-wrap">
+      <button class="cta" id="installBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12"/>
+          <path d="M7 10l5 5 5-5"/>
+          <path d="M5 21h14"/>
+        </svg>
+        <span class="label">바로가기 만들기</span>
+      </button>
+      <p class="cta-help" id="ctaHelp">버튼을 누르면 설치 안내가 시작돼요</p>
+
+      <!-- iOS 전용 안내 -->
+      <div class="ios-note" id="iosNote">
+        <b>📱 아이폰 안내</b><br>
+        아이폰은 사파리 보안 정책상 자동 설치가 안 돼요.
+        버튼을 누르면 <b>홈 화면에 추가하는 3단계</b>를 그림과 함께 보여드려요.
+      </div>
+    </div>
+
+    <div class="foot">
+      <a href="./" id="backLink">← 메인 페이지로 돌아가기</a>
+    </div>
+
+  </main>
+
+  <!-- iOS 안내 시트 -->
+  <div class="ios-sheet" id="iosSheet">
+    <div class="ios-dim" id="iosDim"></div>
+    <div class="ios-card">
+      <h2 class="ios-h">아이폰 바로가기 만들기</h2>
+      <p class="ios-sub">아래 <b>3단계</b>만 따라하면 끝나요. 약 10초면 충분해요.</p>
+
+      <div class="ios-intro">
+        <div class="ic"><img src="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png" alt=""></div>
+        <div>
+          <div class="nm">Victory Church</div>
+          <div class="sub2">이 페이지를 홈 화면에 추가해요</div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="ios-step">
+        <div class="head"><div class="badge">1</div><div class="ttl">공유 버튼 누르기</div></div>
+        <p class="desc">사파리 화면 <b>아래쪽 가운데</b>의 <b>공유 버튼</b>(↑)을 누르세요</p>
+        <div class="phone">
+          <svg viewBox="0 0 260 150" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="10" width="220" height="100" rx="10" fill="#fff" stroke="#e5e7eb"/>
+            <rect x="40" y="22" width="180" height="8" rx="3" fill="#e5e7eb"/>
+            <rect x="40" y="40" width="120" height="6" rx="3" fill="#f3f4f6"/>
+            <rect x="40" y="54" width="160" height="6" rx="3" fill="#f3f4f6"/>
+            <rect x="40" y="68" width="100" height="6" rx="3" fill="#f3f4f6"/>
+            <rect x="20" y="115" width="220" height="30" rx="8" fill="#f8fafc" stroke="#e5e7eb"/>
+            <path d="M50 130 l-6 0 M50 130 l3 -3 M50 130 l3 3" stroke="#9ca3af" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M82 130 l6 0 M88 130 l-3 -3 M88 130 l-3 3" stroke="#9ca3af" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <g transform="translate(124 122)">
+              <circle cx="6" cy="8" r="14" fill="#2563eb" opacity=".15" class="a2hs-pulse"/>
+              <rect x="-2" y="5" width="16" height="12" rx="2" fill="none" stroke="#2563eb" stroke-width="2"/>
+              <path d="M6 14 L6 -3 M2 1 L6 -3 L10 1" stroke="#2563eb" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <rect x="170" y="125" width="14" height="11" rx="1" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+            <rect x="200" y="124" width="13" height="13" rx="2" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+            <rect x="203" y="121" width="13" height="13" rx="2" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="ios-step">
+        <div class="head"><div class="badge">2</div><div class="ttl">홈 화면에 추가 선택</div></div>
+        <p class="desc">메뉴를 <b>위로 스크롤</b>해서 <b>홈 화면에 추가</b>를 누르세요</p>
+        <div class="phone">
+          <svg viewBox="0 0 260 200" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="10" width="220" height="180" rx="14" fill="#fff" stroke="#e5e7eb"/>
+            <rect x="32" y="22" width="196" height="36" rx="8" fill="#f3f4f6"/>
+            <rect x="42" y="32" width="26" height="16" rx="3" fill="#cbd5e1"/>
+            <rect x="74" y="32" width="120" height="6" rx="3" fill="#94a3b8"/>
+            <rect x="74" y="42" width="80" height="5" rx="2" fill="#cbd5e1"/>
+            <circle cx="50" cy="78" r="14" fill="#eff6ff"/>
+            <text x="50" y="82" font-size="10" text-anchor="middle" fill="#2563eb" font-weight="700">AD</text>
+            <circle cx="92" cy="78" r="14" fill="#dcfce7"/>
+            <text x="92" y="82" font-size="10" text-anchor="middle" fill="#16a34a" font-weight="700">M</text>
+            <circle cx="134" cy="78" r="14" fill="#dbeafe"/>
+            <text x="134" y="82" font-size="10" text-anchor="middle" fill="#1d4ed8" font-weight="700">@</text>
+            <circle cx="176" cy="78" r="14" fill="#fce7f3"/>
+            <text x="176" y="82" font-size="10" text-anchor="middle" fill="#be185d" font-weight="700">···</text>
+            <line x1="32" y1="102" x2="228" y2="102" stroke="#e5e7eb"/>
+            <rect x="32" y="110" width="196" height="22" rx="6" fill="#f8fafc"/>
+            <text x="44" y="125" font-size="11" fill="#6b7280">링크 복사</text>
+            <rect x="32" y="138" width="196" height="28" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="44" y="156" font-size="12" fill="#1d4ed8" font-weight="800">홈 화면에 추가</text>
+            <g transform="translate(204 152)">
+              <circle cx="0" cy="0" r="11" fill="#2563eb" opacity=".18" class="a2hs-pulse"/>
+              <rect x="-7" y="-7" width="14" height="14" rx="3" fill="none" stroke="#2563eb" stroke-width="1.8"/>
+              <path d="M0 -3 L0 3 M-3 0 L3 0" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round"/>
+            </g>
+            <rect x="32" y="172" width="196" height="14" rx="6" fill="#f8fafc"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="ios-step">
+        <div class="head"><div class="badge">3</div><div class="ttl">추가 누르기</div></div>
+        <p class="desc">오른쪽 위 <b>추가</b>를 누르면 완료!</p>
+        <div class="phone">
+          <svg viewBox="0 0 260 180" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="10" width="220" height="160" rx="14" fill="#fff" stroke="#e5e7eb"/>
+            <text x="42" y="34" font-size="12" fill="#6b7280">취소</text>
+            <text x="130" y="34" font-size="13" fill="#111" text-anchor="middle" font-weight="700">홈 화면에 추가</text>
+            <g>
+              <circle cx="208" cy="29" r="20" fill="#2563eb" opacity=".15" class="a2hs-pulse"/>
+              <rect x="190" y="20" width="38" height="20" rx="6" fill="#2563eb"/>
+              <text x="209" y="34" font-size="12" fill="#fff" text-anchor="middle" font-weight="800">추가</text>
+            </g>
+            <line x1="30" y1="50" x2="230" y2="50" stroke="#e5e7eb"/>
+            <rect x="40" y="64" width="60" height="60" rx="13" fill="#eff6ff" stroke="#dbeafe"/>
+            <text x="70" y="100" font-size="9" fill="#1d4ed8" text-anchor="middle" font-weight="800">VIC</text>
+            <text x="70" y="110" font-size="6" fill="#1d4ed8" text-anchor="middle" font-weight="700">CHURCH</text>
+            <rect x="112" y="68" width="110" height="14" rx="4" fill="#f3f4f6"/>
+            <text x="118" y="78" font-size="9" fill="#111" font-weight="700">Victory Church</text>
+            <rect x="112" y="88" width="100" height="9" rx="3" fill="#f3f4f6"/>
+            <text x="118" y="95" font-size="7" fill="#9ca3af">victorychurch.nz</text>
+            <text x="40" y="146" font-size="9" fill="#6b7280">홈 화면에서 빠르게 열 수 있도록 아이콘이 추가됩니다.</text>
+          </svg>
+        </div>
+      </div>
+
+      <button class="ios-close" id="iosClose" type="button">닫기</button>
+    </div>
+  </div>
+
+  <script>
+    // ----- 환경 감지 -----
+    var ua = navigator.userAgent || '';
+    var isAndroid = /android/i.test(ua);
+    var isIOS = /iphone|ipad|ipod/i.test(ua) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var isInApp = /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line|NAVER\(inapp/i.test(ua);
+    var isStandalone =
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      window.navigator.standalone === true;
+
+    var root = document.getElementById('root');
+    var btn = document.getElementById('installBtn');
+    var label = btn.querySelector('.label');
+    var title = document.getElementById('title');
+    var subtitle = document.getElementById('subtitle');
+    var ctaHelp = document.getElementById('ctaHelp');
+    var iosNote = document.getElementById('iosNote');
+    var sheet = document.getElementById('iosSheet');
+
+    // ----- iOS UI 분기 -----
+    if (isIOS) {
+      iosNote.style.display = 'block';
+      ctaHelp.textContent = '버튼을 누르면 그림으로 안내해 드려요';
+    }
+
+    // ----- 이미 설치된 상태 -----
+    function showInstalled() {
+      root.classList.add('done');
+      title.textContent = '이미 설치되어 있어요';
+      subtitle.innerHTML = '홈 화면 또는 시작 메뉴의<br><b>Victory Church</b> 아이콘으로 바로 열어보세요.';
+      label.textContent = '✓ 설치 완료';
+      btn.disabled = true;
+      ctaHelp.textContent = '';
+      iosNote.style.display = 'none';
+    }
+    if (isStandalone) {
+      try { localStorage.setItem('a2hs_installed', '1'); } catch (e) {}
+      showInstalled();
+    } else {
+      try {
+        if (localStorage.getItem('a2hs_installed') === '1') {
+          // 표시만 (실제 설치 여부는 OS가 알지만, 신뢰는 standalone만)
+          ctaHelp.textContent = '한 번 설치하신 적이 있어요. 다시 설치할 수도 있어요.';
+        }
+      } catch (e) {}
+    }
+
+    // ----- 인앱 브라우저 안내 -----
+    if (isInApp) {
+      title.textContent = '기본 브라우저로 열어주세요';
+      subtitle.innerHTML = '카카오톡 안에서는 바로가기를 만들 수 없어요.<br>오른쪽 위 메뉴 → <b>다른 브라우저로 열기</b>를 눌러주세요.';
+      label.textContent = '메인 페이지로';
+      btn.onclick = function () { location.href = './'; };
+      ctaHelp.textContent = '';
+      iosNote.style.display = 'none';
+    }
+
+    // ----- PWA 설치 (안드로이드/데스크톱) -----
+    var deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+    window.addEventListener('appinstalled', function () {
+      try { localStorage.setItem('a2hs_installed', '1'); } catch (e) {}
+      btn.classList.remove('loading');
+      showInstalled();
+    });
+
+    // ----- iOS 가이드 시트 제어 -----
+    function openSheet() { sheet.classList.add('show'); }
+    function closeSheet() { sheet.classList.remove('show'); }
+    document.getElementById('iosClose').addEventListener('click', closeSheet);
+    document.getElementById('iosDim').addEventListener('click', closeSheet);
+
+    // ----- 메인 버튼 동작 -----
+    if (!isInApp) {
+      btn.addEventListener('click', function () {
+        if (isStandalone) return;
+        if (isIOS) {
+          openSheet();
+          return;
+        }
+        if (deferredPrompt) {
+          btn.classList.add('loading');
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function (res) {
+            // accepted 는 사용자가 OK 누른 시점 — 실제 완료는 appinstalled
+            if (res && res.outcome !== 'accepted') {
+              btn.classList.remove('loading');
+            }
+            deferredPrompt = null;
+          });
+          return;
+        }
+        // deferredPrompt 가 없는 경우
+        alert('설치할 수 없는 환경이에요.\n페이지를 새로고침한 후 다시 시도해 주세요.');
+      });
+    }
+
+    // ----- 서비스워커 (설치 조건 충족용) -----
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    }
+  </script>
+</body>
+</html>
