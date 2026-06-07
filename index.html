@@ -5,48 +5,269 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Victory Church</title>
 
-  <!-- ▼ (선택) 안드로이드에서 '진짜 설치'가 되게 하려면 manifest 연결 -->
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#1e3a8a">
-  <!-- iOS 홈 화면 아이콘/제목 -->
   <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-title" content="Victory Church">
   <meta name="apple-mobile-web-app-capable" content="yes">
 
   <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;margin:0;
-      padding:80px 20px 40px;color:#222;line-height:1.6}
-    h1{color:#1e3a8a}
-    .tip{background:#f1f5ff;border:1px solid #c7d6ff;border-radius:12px;padding:16px;margin-top:20px;font-size:14px}
-    button.reset{margin-top:16px;background:#111;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-size:14px}
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background: linear-gradient(160deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+      color: #111;
+      min-height: 100%;
+      padding:
+        calc(env(safe-area-inset-top) + 24px)
+        20px
+        calc(env(safe-area-inset-bottom) + 24px);
+    }
+
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .logo {
+      width: 96px; height: 96px;
+      border-radius: 22px;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(0,0,0,.25);
+      margin-bottom: 16px;
+    }
+    .logo img { width: 100%; height: 100%; object-fit: cover; }
+
+    .title {
+      color: #fff;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      margin: 0 0 6px;
+      text-align: center;
+    }
+    .subtitle {
+      color: rgba(255,255,255,.85);
+      font-size: 15px;
+      margin: 0 0 28px;
+      text-align: center;
+    }
+
+    .menu {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .menu-btn {
+      width: 100%;
+      background: #fff;
+      color: #111;
+      border: 0;
+      border-radius: 18px;
+      padding: 18px 18px;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0,0,0,.18);
+      display: flex; align-items: center; gap: 14px;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .menu-btn:active {
+      transform: scale(.98);
+      box-shadow: 0 4px 12px rgba(0,0,0,.18);
+    }
+    .menu-btn .ic {
+      flex: 0 0 auto;
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      background: #eef3ff;
+    }
+    .menu-btn.primary .ic { background: #1e3a8a; color: #fff; }
+    .menu-btn.youtube .ic { background: #ff0000; color: #fff; }
+    .menu-btn.live .ic { background: #ef4444; color: #fff; }
+    .menu-btn.home .ic { background: #2563eb; color: #fff; }
+
+    .menu-btn .txt {
+      flex: 1 1 auto; min-width: 0;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .menu-btn .t1 { font-size: 18px; font-weight: 800; }
+    .menu-btn .t2 { font-size: 13px; color: #555; font-weight: 500; }
+
+    .menu-btn .chev {
+      flex: 0 0 auto; color: #999; font-size: 22px;
+    }
+
+    .menu-btn[disabled] {
+      opacity: .6; cursor: default;
+    }
+    .menu-btn.installed { background: #ecfdf5; }
+    .menu-btn.installed .ic { background: #10b981; color: #fff; }
+    .menu-btn.installed .t2 { color: #047857; font-weight: 700; }
+
+    .footer {
+      margin-top: 28px;
+      color: rgba(255,255,255,.7);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    /* 설치 완료 토스트 */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom) + 28px);
+      transform: translateX(-50%) translateY(20px);
+      background: #111;
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease, transform .3s ease;
+      z-index: 2147483647;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   </style>
 </head>
 <body>
-  <h1>⛪ Victory Church</h1>
-  <p>이 페이지를 <b>모바일(안드로이드/아이폰)</b>에서 열면 상단에<br>
-  "홈 화면에 추가" 안내 배너가 나타납니다.</p>
 
-  <div class="tip">
-    📱 <b>테스트 방법</b><br>
-    1. 이 파일을 https 주소로 올린 뒤 휴대폰으로 접속<br>
-    2. PC 크롬: F12 → 기기 툴바(📱)로 모바일 모드 전환 후 새로고침<br>
-    3. 카카오톡/인스타로 링크 보내서 인앱 브라우저 동작도 확인
+  <div class="wrap">
+    <div class="logo">
+      <img src="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png" alt="Victory Church">
+    </div>
+    <h1 class="title">Victory Church</h1>
+    <p class="subtitle">뉴질랜드 빅토리처치</p>
+
+    <div class="menu">
+      <!-- 1. 홈 화면 바로가기 -->
+      <button class="menu-btn primary" id="btnInstall" type="button" data-a2hs>
+        <div class="ic">📲</div>
+        <div class="txt">
+          <span class="t1">바로가기 만들기</span>
+          <span class="t2">폰·PC에 앱처럼 추가해요</span>
+        </div>
+        <div class="chev">›</div>
+      </button>
+
+      <!-- 2. 홈페이지 -->
+      <button class="menu-btn home" id="btnHome" type="button">
+        <div class="ic">🏠</div>
+        <div class="txt">
+          <span class="t1">홈페이지 이동</span>
+          <span class="t2">victorychurch.nz</span>
+        </div>
+        <div class="chev">›</div>
+      </button>
+
+      <!-- 3. 유튜브 -->
+      <button class="menu-btn youtube" id="btnYoutube" type="button">
+        <div class="ic">▶</div>
+        <div class="txt">
+          <span class="t1">유튜브 이동</span>
+          <span class="t2">@nzvictory 영상</span>
+        </div>
+        <div class="chev">›</div>
+      </button>
+
+      <!-- 4. 유튜브 라이브 -->
+      <button class="menu-btn live" id="btnLive" type="button">
+        <div class="ic">●</div>
+        <div class="txt">
+          <span class="t1">유튜브 라이브</span>
+          <span class="t2">실시간 예배 / 라이브 방송</span>
+        </div>
+        <div class="chev">›</div>
+      </button>
+    </div>
+
+    <div class="footer">© Victory Church NZ</div>
   </div>
 
-  <button class="reset" onclick="localStorage.removeItem('a2hs_dismissed_until');location.reload()">
-    배너 다시 보기 (숨김 초기화)
-  </button>
+  <div class="toast" id="toast">설치 완료!</div>
 
-  <!-- (선택) 안드로이드 진짜 설치용 서비스워커 등록 -->
   <script>
+    // 새창 열기
+    function openExternal(url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+    document.getElementById('btnHome').addEventListener('click', function () {
+      openExternal('https://victorychurch.nz/');
+    });
+    document.getElementById('btnYoutube').addEventListener('click', function () {
+      openExternal('https://www.youtube.com/@nzvictory/videos');
+    });
+    document.getElementById('btnLive').addEventListener('click', function () {
+      openExternal('https://www.youtube.com/@nzvictory/streams');
+    });
+
+    // 토스트
+    var toastEl = document.getElementById('toast');
+    var toastTimer = null;
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        toastEl.classList.remove('show');
+      }, 2200);
+    }
+
+    // 설치 완료 상태 UI 반영
+    var installBtn = document.getElementById('btnInstall');
+    function markInstalled() {
+      installBtn.classList.add('installed');
+      installBtn.querySelector('.ic').textContent = '✓';
+      installBtn.querySelector('.t1').textContent = '바로가기 설치 완료';
+      installBtn.querySelector('.t2').textContent = '첫 화면에서 바로 열 수 있어요';
+    }
+    try {
+      if (localStorage.getItem('a2hs_installed') === '1') markInstalled();
+    } catch (e) {}
+
+    // 설치 완료 이벤트 감지 (PWA 네이티브 설치)
+    window.addEventListener('appinstalled', function () {
+      try { localStorage.setItem('a2hs_installed', '1'); } catch (e) {}
+      markInstalled();
+      showToast('설치 완료!');
+    });
+
+    // standalone 모드면 이미 설치된 것으로 간주
+    var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+                       || window.navigator.standalone === true;
+    if (isStandalone) {
+      try { localStorage.setItem('a2hs_installed', '1'); } catch (e) {}
+      markInstalled();
+    }
+
+    // 서비스워커 (안드로이드 PWA 설치 조건)
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function(){});
     }
   </script>
 
-  <!-- ▼ 이 한 줄만 실제 사이트 </body> 직전에 넣으면 됩니다 -->
+  <!-- 위젯: 자동 배너 끔, [data-a2hs] 버튼이 자동 연결됨 -->
   <script src="a2hs.js" defer
     data-site-name="Victory Church"
-    data-icon="icon-192.png"></script>
+    data-icon="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png"
+    data-auto-banner="false"></script>
 </body>
 </html>
