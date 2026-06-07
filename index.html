@@ -325,7 +325,7 @@
     .past-item:first-child { border-top: none; padding-top: 0; }
     .past-item .past-range {
       display: inline-block;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--brand);
       background: var(--brand-dim);
@@ -335,8 +335,8 @@
       letter-spacing: 0;
     }
     .past-item .past-text {
-      font-size: 16px;
-      line-height: 1.7;
+      font-size: 19px;
+      line-height: 1.75;
       color: var(--text);
       font-weight: 500;
       white-space: pre-wrap;
@@ -345,12 +345,31 @@
     }
     .past-item .past-ref {
       display: block;
-      margin-top: 8px;
-      font-size: 13px;
+      margin-top: 10px;
+      font-size: 15px;
       color: var(--text-2);
       font-weight: 700;
       text-align: right;
     }
+    .past-more-btn {
+      display: block;
+      width: 100%;
+      margin: 14px 0 4px;
+      padding: 11px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brand);
+      background: var(--brand-dim);
+      border: 1px solid #c7d4ec;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: center;
+      letter-spacing: -0.01em;
+      transition: background .15s ease, border-color .15s ease, transform .08s ease;
+    }
+    .past-more-btn:hover { background: #dde6f6; border-color: #9db1dc; }
+    .past-more-btn:active { transform: scale(.98); }
 
     /* TTS 버튼 */
     .tts-row {
@@ -777,6 +796,36 @@
       } catch (e) {}
     }
 
+    const PAST_PAGE_SIZE = 5; // 한 번에 보여줄 지난 구절 개수 (나머지는 "더 보기"로 펼침)
+
+    function buildPastItem(v) {
+      const item = document.createElement('div');
+      item.className = 'past-item';
+
+      const range = fmtRange(v.startDate, v.endDate);
+      if (range) {
+        const r = document.createElement('span');
+        r.className = 'past-range';
+        r.textContent = range;
+        item.appendChild(r);
+      }
+      const p = document.createElement('p');
+      p.className = 'past-text';
+      p.textContent = (v.text || '').trim();
+      item.appendChild(p);
+
+      const ref = (v.reference || '').trim();
+      if (ref) {
+        const rf = document.createElement('span');
+        rf.className = 'past-ref';
+        rf.textContent = ref;
+        item.appendChild(rf);
+      }
+      return item;
+    }
+
+    let pastShownCount = PAST_PAGE_SIZE; // 펼친 개수를 재렌더링 후에도 유지(실시간 스냅샷이 다시 그릴 때 접히지 않도록)
+
     function renderPast(past) {
       pastListEl.textContent = '';
       if (!past || past.length === 0) {
@@ -785,33 +834,28 @@
         pastToggle.classList.remove('open');
         pastToggle.setAttribute('aria-expanded', 'false');
         pastToggleLabel.textContent = '지난 암송 구절';
+        pastShownCount = PAST_PAGE_SIZE;
         return;
       }
-      past.forEach((v) => {
-        const item = document.createElement('div');
-        item.className = 'past-item';
 
-        const range = fmtRange(v.startDate, v.endDate);
-        if (range) {
-          const r = document.createElement('span');
-          r.className = 'past-range';
-          r.textContent = range;
-          item.appendChild(r);
+      function renderUpTo(count) {
+        pastListEl.textContent = '';
+        past.slice(0, count).forEach((v) => pastListEl.appendChild(buildPastItem(v)));
+        if (count < past.length) {
+          const moreBtn = document.createElement('button');
+          moreBtn.type = 'button';
+          moreBtn.className = 'past-more-btn';
+          moreBtn.textContent = `더 보기 (${past.length - count})`;
+          moreBtn.addEventListener('click', () => {
+            pastShownCount = Math.min(pastShownCount + PAST_PAGE_SIZE, past.length);
+            renderUpTo(pastShownCount);
+          });
+          pastListEl.appendChild(moreBtn);
         }
-        const p = document.createElement('p');
-        p.className = 'past-text';
-        p.textContent = (v.text || '').trim();
-        item.appendChild(p);
+      }
 
-        const ref = (v.reference || '').trim();
-        if (ref) {
-          const rf = document.createElement('span');
-          rf.className = 'past-ref';
-          rf.textContent = ref;
-          item.appendChild(rf);
-        }
-        pastListEl.appendChild(item);
-      });
+      pastShownCount = Math.min(Math.max(pastShownCount, PAST_PAGE_SIZE), past.length);
+      renderUpTo(pastShownCount);
       pastToggle.classList.remove('hidden');
     }
 
