@@ -752,7 +752,7 @@
     // ----- iOS UI 분기 -----
     if (isIOS) {
       iosNote.style.display = 'block';
-      ctaHelp.textContent = '버튼을 누르면 그림으로 안내해 드려요';
+      ctaHelp.textContent = '잠시 후 설치 방법을 그림으로 보여드려요';
     }
 
     // ----- 이미 설치된 상태 -----
@@ -872,6 +872,13 @@
           }
         });
       };
+    }
+
+    // 아이폰: 이 페이지는 "설치 전용" 페이지라 버튼을 또 누르게 할 필요가 없다.
+    // 도착하자마자 3단계 안내 시트를 바로 열어서 클릭 한 번을 줄인다.
+    // (이미 설치됨/standalone/인앱 상태에서는 열지 않음)
+    if (isIOS && !isInApp && !root.classList.contains('done')) {
+      setTimeout(function () { openSheet(); }, 350);
     }
 
     // ----- PWA 설치 (안드로이드/데스크톱) -----
