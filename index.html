@@ -650,9 +650,8 @@
 
       /* ElevenLabs 설정 */
       const XI_KEY   = '0fb32fdf3fa82c68378bcf9a8e5de0a0acef05ceb7b0012c054b8ebbb0b831fe';
-      // - '8yL2rVx40vjDeu5pTbg6': Kim (차분하고 묵직한 중년 남성 목소리 - 목사님 느낌)
-      // - 'oMb1n2v5lej4lcqCGPY4': David Bae (부드럽고 차분한 남성 목소리)
-      const VOICE_ID = '8yL2rVx40vjDeu5pTbg6'; 
+      // 무료 계정은 커뮤니티 공유 목소리를 API로 쓸 수 없으므로, 기본 제공 고품질 남성 목소리인 'Adam' 사용
+      const VOICE_ID = 'pNInz6obpgDQGcFmaJgB'; // Adam (기본 제공 남성 목소리)
       const MODEL    = 'eleven_multilingual_v2';
 
       const ICON_PLAY = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
@@ -801,15 +800,21 @@
         }
       }
 
-      /* Web Speech API 폴백 */
+      /* Web Speech API 폴백 (브라우저 기본 남성 목소리 우선 매칭) */
       function fallback(text) {
         if (!window.speechSynthesis || !active) return;
         const utt = new SpeechSynthesisUtterance(text);
         utt.lang  = 'ko-KR';
         utt.rate  = 0.92;
         utt.pitch = 0.88;
+        
         const voices = window.speechSynthesis.getVoices();
-        const v = voices.find(v => v.lang.startsWith('ko'));
+        const koVoices = voices.filter(v => v.lang.startsWith('ko'));
+        
+        // 브라우저 기본 한국어 목소리 중 남성(Injoon, Kangkang 등) 우선 검색, 없으면 첫 번째 한국어 목소리 사용
+        const maleVoice = koVoices.find(v => /male|남성|남자|injoon|kangkang/i.test(v.name));
+        const v = maleVoice || koVoices[0];
+        
         if (v) utt.voice = v;
         utt.onend = () => { if (active) setTimeout(() => fallback(text), 2000); };
         window.speechSynthesis.speak(utt);
