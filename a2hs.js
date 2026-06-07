@@ -409,16 +409,18 @@
     var externalUrl = installPageUrl();
     var target = null;
 
-    // iOS는 앱마다 다른 "외부 브라우저로 전환" 스킴이 없다 — 카카오/라인/네이버용
-    // 커스텀 스킴은 전부 안드로이드 전용이거나 동작하지 않아 location.href 가 조용히
-    // 무시되고 "아무 반응 없음"처럼 보인다(네이버 인앱 iOS에서 실제 확인된 증상).
-    // iOS에서는 플랫폼 자체에 사파리 강제 실행 방법이 없으므로, 어떤 인앱이든
-    // window.open 시도 → 실패 시 사용자가 직접 메뉴에서 열도록 안내한다.
+    // iOS는 카카오/라인/네이버용 커스텀 스킴이 동작하지 않고, window.open('_blank') 도
+    // "같은 인앱 브라우저의 새 탭"만 열어 똑같은 페이지가 다시 뜬다(네이버 인앱 iOS 확인됨).
+    // 유일하게 통하는 방법: x-safari-https:// 스킴(iOS 17+) → 진짜 사파리로 전환.
+    // 실패 시(구형 iOS) 인앱 브라우저의 ≡ 메뉴 > "Safari로 열기"를 직접 누르도록 안내.
     if (isIOS) {
-      var w = window.open(externalUrl, "_blank");
-      if (!w) {
-        showDialog({ variant: "warn", title: "사파리로 열어 주세요", message: "오른쪽 위 메뉴(···)에서 '사파리로 열기'를 눌러 주세요." });
-      }
+      var startedAt = Date.now();
+      try { location.href = "x-safari-" + externalUrl; } catch (e) {}
+      setTimeout(function () {
+        if (!document.hidden && (Date.now() - startedAt) < 4000) {
+          showDialog({ variant: "warn", title: "사파리로 열어 주세요", message: "화면 오른쪽 아래 ≡ (메뉴)를 누른 뒤 'Safari로 열기'를 선택해 주세요." });
+        }
+      }, 1200);
       return;
     }
 

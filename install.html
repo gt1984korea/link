@@ -814,21 +814,23 @@
       var externalUrl = currentPageUrl();
       var target = null;
 
-      // iOS는 앱마다 다른 "외부 브라우저로 전환" 스킴이 없다 — 카카오/라인/네이버용
-      // 커스텀 스킴은 전부 안드로이드 전용이거나 동작하지 않아 location.href 가 조용히
-      // 무시되고 "아무 반응 없음"처럼 보인다(네이버 인앱 iOS에서 실제 확인된 증상).
-      // iOS에서는 플랫폼 자체에 사파리 강제 실행 방법이 없으므로, 어떤 인앱이든
-      // window.open 시도 → 실패 시 메뉴에서 직접 열도록 안내(아래 주소 복사 버튼도 함께 노출).
+      // iOS는 카카오/라인/네이버용 커스텀 스킴이 전부 동작하지 않고(안드로이드 전용),
+      // window.open('_blank') 도 "같은 인앱 브라우저의 새 탭"만 열어 똑같은 페이지가
+      // 다시 뜬다(네이버 인앱 iOS에서 실제 확인된 증상).
+      // 유일하게 통하는 방법:
+      //   1) x-safari-https:// 스킴 — iOS 17+ 에서 진짜 사파리로 전환됨
+      //   2) 실패 시(구형 iOS) → 인앱 브라우저 ≡ 메뉴 > "Safari로 열기" 안내
       if (isIOS) {
-        var w = window.open(externalUrl, '_blank');
-        if (!w) {
-          showDialog(
-            "오른쪽 위 또는 아래 메뉴(··· 또는 공유 아이콘)에서\n" +
-            "'다른 브라우저로 열기' 또는 '사파리로 열기'를 눌러 주세요.\n" +
-            '메뉴가 안 보이면 아래 [주소 복사하기]로 사파리에 붙여넣어 주세요.',
-            '기본 브라우저로 열어 주세요'
-          );
-        }
+        var startedAt = Date.now();
+        // currentPageUrl() 은 https:// 로 시작 → x-safari- 접두사를 붙이면 x-safari-https://...
+        try { location.href = 'x-safari-' + externalUrl; } catch (e) {}
+        // 전환에 성공하면 페이지가 백그라운드로 가서 document.hidden === true.
+        // 1.2초 뒤에도 그대로면 실패로 보고 수동 안내를 띄운다.
+        setTimeout(function () {
+          if (!document.hidden && (Date.now() - startedAt) < 4000) {
+            showSafariGuide();
+          }
+        }, 1200);
         return;
       }
 
@@ -856,18 +858,85 @@
       }
     }
 
+    // iOS 인앱에서 x-safari 전환이 막혔을 때(구형 iOS 등) 수동 안내
+    function showSafariGuide() {
+      showDialog(
+        "화면 오른쪽 아래 ≡ (메뉴)를 누른 뒤\n" +
+        "‘Safari로 열기’를 선택해 주세요.\n\n" +
+        "메뉴가 없으면 아래 [주소 복사하기]로\n" +
+        "사파리 주소창에 붙여넣어 주세요.",
+        '사파리로 열어주세요'
+      );
+    }
+
+    // iOS 인앱 안내용 그림: 네이버 등 인앱 브라우저의 하단 메뉴(≡)를 눌러
+    // "Safari로 열기"를 선택하는 흐름을 한 장으로 보여준다.
+    function iosSafariGuideMarkup() {
+      return '' +
+        '<svg viewBox="0 0 260 196" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="메뉴에서 사파리로 열기">' +
+          // 폰 화면 틀
+          '<rect x="14" y="8" width="232" height="180" rx="16" fill="#fff" stroke="#e5e7eb"/>' +
+          // 주소창
+          '<rect x="30" y="20" width="200" height="16" rx="8" fill="#f3f4f6"/>' +
+          '<text x="130" y="31" font-size="8" text-anchor="middle" fill="#9ca3af">victorychurch-665a9.web.app</text>' +
+          // 펼쳐진 메뉴 카드 (오른쪽 아래 ≡ 위로 떠 있음)
+          '<rect x="120" y="48" width="112" height="96" rx="12" fill="#fff" stroke="#e5e7eb"/>' +
+          // 메뉴 항목 1: 공유 (흐리게)
+          '<circle cx="136" cy="68" r="6" fill="#eef2ff"/>' +
+          '<rect x="150" y="64" width="56" height="7" rx="3" fill="#e5e7eb"/>' +
+          // 메뉴 항목 2: Safari로 열기 (강조)
+          '<rect x="126" y="84" width="100" height="26" rx="8" fill="#eff6ff" stroke="#2563eb"/>' +
+          // 사파리(나침반) 아이콘
+          '<circle cx="138" cy="97" r="7" fill="#2563eb"/>' +
+          '<path d="M138 92 l2.4 3.2 -3.2 2.4 z" fill="#fff"/>' +
+          '<text x="152" y="101" font-size="9" fill="#1d4ed8" font-weight="700">Safari로 열기</text>' +
+          // 메뉴 항목 3: 복사 (흐리게)
+          '<circle cx="136" cy="124" r="6" fill="#f3f4f6"/>' +
+          '<rect x="150" y="120" width="44" height="7" rx="3" fill="#f3f4f6"/>' +
+          // 하단 툴바
+          '<rect x="14" y="158" width="232" height="30" rx="0" fill="#f8fafc"/>' +
+          '<line x1="14" y1="158" x2="246" y2="158" stroke="#e5e7eb"/>' +
+          // 툴바 아이콘들 (왼쪽부터): N, <, >, 검색, 새로고침
+          '<text x="40" y="178" font-size="11" text-anchor="middle" fill="#22c55e" font-weight="800">N</text>' +
+          '<text x="78" y="178" font-size="12" text-anchor="middle" fill="#9ca3af">&#8249;</text>' +
+          '<text x="116" y="178" font-size="12" text-anchor="middle" fill="#9ca3af">&#8250;</text>' +
+          '<circle cx="152" cy="173" r="5" fill="none" stroke="#9ca3af" stroke-width="1.4"/>' +
+          '<line x1="156" y1="177" x2="159" y2="180" stroke="#9ca3af" stroke-width="1.4"/>' +
+          '<path d="M186 169 a5 5 0 1 1 -1.5 -3.2" fill="none" stroke="#9ca3af" stroke-width="1.4"/>' +
+          // ≡ 메뉴 (오른쪽 끝) — 강조 링 + 펄스
+          '<circle cx="222" cy="173" r="13" fill="#2563eb" opacity=".16" class="a2hs-pulse"/>' +
+          '<circle cx="222" cy="173" r="11" fill="none" stroke="#2563eb" stroke-width="2"/>' +
+          '<line x1="216" y1="170" x2="228" y2="170" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>' +
+          '<line x1="216" y1="174" x2="228" y2="174" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>' +
+          '<line x1="216" y1="178" x2="228" y2="178" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>' +
+        '</svg>' +
+        '<p class="cap">오른쪽 아래 <b>≡</b> 를 누른 뒤<br><b>‘Safari로 열기’</b>를 선택하세요</p>';
+    }
+
     // ----- 인앱 브라우저 안내 -----
-    // 60대 이상 사용자도 헷갈리지 않도록: 버튼 1개 + "누르고 → 새 화면에서 한 번 더 누르기" 두 단계만 안내
+    // 60대 이상 사용자도 헷갈리지 않도록: 버튼 1개 + 그림 한 장으로 안내
     if (isInApp) {
-      title.textContent = '버튼 2번이면 끝나요';
-      subtitle.innerHTML =
-        '① 아래 <b>큰 버튼</b>을 누르면 새 화면이 열려요<br>' +
-        '② 그 화면에서 <b>바로가기 만들기</b>를 한 번 더 눌러주세요';
-      label.textContent = '기본 브라우저로 열기';
-      btn.onclick = function () { openDefaultBrowser(); };
       ctaHelp.textContent = inAppName + ' 안에서는 설치할 수 없어서 그래요';
       iosNote.style.display = 'none';
       guidePreview.style.display = 'block';
+      btn.onclick = function () { openDefaultBrowser(); };
+
+      if (isIOS) {
+        // iOS 인앱: 버튼은 사파리 전환(x-safari) 시도, 그림은 "≡ > Safari로 열기" 안내
+        title.textContent = '사파리로 열어주세요';
+        subtitle.innerHTML =
+          '아래 <b>큰 버튼</b>을 누르면 사파리로 열려요.<br>' +
+          '안 열리면 그림처럼 <b>‘Safari로 열기’</b>를 눌러주세요';
+        label.textContent = '사파리로 열기';
+        guidePreview.innerHTML = iosSafariGuideMarkup();
+      } else {
+        // 안드로이드 인앱: intent 스킴으로 크롬이 새로 열리고, 거기서 한 번 더 설치
+        title.textContent = '버튼 2번이면 끝나요';
+        subtitle.innerHTML =
+          '① 아래 <b>큰 버튼</b>을 누르면 새 화면이 열려요<br>' +
+          '② 그 화면에서 <b>바로가기 만들기</b>를 한 번 더 눌러주세요';
+        label.textContent = '기본 브라우저로 열기';
+      }
 
       // 자동 전환이 막히는 기기를 위한 최후 수단: 주소 복사 후 수동으로 붙여넣기
       copyLinkBtn.style.display = 'block';
