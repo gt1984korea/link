@@ -141,6 +141,11 @@
     ".a2hs-visual .desc b{color:#1d4ed8}" +
     ".a2hs-visual .phone{margin:0 0 0 40px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:14px;display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden}" +
     ".a2hs-visual .phone svg{display:block;max-width:100%;height:auto}" +
+    // 추가 확정 화면 미리보기 — 실제 앱 아이콘을 SVG 위에 정확한 위치로 겹쳐 표시
+    ".a2hs-add-mock{position:relative;display:block;width:100%}" +
+    ".a2hs-add-mock svg{display:block;width:100%;height:auto}" +
+    ".a2hs-add-mock-ic{position:absolute;left:15.38%;top:35.56%;width:23.08%;height:33.33%;" +
+    "border-radius:22%;object-fit:cover;box-shadow:0 1px 4px rgba(16,26,63,.18)}" +
     "@keyframes a2hs-pulse{0%{transform:scale(1);opacity:.7}70%{transform:scale(1.6);opacity:0}100%{transform:scale(1.6);opacity:0}}" +
     ".a2hs-pulse{transform-origin:center;animation:a2hs-pulse 1.6s ease-out infinite}" +
     // 커스텀 다이얼로그 (alert 대체)
@@ -540,31 +545,32 @@
   // [iOS Step 3] 추가 확정 화면 — 우측 상단 "추가" 강조
   function iosVisualAddScreen() {
     var iconUrl = CFG.icon || "icon-192.png";
+    // SVG <image>는 innerHTML 삽입 시 비율/클립이 브라우저마다 깨져 아이콘이
+    // 잘려 보이는 문제가 있어, 실제 <img> 를 SVG 위에 정확한 위치로 겹쳐 그린다.
     return '' +
-'<svg viewBox="0 0 260 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="홈 화면에 추가 확정 화면">' +
-  '<defs><clipPath id="a2hs-add-ic-clip"><rect x="40" y="64" width="60" height="60" rx="13"/></clipPath></defs>' +
-  '<rect x="20" y="10" width="220" height="160" rx="14" fill="#fff" stroke="#e5e7eb"/>' +
-  // 헤더: 취소 / 제목 / 추가
-  '<text x="42" y="34" font-size="12" fill="#6b7280">취소</text>' +
-  '<text x="130" y="34" font-size="13" fill="#111" text-anchor="middle" font-weight="700">홈 화면에 추가</text>' +
-  // 추가 버튼 강조
-  '<g>' +
-    '<circle cx="208" cy="29" r="20" fill="#2563eb" opacity=".15" class="a2hs-pulse"/>' +
-    '<rect x="190" y="20" width="38" height="20" rx="6" fill="#2563eb"/>' +
-    '<text x="209" y="34" font-size="12" fill="#fff" text-anchor="middle" font-weight="800">추가</text>' +
-  '</g>' +
-  '<line x1="30" y1="50" x2="230" y2="50" stroke="#e5e7eb"/>' +
-  // 미리보기 카드 — 실제 앱 아이콘 사용
-  '<rect x="40" y="64" width="60" height="60" rx="13" fill="#eff6ff" stroke="#dbeafe"/>' +
-  '<image href="' + iconUrl + '" x="40" y="64" width="60" height="60" ' +
-    'clip-path="url(#a2hs-add-ic-clip)" preserveAspectRatio="xMidYMid slice"/>' +
-  '<rect x="112" y="68" width="110" height="14" rx="4" fill="#f3f4f6"/>' +
-  '<text x="118" y="78" font-size="9" fill="#111" font-weight="700">빅토리처치</text>' +
-  '<rect x="112" y="88" width="100" height="9" rx="3" fill="#f3f4f6"/>' +
-  '<text x="118" y="95" font-size="7" fill="#9ca3af">victorychurch.nz</text>' +
-  // 안내 텍스트
-  '<text x="40" y="146" font-size="9" fill="#6b7280">홈 화면에서 빠르게 열 수 있도록 아이콘이 추가됩니다.</text>' +
-'</svg>';
+'<div class="a2hs-add-mock">' +
+  '<svg viewBox="0 0 260 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="홈 화면에 추가 확정 화면">' +
+    '<rect x="20" y="10" width="220" height="160" rx="14" fill="#fff" stroke="#e5e7eb"/>' +
+    // 헤더: 취소 / 제목 / 추가
+    '<text x="42" y="34" font-size="12" fill="#6b7280">취소</text>' +
+    '<text x="130" y="34" font-size="13" fill="#111" text-anchor="middle" font-weight="700">홈 화면에 추가</text>' +
+    // 추가 버튼 강조
+    '<g>' +
+      '<circle cx="208" cy="29" r="20" fill="#2563eb" opacity=".15" class="a2hs-pulse"/>' +
+      '<rect x="190" y="20" width="38" height="20" rx="6" fill="#2563eb"/>' +
+      '<text x="209" y="34" font-size="12" fill="#fff" text-anchor="middle" font-weight="800">추가</text>' +
+    '</g>' +
+    '<line x1="30" y1="50" x2="230" y2="50" stroke="#e5e7eb"/>' +
+    // 미리보기 카드 텍스트 (아이콘 자리는 비워두고 실제 <img> 를 겹친다)
+    '<rect x="112" y="68" width="110" height="14" rx="4" fill="#f3f4f6"/>' +
+    '<text x="118" y="78" font-size="9" fill="#111" font-weight="700">빅토리처치</text>' +
+    '<rect x="112" y="88" width="100" height="9" rx="3" fill="#f3f4f6"/>' +
+    '<text x="118" y="95" font-size="7" fill="#9ca3af">victorychurch.nz</text>' +
+    // 안내 텍스트
+    '<text x="40" y="146" font-size="9" fill="#6b7280">홈 화면에서 빠르게 열 수 있도록 아이콘이 추가됩니다.</text>' +
+  '</svg>' +
+  '<img class="a2hs-add-mock-ic" src="' + iconUrl + '" alt="">' +
+'</div>';
   }
   function closeSheet() { if (sheet) sheet.classList.remove("show"); }
   function closeBanner() {
