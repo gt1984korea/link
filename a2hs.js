@@ -557,7 +557,7 @@
   '<text x="70" y="100" font-size="9" fill="#1d4ed8" text-anchor="middle" font-weight="800">VIC</text>' +
   '<text x="70" y="110" font-size="6" fill="#1d4ed8" text-anchor="middle" font-weight="700">CHURCH</text>' +
   '<rect x="112" y="68" width="110" height="14" rx="4" fill="#f3f4f6"/>' +
-  '<text x="118" y="78" font-size="9" fill="#111" font-weight="700">Victory Church</text>' +
+  '<text x="118" y="78" font-size="9" fill="#111" font-weight="700">빅토리처치</text>' +
   '<rect x="112" y="88" width="100" height="9" rx="3" fill="#f3f4f6"/>' +
   '<text x="118" y="95" font-size="7" fill="#9ca3af">victorychurch.nz</text>' +
   // 안내 텍스트
