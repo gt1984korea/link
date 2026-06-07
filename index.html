@@ -70,14 +70,14 @@
       image-rendering: -webkit-optimize-contrast;
     }
     .header h1 {
-      font-size: 22px;
+      font-size: 18px;
       font-weight: 700;
       color: var(--navy);
-      margin: 0 0 6px;
+      margin: 0 0 4px;
       letter-spacing: -0.02em;
     }
     .header p {
-      font-size: 14px;
+      font-size: 12.5px;
       color: var(--text-2);
       margin: 0;
       font-weight: 500;
@@ -618,7 +618,14 @@
       installBtn.classList.add('installed');
       installBtn.querySelector('.t1').textContent = '바로가기가 설치되어 있어요';
       installBtn.querySelector('.t2').textContent = '앱 아이콘에서 바로 열어보세요';
+      // 이미 설치된 경우 버튼 자체를 숨김
+      installBtn.style.display = 'none';
     }
+
+    // 이전에 설치한 기록이 있으면 로드 시점에 바로 숨김
+    try {
+      if (localStorage.getItem('a2hs_installed') === '1') setInstalled();
+    } catch (e) {}
     function startLoading() {
       if (installBtn.classList.contains('installed')) return;
       installBtn.classList.add('loading');
