@@ -190,6 +190,12 @@
       <label for="verseRef">출처</label>
       <input type="text" id="verseRef" placeholder="예) 요한복음 3:16">
 
+      <label for="voiceSelect">목소리 선택 (TTS)</label>
+      <select id="voiceSelect" style="width: 100%; font-family: inherit; font-size: 15px; color: var(--text); background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; outline: none; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease;">
+        <option value="nPczCjzI2devNBz1zQrb">목사님 C (브라이언 - Brian): 묵직하고 경건한 목소리</option>
+        <option value="N2lVS1w4EtoT3dr4eOWO">목사님 D (칼럼 - Callum): 역동적이고 무게감 있는 목소리</option>
+      </select>
+
       <div class="row">
         <button class="btn btn-ghost" id="btnReload" type="button">불러오기</button>
         <button class="btn btn-primary" id="btnSave" type="button">저장</button>
@@ -269,9 +275,11 @@
           const d = snap.data() || {};
           txt.value   = d.text || '';
           refIn.value = d.reference || '';
+          $('voiceSelect').value = d.voiceId || 'nPczCjzI2devNBz1zQrb';
           updatedMeta.textContent = d.updatedAt ? `마지막 수정: ${formatTime(d.updatedAt)}` : '';
         } else {
           txt.value = ''; refIn.value = '';
+          $('voiceSelect').value = 'nPczCjzI2devNBz1zQrb';
           updatedMeta.textContent = '아직 저장된 구절이 없습니다.';
         }
         syncPreview();
@@ -284,6 +292,7 @@
     async function save() {
       const text = txt.value.trim();
       const reference = refIn.value.trim();
+      const voiceId = $('voiceSelect').value;
       if (!text) {
         saveStatus.textContent = '구절 본문을 입력하세요.';
         saveStatus.className = 'status err';
@@ -294,7 +303,7 @@
       saveStatus.textContent = '저장 중…';
       saveStatus.className = 'status';
       try {
-        await setDoc(ref, { text, reference, updatedAt: serverTimestamp() }, { merge: true });
+        await setDoc(ref, { text, reference, voiceId, updatedAt: serverTimestamp() }, { merge: true });
         saveStatus.textContent = '저장되었습니다. 사용자 화면에 즉시 반영됩니다.';
         saveStatus.className = 'status ok';
       } catch (e) {
