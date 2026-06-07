@@ -959,10 +959,10 @@
             }
           };
 
-          // 첫 시작(startTime이 전달됨)일 때만 인트로 딜레이 2초 보장
+          // 첫 시작(startTime이 전달됨)일 때만 인트로 딜레이 5초 보장
           if (startTime) {
             const elapsed = Date.now() - startTime;
-            const delay = Math.max(0, 2000 - elapsed);
+            const delay = Math.max(0, 5000 - elapsed);
             label.textContent = '멈추기';
             setTimeout(() => {
               if (active && sessionId === playSessionId) {
@@ -981,7 +981,7 @@
           // 첫 시작일 때 인트로 딜레이 후 fallback 실행
           if (startTime) {
             const elapsed = Date.now() - startTime;
-            const delay = Math.max(0, 2000 - elapsed);
+            const delay = Math.max(0, 5000 - elapsed);
             setTimeout(() => {
               if (active && sessionId === playSessionId) {
                 fallback(text, sessionId);
