@@ -125,7 +125,24 @@
     ".a2hs-close2{display:block;width:100%;margin-top:22px;background:#111;color:#fff;border:0;" +
     "border-radius:14px;font-size:19px;font-weight:800;padding:17px;cursor:pointer}" +
     ".a2hs-copy{display:block;width:100%;margin-top:12px;background:#2563eb;color:#fff;border:0;" +
-    "border-radius:14px;font-size:19px;font-weight:800;padding:17px;cursor:pointer}";
+    "border-radius:14px;font-size:19px;font-weight:800;padding:17px;cursor:pointer}" +
+    // iOS 시각 가이드 전용
+    ".a2hs-ios-intro{display:flex;align-items:center;gap:12px;background:#f3f4f6;border-radius:14px;padding:12px 14px;margin-bottom:16px}" +
+    ".a2hs-ios-intro .ic{width:42px;height:42px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}" +
+    ".a2hs-ios-intro .ic img{width:90%;height:auto}" +
+    ".a2hs-ios-intro .nm{font-weight:700;font-size:15px;color:#111}" +
+    ".a2hs-ios-intro .sub{font-size:12px;color:#6b7280;margin-top:1px}" +
+    ".a2hs-visual{border-top:1px solid #eee;padding:18px 0}" +
+    ".a2hs-visual:first-of-type{border-top:0;padding-top:6px}" +
+    ".a2hs-visual .head{display:flex;align-items:center;gap:12px;margin-bottom:10px}" +
+    ".a2hs-visual .badge{width:28px;height:28px;border-radius:50%;background:#2563eb;color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}" +
+    ".a2hs-visual .ttl{font-size:17px;font-weight:800;color:#111;letter-spacing:-.01em}" +
+    ".a2hs-visual .desc{font-size:14px;color:#4b5563;line-height:1.55;margin:0 0 12px 40px}" +
+    ".a2hs-visual .desc b{color:#1d4ed8}" +
+    ".a2hs-visual .phone{margin:0 0 0 40px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:14px;display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden}" +
+    ".a2hs-visual .phone svg{display:block;max-width:100%;height:auto}" +
+    "@keyframes a2hs-pulse{0%{transform:scale(1);opacity:.7}70%{transform:scale(1.6);opacity:0}100%{transform:scale(1.6);opacity:0}}" +
+    ".a2hs-pulse{transform-origin:center;animation:a2hs-pulse 1.6s ease-out infinite}";
     var style = document.createElement("style");
     style.id = "a2hs-style";
     style.textContent = css;
@@ -219,15 +236,15 @@
     if (isDesktop) {
       // 데스크톱: 브라우저별 PWA 설치 / 북마크 안내
       if (isChrome || isEdge) {
-        h.textContent = "바탕화면에 바로가기 만들기";
-        sub.textContent = "아래 순서대로 바탕화면(또는 시작 메뉴)에 앱처럼 추가해요.";
-        var browserName = isEdge ? "엣지" : "크롬";
-        var menuIcon = isEdge ? "···" : "⋮";
-        steps.innerHTML =
-          step(1, '주소창 오른쪽 끝의 <b>설치 아이콘</b> (모니터 + 아래 화살표 모양) 을 누르세요') +
-          step(2, '또는 오른쪽 위 <b>' + menuIcon + '</b> 메뉴 → <b>앱</b> → <b>이 사이트를 앱으로 설치</b> 를 누르세요') +
-          step(3, '<b>설치</b> 버튼을 누르면 바탕화면에 바로가기가 생겨요!');
-        addCopyButton(extra);
+        // 크롬/엣지에서 deferredPrompt 가 없다는 건 이미 설치되어 있거나
+        // PWA 설치 조건(HTTPS + SW + manifest)이 미충족인 경우.
+        // 안내 시트를 띄우지 않고 짧은 알림 후 종료.
+        if (ls(K.installed) === "1") {
+          alert("이미 바로가기가 설치되어 있어요. 시작 메뉴 또는 바탕화면에서 열어 주세요.");
+        } else {
+          alert("바로가기 설치를 시작할 수 없어요.\n페이지를 새로고침(F5) 후 다시 시도해 주세요.");
+        }
+        return; // 시트 표시하지 않음
       } else if (isSafariDesktop) {
         h.textContent = "Dock에 바로가기 만들기";
         sub.textContent = "맥 사파리에서는 아래 순서대로 추가해요.";
@@ -273,19 +290,45 @@
       openBtn.onclick = function () { openInExternalBrowser(); };
       extra.appendChild(openBtn);
     } else if (isIOS) {
-      h.textContent = "이렇게 따라 하세요";
-      sub.textContent = "아이폰에서는 아래 3단계로 첫 화면에 바로가기를 만들어요.";
+      // iOS Safari: 네이티브 설치 API 없음 → 시각 가이드 시트 사용
+      if (ls(K.installed) === "1") {
+        alert("이미 바로가기가 설치되어 있어요.\n홈 화면의 아이콘에서 열어 주세요.");
+        return;
+      }
+      h.textContent = "아이폰 바로가기 만들기";
+      sub.innerHTML = "아래 <b>3단계</b> 만 따라하면 끝나요. 약 10초면 충분해요.";
+
+      // 사이트 아이콘 + 이름 인트로
+      var iconUrl = CFG.icon || "icon-192.png";
       steps.innerHTML =
-        step(1, '화면 <b>아래쪽 가운데</b> 의 <b>공유</b> ' + SHARE_IOS + ' (위로 향한 화살표) 를 누르세요') +
-        step(2, '목록을 위로 넘겨서 <b>홈 화면에 추가</b> ' + PLUS + ' 를 누르세요') +
-        step(3, '오른쪽 위 <b>추가</b> 를 누르면 끝!');
+        '<div class="a2hs-ios-intro">' +
+          '<div class="ic"><img src="' + iconUrl + '" alt=""></div>' +
+          '<div>' +
+            '<div class="nm">' + escapeHtml(CFG.siteName) + '</div>' +
+            '<div class="sub">이 페이지를 홈 화면에 추가해요</div>' +
+          '</div>' +
+        '</div>' +
+        iosStep(1,
+          "사파리 화면 <b>아래쪽 가운데</b>의 <b>공유 버튼</b>(↑)을 누르세요",
+          iosVisualShareBar()
+        ) +
+        iosStep(2,
+          "메뉴를 <b>위로 스크롤</b>해서 <b>홈 화면에 추가</b>를 누르세요",
+          iosVisualShareMenu()
+        ) +
+        iosStep(3,
+          "오른쪽 위 <b>추가</b>를 누르면 완료!",
+          iosVisualAddScreen()
+        );
     } else {
-      h.textContent = "이렇게 따라 하세요";
-      sub.textContent = "아래 순서대로 첫 화면에 바로가기를 만들어요.";
-      steps.innerHTML =
-        step(1, '화면 오른쪽 위 ' + DOTS + ' (점 세 개) 를 누르세요') +
-        step(2, '<b>홈 화면에 추가</b> 또는 <b>앱 설치</b> 를 누르세요') +
-        step(3, '<b>추가</b> 를 누르면 끝!');
+      // 안드로이드 크롬: deferredPrompt 가 없다는 건 이미 설치되었거나
+      // 설치 조건이 미충족된 경우. 안내 시트 대신 짧은 알림으로 끝낸다.
+      if (ls(K.installed) === "1") {
+        alert("이미 바로가기가 설치되어 있어요.\n홈 화면의 아이콘에서 열어 주세요.");
+      } else {
+        alert("바로가기 설치를 시작할 수 없어요.\n페이지를 새로고침한 후 다시 시도해 주세요.");
+      }
+      return; // 시트 표시하지 않음
     }
     sheet.classList.add("show");
   }
@@ -356,6 +399,112 @@
   function step(n, html) {
     return '<div class="a2hs-step"><div class="a2hs-n">' + n + '</div>' +
            '<div class="a2hs-sd">' + html + '</div></div>';
+  }
+  function iosStep(n, descHtml, svgHtml) {
+    return '<div class="a2hs-visual">' +
+             '<div class="head"><div class="badge">' + n + '</div>' +
+               '<div class="ttl">' + (n === 1 ? "공유 버튼 누르기" : n === 2 ? "홈 화면에 추가 선택" : "추가 누르기") + '</div>' +
+             '</div>' +
+             '<p class="desc">' + descHtml + '</p>' +
+             '<div class="phone">' + svgHtml + '</div>' +
+           '</div>';
+  }
+
+  // [iOS Step 1] 사파리 하단 툴바 — 공유 아이콘 강조
+  function iosVisualShareBar() {
+    return '' +
+'<svg viewBox="0 0 260 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="사파리 하단 공유 버튼">' +
+  '<rect x="20" y="10" width="220" height="100" rx="10" fill="#fff" stroke="#e5e7eb"/>' +
+  '<rect x="40" y="22" width="180" height="8" rx="3" fill="#e5e7eb"/>' +
+  '<rect x="40" y="40" width="120" height="6" rx="3" fill="#f3f4f6"/>' +
+  '<rect x="40" y="54" width="160" height="6" rx="3" fill="#f3f4f6"/>' +
+  '<rect x="40" y="68" width="100" height="6" rx="3" fill="#f3f4f6"/>' +
+  // 하단 툴바
+  '<rect x="20" y="115" width="220" height="30" rx="8" fill="#f8fafc" stroke="#e5e7eb"/>' +
+  // 왼쪽 화살표
+  '<path d="M50 130 l-6 0 M50 130 l3 -3 M50 130 l3 3" stroke="#9ca3af" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+  // 오른쪽 화살표
+  '<path d="M82 130 l6 0 M88 130 l-3 -3 M88 130 l-3 3" stroke="#9ca3af" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+  // 공유 아이콘 (강조됨)
+  '<g transform="translate(124 122)">' +
+    '<circle cx="6" cy="8" r="14" fill="#2563eb" opacity=".15" class="a2hs-pulse"/>' +
+    '<rect x="-2" y="5" width="16" height="12" rx="2" fill="none" stroke="#2563eb" stroke-width="2"/>' +
+    '<path d="M6 14 L6 -3 M2 1 L6 -3 L10 1" stroke="#2563eb" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+  '</g>' +
+  // 책 아이콘
+  '<rect x="170" y="125" width="14" height="11" rx="1" fill="none" stroke="#9ca3af" stroke-width="1.5"/>' +
+  // 탭 아이콘
+  '<rect x="200" y="124" width="13" height="13" rx="2" fill="none" stroke="#9ca3af" stroke-width="1.5"/>' +
+  '<rect x="203" y="121" width="13" height="13" rx="2" fill="none" stroke="#9ca3af" stroke-width="1.5"/>' +
+'</svg>';
+  }
+
+  // [iOS Step 2] 공유 메뉴 — "홈 화면에 추가" 강조
+  function iosVisualShareMenu() {
+    return '' +
+'<svg viewBox="0 0 260 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="공유 메뉴에서 홈 화면에 추가">' +
+  '<rect x="20" y="10" width="220" height="180" rx="14" fill="#fff" stroke="#e5e7eb"/>' +
+  // 사이트 미리보기
+  '<rect x="32" y="22" width="196" height="36" rx="8" fill="#f3f4f6"/>' +
+  '<rect x="42" y="32" width="26" height="16" rx="3" fill="#cbd5e1"/>' +
+  '<rect x="74" y="32" width="120" height="6" rx="3" fill="#94a3b8"/>' +
+  '<rect x="74" y="42" width="80" height="5" rx="2" fill="#cbd5e1"/>' +
+  // 첫줄: 아이콘 행 (AirDrop, 메시지, 메일…)
+  '<g>' +
+    '<circle cx="50" cy="78" r="14" fill="#eff6ff"/>' +
+    '<text x="50" y="82" font-size="10" text-anchor="middle" fill="#2563eb" font-weight="700">AD</text>' +
+    '<circle cx="92" cy="78" r="14" fill="#dcfce7"/>' +
+    '<text x="92" y="82" font-size="10" text-anchor="middle" fill="#16a34a" font-weight="700">M</text>' +
+    '<circle cx="134" cy="78" r="14" fill="#dbeafe"/>' +
+    '<text x="134" y="82" font-size="10" text-anchor="middle" fill="#1d4ed8" font-weight="700">@</text>' +
+    '<circle cx="176" cy="78" r="14" fill="#fce7f3"/>' +
+    '<text x="176" y="82" font-size="10" text-anchor="middle" fill="#be185d" font-weight="700">···</text>' +
+  '</g>' +
+  '<line x1="32" y1="102" x2="228" y2="102" stroke="#e5e7eb"/>' +
+  // 리스트 항목들
+  '<rect x="32" y="110" width="196" height="22" rx="6" fill="#f8fafc"/>' +
+  '<text x="44" y="125" font-size="11" fill="#6b7280">링크 복사</text>' +
+  '<text x="210" y="125" font-size="13" fill="#9ca3af" text-anchor="middle">⌐</text>' +
+
+  // 홈 화면에 추가 — 강조 (파란 라인)
+  '<rect x="32" y="138" width="196" height="28" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>' +
+  '<text x="44" y="156" font-size="12" fill="#1d4ed8" font-weight="800">홈 화면에 추가</text>' +
+  '<g transform="translate(204 152)">' +
+    '<circle cx="0" cy="0" r="11" fill="#2563eb" opacity=".18" class="a2hs-pulse"/>' +
+    '<rect x="-7" y="-7" width="14" height="14" rx="3" fill="none" stroke="#2563eb" stroke-width="1.8"/>' +
+    '<path d="M0 -3 L0 3 M-3 0 L3 0" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round"/>' +
+  '</g>' +
+
+  '<rect x="32" y="172" width="196" height="14" rx="6" fill="#f8fafc"/>' +
+'</svg>';
+  }
+
+  // [iOS Step 3] 추가 확정 화면 — 우측 상단 "추가" 강조
+  function iosVisualAddScreen() {
+    return '' +
+'<svg viewBox="0 0 260 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="홈 화면에 추가 확정 화면">' +
+  '<rect x="20" y="10" width="220" height="160" rx="14" fill="#fff" stroke="#e5e7eb"/>' +
+  // 헤더: 취소 / 제목 / 추가
+  '<text x="42" y="34" font-size="12" fill="#6b7280">취소</text>' +
+  '<text x="130" y="34" font-size="13" fill="#111" text-anchor="middle" font-weight="700">홈 화면에 추가</text>' +
+  // 추가 버튼 강조
+  '<g>' +
+    '<circle cx="208" cy="29" r="20" fill="#2563eb" opacity=".15" class="a2hs-pulse"/>' +
+    '<rect x="190" y="20" width="38" height="20" rx="6" fill="#2563eb"/>' +
+    '<text x="209" y="34" font-size="12" fill="#fff" text-anchor="middle" font-weight="800">추가</text>' +
+  '</g>' +
+  '<line x1="30" y1="50" x2="230" y2="50" stroke="#e5e7eb"/>' +
+  // 미리보기 카드
+  '<rect x="40" y="64" width="60" height="60" rx="13" fill="#eff6ff" stroke="#dbeafe"/>' +
+  '<text x="70" y="100" font-size="9" fill="#1d4ed8" text-anchor="middle" font-weight="800">VIC</text>' +
+  '<text x="70" y="110" font-size="6" fill="#1d4ed8" text-anchor="middle" font-weight="700">CHURCH</text>' +
+  '<rect x="112" y="68" width="110" height="14" rx="4" fill="#f3f4f6"/>' +
+  '<text x="118" y="78" font-size="9" fill="#111" font-weight="700">Victory Church</text>' +
+  '<rect x="112" y="88" width="100" height="9" rx="3" fill="#f3f4f6"/>' +
+  '<text x="118" y="95" font-size="7" fill="#9ca3af">victorychurch.nz</text>' +
+  // 안내 텍스트
+  '<text x="40" y="146" font-size="9" fill="#6b7280">홈 화면에서 빠르게 열 수 있도록 아이콘이 추가됩니다.</text>' +
+'</svg>';
   }
   function closeSheet() { if (sheet) sheet.classList.remove("show"); }
   function closeBanner() {
