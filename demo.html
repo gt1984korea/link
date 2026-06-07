@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Victory Church</title>
+
+  <!-- ▼ (선택) 안드로이드에서 '진짜 설치'가 되게 하려면 manifest 연결 -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1e3a8a">
+  <!-- iOS 홈 화면 아이콘/제목 -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-title" content="Victory Church">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;margin:0;
+      padding:80px 20px 40px;color:#222;line-height:1.6}
+    h1{color:#1e3a8a}
+    .tip{background:#f1f5ff;border:1px solid #c7d6ff;border-radius:12px;padding:16px;margin-top:20px;font-size:14px}
+    button.reset{margin-top:16px;background:#111;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-size:14px}
+  </style>
+</head>
+<body>
+  <h1>⛪ Victory Church</h1>
+  <p>이 페이지를 <b>모바일(안드로이드/아이폰)</b>에서 열면 상단에<br>
+  "홈 화면에 추가" 안내 배너가 나타납니다.</p>
+
+  <div class="tip">
+    📱 <b>테스트 방법</b><br>
+    1. 이 파일을 https 주소로 올린 뒤 휴대폰으로 접속<br>
+    2. PC 크롬: F12 → 기기 툴바(📱)로 모바일 모드 전환 후 새로고침<br>
+    3. 카카오톡/인스타로 링크 보내서 인앱 브라우저 동작도 확인
+  </div>
+
+  <button class="reset" onclick="localStorage.removeItem('a2hs_dismissed_until');location.reload()">
+    배너 다시 보기 (숨김 초기화)
+  </button>
+
+  <!-- (선택) 안드로이드 진짜 설치용 서비스워커 등록 -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    }
+  </script>
+
+  <!-- ▼ 이 한 줄만 실제 사이트 </body> 직전에 넣으면 됩니다 -->
+  <script src="a2hs.js" defer
+    data-site-name="Victory Church"
+    data-icon="icon-192.png"></script>
+</body>
+</html>

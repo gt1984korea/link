@@ -1,0 +1,7 @@
+node_modules/
+_*.mjs
+_*.png
+.DS_Store
+Thumbs.db
+docs/.bkit-memory.json
+docs/.pdca-status.json
