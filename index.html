@@ -820,29 +820,23 @@
             bgmSource.connect(bgmVolume);
           }
 
-          // 페이드인 처리 (목소리 크기와 조화를 이루도록 16% 볼륨으로 설정)
+          // 페이드인 처리 (노래가 잘 들리도록 35% 볼륨으로 설정)
           const now = audioCtx.currentTime;
           bgmVolume.gain.cancelScheduledValues(now);
           bgmVolume.gain.setValueAtTime(bgmVolume.gain.value === 1.0 ? 0.0 : bgmVolume.gain.value, now);
-          bgmVolume.gain.linearRampToValueAtTime(0.16, now + 3.0); // 3초 페이드인
+          bgmVolume.gain.linearRampToValueAtTime(0.35, now + 3.0); // 3초 페이드인
 
           // 브라우저 자동재생 제한 우회 처리를 보강하여 명시적으로 재생 실행
           if (audioCtx.state === 'suspended') {
             audioCtx.resume();
           }
 
-          // 노래의 하이라이트 부분(약 48초)이 먼저 나오도록 타임스탬프 설정
-          if (bgmAudio.currentTime === 0) {
-            bgmAudio.currentTime = 48;
-          }
+          // 노래를 처음(0초)부터 재생
 
           bgmAudio.play().catch(e => {
             console.warn('BGM play failed, retrying on window click:', e);
             // 사용자 제스처가 간혹 분실되었을 때를 대비한 백업 핸들러 등록
             const retryPlay = () => {
-              if (bgmAudio.currentTime === 0) {
-                bgmAudio.currentTime = 48;
-              }
               bgmAudio.play().then(() => {
                 window.removeEventListener('click', retryPlay);
               }).catch(err => console.warn('BGM retry failed:', err));
@@ -864,7 +858,7 @@
         setTimeout(() => {
           if (!active && bgmAudio) {
             bgmAudio.pause();
-            bgmAudio.currentTime = 48; // 정지 후 되감기 시에도 하이라이트(48초)로 설정
+            bgmAudio.currentTime = 0; // 정지 후 다시 처음(0초)부터 재생되도록 되감기
           }
         }, 1600);
       }
