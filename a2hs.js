@@ -333,32 +333,39 @@
     sheet.classList.add("show");
   }
 
+  // 외부 전환 URL에 자동 설치 트리거 파라미터를 붙임
+  function urlWithInstallFlag(baseUrl) {
+    if (/[?&]install=1\b/.test(baseUrl)) return baseUrl;
+    return baseUrl + (baseUrl.indexOf("?") >= 0 ? "&" : "?") + "install=1";
+  }
+
   // 인앱 → 외부 브라우저로 자동 전환
   // 각 앱의 공식 외부 열기 스킴 사용. 실패하면 새창 폴백.
+  // 외부 브라우저로 열린 페이지는 ?install=1 을 보고 자동으로 설치를 시작함.
   function openInExternalBrowser() {
-    var url = location.href;
+    var externalUrl = urlWithInstallFlag(location.href);
     var target = null;
 
     if (inApp.kakao) {
       // 카카오톡: 외부 브라우저 강제 오픈
-      target = "kakaotalk://web/openExternal?url=" + encodeURIComponent(url);
+      target = "kakaotalk://web/openExternal?url=" + encodeURIComponent(externalUrl);
     } else if (inApp.line) {
       // 라인: openExternalBrowser=true 쿼리 추가
-      var sep = url.indexOf("?") >= 0 ? "&" : "?";
-      location.href = url + sep + "openExternalBrowser=1";
+      var sep = externalUrl.indexOf("?") >= 0 ? "&" : "?";
+      location.href = externalUrl + sep + "openExternalBrowser=1";
       return;
     } else if (inApp.naver) {
       // 네이버 인앱: 외부 브라우저 스킴
-      target = "naversearchapp://inappbrowser?url=" + encodeURIComponent(url) + "&target=new";
+      target = "naversearchapp://inappbrowser?url=" + encodeURIComponent(externalUrl) + "&target=new";
     } else if (isAndroid) {
       // 안드로이드 일반: 크롬 인텐트로 외부 전환
-      target = "intent://" + url.replace(/^https?:\/\//, "") +
+      target = "intent://" + externalUrl.replace(/^https?:\/\//, "") +
                "#Intent;scheme=" + (location.protocol.replace(":", "") || "https") +
                ";package=com.android.chrome;end";
     } else if (isIOS) {
       // iOS 인스타/페북 등: 사파리로 직접 보낼 공식 스킴이 없음
       // → 새창 시도 후, 차단되면 안내
-      var w = window.open(url, "_blank");
+      var w = window.open(externalUrl, "_blank");
       if (!w) {
         alert("오른쪽 위 메뉴(···)에서 '사파리로 열기'를 눌러 주세요.");
       }
@@ -370,10 +377,10 @@
       location.href = target;
       // 2초 뒤에도 페이지에 머물러 있으면 새창 폴백
       setTimeout(function () {
-        try { window.open(url, "_blank"); } catch (e) {}
+        try { window.open(externalUrl, "_blank"); } catch (e) {}
       }, 2000);
     } else {
-      try { window.open(url, "_blank"); } catch (e) {}
+      try { window.open(externalUrl, "_blank"); } catch (e) {}
     }
   }
 
@@ -557,5 +564,38 @@
   // 자동 배너 (모바일 + 빈도 통과)
   if (CFG.autoBanner && isMobile && !isStandalone && ls(K.installed) !== "1") {
     gate().then(function (ok) { if (ok) showBanner(); });
+  }
+
+  // 외부 브라우저로 진입 시 자동 설치 트리거
+  // 인앱에서 "바로가기 만들기" 누르면 ?install=1 이 붙어 외부 브라우저로 열리고,
+  // 여기서 이 파라미터를 보면 자동으로 onAddClick()을 실행한다.
+  // 무한 루프를 막기 위해 인앱 브라우저에서는 동작하지 않음.
+  function autoInstallIfRequested() {
+    if (isInApp) return;                       // 인앱은 자동 실행 금지 (루프 방지)
+    if (isStandalone) return;                  // 이미 설치된 상태
+    if (ls(K.installed) === "1") return;       // 이미 설치 기록
+    if (!/[?&]install=1\b/.test(location.search)) return;
+
+    // beforeinstallprompt 가 잡힐 시간을 약간 줌. (보통 즉시 발생)
+    function fire() {
+      // 안내 시트 또는 네이티브 프롬프트 표시
+      try { onAddClick(); } catch (e) {}
+      // URL 정리 — 새로고침 시 다시 트리거되지 않도록
+      try {
+        var clean = location.href.replace(/([?&])install=1(&|$)/, function (_, p1, p2) {
+          return p2 === "&" ? p1 : "";
+        }).replace(/[?&]$/, "");
+        history.replaceState(null, "", clean);
+      } catch (e) {}
+    }
+
+    // 안드로이드 크롬은 beforeinstallprompt 가 약간 지연될 수 있으므로 잠시 대기.
+    // 그 사이 deferredPrompt 가 잡히면 onAddClick 이 네이티브 다이얼로그를 즉시 띄움.
+    setTimeout(fire, 700);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", autoInstallIfRequested);
+  } else {
+    autoInstallIfRequested();
   }
 })();
