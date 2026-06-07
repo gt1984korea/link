@@ -241,18 +241,17 @@
       .admin-grid {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        grid-template-areas:
-          "editor  list"
-          "audio   list"
-          "preview list";
         gap: 20px;
         align-items: start;
       }
-      #editor      { grid-area: editor; }
-      #audioCard   { grid-area: audio; }
-      #previewCard { grid-area: preview; }
+      .col-form, .col-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-width: 0;
+      }
+      .col-form .card, .col-list .card { margin-bottom: 0; }
       #listCard {
-        grid-area: list;
         position: sticky;
         top: 20px;
         max-height: calc(100vh - 40px);
@@ -293,6 +292,8 @@
 
     <div class="admin-grid">
 
+    <div class="col-form">
+
     <!-- 편집 영역 -->
     <section class="card hidden" id="editor">
       <h2 id="editorTitle">새 암송 구절 추가</h2>
@@ -316,27 +317,12 @@
         </div>
       </div>
 
-      <label for="voiceSelect">목소리 선택 (TTS)</label>
-      <select id="voiceSelect" style="width: 100%; font-family: inherit; font-size: 15px; color: var(--text); background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; outline: none; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease;">
-        <option value="nPczCjzI2devNBz1zQrb">목사님 C (브라이언 - Brian): 묵직함이 깔려있어 경건하고 설득력 있는 중년 남성 목소리</option>
-        <option value="N2lVS1w4EtoT3dr4eOWO">목사님 D (칼럼 - Callum): 다소 역동적이고 짙은 무게감이 실린 목소리</option>
-      </select>
-
       <div class="row">
         <button class="btn btn-ghost" id="btnNew" type="button">새로 작성</button>
         <button class="btn btn-primary" id="btnSave" type="button">저장</button>
       </div>
       <div class="status" id="saveStatus"></div>
       <div class="meta" id="updatedMeta"></div>
-    </section>
-
-    <!-- 등록된 구절 목록 -->
-    <section class="card hidden" id="listCard">
-      <h2>등록된 암송 구절</h2>
-      <div class="vlist" id="vlist"></div>
-      <p class="hint" id="listHint" style="margin-top:14px">
-        편집하려면 항목의 <b>편집</b>을 누르세요. 오늘 날짜가 포함된 구절이 메인 화면에 표시됩니다.
-      </p>
     </section>
 
     <!-- 구절 음성 녹음 -->
@@ -391,11 +377,21 @@
             style="color:var(--danger); border-color:#f3c7c7;">녹음 삭제 (TTS로 복귀)</button>
         </div>
       </div>
+
+      <label for="voiceSelect" style="margin-top:20px">목소리 선택 (TTS)</label>
+      <select id="voiceSelect" style="width: 100%; font-family: inherit; font-size: 15px; color: var(--text); background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; outline: none; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease;">
+        <option value="nPczCjzI2devNBz1zQrb">목사님 C (브라이언 - Brian): 묵직함이 깔려있어 경건하고 설득력 있는 중년 남성 목소리</option>
+        <option value="N2lVS1w4EtoT3dr4eOWO">목사님 D (칼럼 - Callum): 다소 역동적이고 짙은 무게감이 실린 목소리</option>
+      </select>
     </section>
+
+    </div>
+
+    <div class="col-list">
 
     <!-- 미리보기 -->
     <section class="card hidden" id="previewCard">
-      <h2>미리보기 (사용자 화면)</h2>
+      <h2>현재 화면 미리보기(사용자 화면)</h2>
       <div class="preview">
         <span class="label">이번 주 암송 구절</span>
         <p class="text" id="pvText">—</p>
@@ -403,6 +399,17 @@
       </div>
       <p class="hint" style="margin-top:14px">저장하면 모든 사용자 화면에 실시간 반영됩니다.</p>
     </section>
+
+    <!-- 등록된 구절 목록 -->
+    <section class="card hidden" id="listCard">
+      <h2>등록된 암송 구절</h2>
+      <div class="vlist" id="vlist"></div>
+      <p class="hint" id="listHint" style="margin-top:14px">
+        편집하려면 항목의 <b>편집</b>을 누르세요. 오늘 날짜가 포함된 구절이 메인 화면에 표시됩니다.
+      </p>
+    </section>
+
+    </div>
 
     </div>
 

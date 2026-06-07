@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>샘플 3 · 모던 미니멀 모노블루 — Admin 디자인 시안</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+
+<style>
+  :root {
+    /* Victory Church 로고 블루(#21428d) 단일 강조색 + 중성 그레이 */
+    --ci-blue:   #21428d;
+    --ci-blue-2: #16306b;
+    --bg:        #f2f4f9;
+    --surface:   #ffffff;
+    --line:      #dde1ea;
+    --text:      #1c2230;
+    --text-2:    #6b7280;
+    --text-3:    #98a0b3;
+    --brand:     var(--ci-blue);
+    --brand-dim: #e6ecf8;
+    --danger:    #d23c3c;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+                 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
+
+  /* 십자가 모티프를 옅은 그리드 패턴으로 배경에 고정 */
+  .grid-bg {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(33,66,141,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(33,66,141,.05) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+  }
+
+  .badge-tag {
+    position: fixed; top: 14px; right: 14px; z-index: 50;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 700; letter-spacing: 0;
+    color: #fff; background: var(--ci-blue);
+    border-radius: 6px; padding: 7px 12px;
+  }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 32px) 22px 56px; }
+
+  .header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--line);
+  }
+  .header .mark {
+    width: 38px; height: 38px; border-radius: 9px; flex: 0 0 auto;
+    background: var(--ci-blue); position: relative;
+  }
+  .header .mark::before, .header .mark::after {
+    content: ""; position: absolute; background: #fff; border-radius: 1px;
+  }
+  .header .mark::before { left: 50%; top: 9px; bottom: 9px; width: 3px; transform: translateX(-50%); }
+  .header .mark::after { top: 50%; left: 11px; right: 11px; height: 3px; transform: translateY(-50%); }
+  .header h1 { font-size: 18px; font-weight: 800; color: var(--text); margin: 0; letter-spacing: -0.02em; }
+  .header p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-3); margin: 2px 0 0; font-weight: 500; letter-spacing: .02em;
+  }
+  .header .spacer { flex: 1; }
+  .header .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 700; color: var(--ci-blue);
+    background: var(--brand-dim); border: 1px solid #cdd9f0;
+    border-radius: 999px; padding: 6px 14px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 800; color: var(--text);
+    margin: 0 0 16px; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 8px;
+    text-transform: uppercase; letter-spacing: .04em; font-size: 12px;
+  }
+  .card h2 .num {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+    color: var(--ci-blue); background: var(--brand-dim);
+    border-radius: 5px; padding: 2px 7px;
+  }
+  label {
+    display: block; font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    color: var(--text-3); margin: 14px 0 6px; letter-spacing: 0.04em;
+  }
+  input[type="text"], input[type="password"], input[type="date"], textarea, select {
+    width: 100%; font-family: inherit; font-size: 14.5px; color: var(--text);
+    background: #fbfcfe;
+    border: 1px solid var(--line);
+    border-radius: 8px; padding: 11px 13px; outline: none;
+    transition: border-color .12s ease, box-shadow .12s ease;
+    letter-spacing: -0.01em;
+  }
+  textarea { min-height: 124px; resize: vertical; line-height: 1.6; }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--ci-blue);
+    box-shadow: 0 0 0 3px var(--brand-dim);
+  }
+  .row { display: flex; gap: 8px; margin-top: 16px; }
+  .btn {
+    flex: 1; font-family: inherit; font-size: 14px; font-weight: 700;
+    border-radius: 8px; padding: 12px 16px; cursor: pointer;
+    border: 1px solid transparent; letter-spacing: -0.01em;
+  }
+  .btn-primary { background: var(--ci-blue); color: #fff; }
+  .btn-primary:hover { background: var(--ci-blue-2); }
+  .btn-ghost { background: #fff; color: var(--text); border-color: var(--line); }
+  .btn-ghost:hover { background: #f6f8fc; border-color: #c9d1e0; }
+  .btn-danger { background: #fff; color: var(--danger); border-color: #f3cdcd; }
+
+  .status { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; margin-top: 14px; }
+  .status.ok { color: var(--ci-blue); }
+  .meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-3); margin-top: 10px; text-align: right; }
+  .hint { font-size: 12px; color: var(--text-3); margin-top: 8px; line-height: 1.6; }
+
+  .date-row { display: flex; gap: 8px; align-items: flex-end; }
+  .date-row > div { flex: 1; min-width: 0; }
+  .date-sep { padding-bottom: 11px; color: var(--text-3); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+  .preview {
+    background: #fbfcfe;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ci-blue);
+    border-radius: 0 10px 10px 0;
+    padding: 20px;
+  }
+  .preview .label {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; font-weight: 700; color: var(--ci-blue);
+    letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px;
+  }
+  .preview .label::before { content: "//"; color: var(--text-3); }
+  .preview .text {
+    font-size: 15px; line-height: 1.7; color: var(--text); font-weight: 500;
+    white-space: pre-wrap; word-break: keep-all; margin: 0;
+  }
+  .preview .ref {
+    display: block; margin-top: 14px; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--text-2); font-weight: 600; text-align: right;
+  }
+
+  .vlist { display: flex; flex-direction: column; gap: 8px; }
+  .vrow { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: #fff; }
+  .vrow.active { border-color: var(--ci-blue); background: var(--brand-dim); }
+  .vrow-top { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; flex-wrap: wrap; }
+  .badge {
+    display: inline-block; font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px; font-weight: 700; border-radius: 5px; padding: 3px 8px; letter-spacing: 0;
+  }
+  .badge.range { color: var(--ci-blue); background: #fff; border: 1px solid #cdd9f0; }
+  .badge.now   { color: #fff; background: var(--ci-blue); }
+  .vrow-text {
+    font-size: 13.5px; line-height: 1.55; color: var(--text); font-weight: 500; margin: 0 0 5px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .vrow-ref { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-2); font-weight: 600; }
+  .vrow-actions { display: flex; gap: 7px; margin-top: 12px; }
+  .vrow-actions .btn { padding: 8px 11px; font-size: 12.5px; flex: 1; }
+
+  .label-link {
+    text-decoration: none; font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 10.5px;
+    color: var(--ci-blue); background: var(--brand-dim);
+    border: 1px solid #cdd9f0; border-radius: 5px; padding: 4px 10px;
+  }
+  .preset { margin-top: 10px; padding: 13px 15px; background: #f6f8fc; border-radius: 8px; border: 1px solid var(--line); }
+  .preset b { font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  .copy-row { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; }
+  .copy-row .copy-label { flex: 0 0 auto; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--text-3); width: 100px; font-size: 10.5px; text-transform: uppercase; }
+  .copy-row code {
+    flex: 1; min-width: 0; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    background: #fff; border: 1px solid var(--line); border-radius: 5px;
+    padding: 5px 9px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text);
+  }
+  .btn-copy {
+    flex: 0 0 auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+    color: var(--ci-blue); background: #fff; border: 1px solid #cdd9f0;
+    border-radius: 5px; padding: 5px 10px; cursor: pointer;
+  }
+
+  .admin-grid {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "editor list" "audio list" "preview list";
+    gap: 14px; align-items: start;
+  }
+  #editor { grid-area: editor; }
+  #audioCard { grid-area: audio; }
+  #previewCard { grid-area: preview; }
+  #listCard { grid-area: list; position: sticky; top: 18px; }
+  @media (max-width: 1023px) {
+    .admin-grid { display: block; }
+    .badge-tag { position: static; display: inline-block; margin-bottom: 18px; }
+  }
+</style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="badge-tag">SAMPLE_03 · MODERN_MINIMAL_MONOBLUE</div>
+  <div class="wrap">
+    <header class="header">
+      <div class="mark"></div>
+      <div>
+        <h1>암송 구절 관리</h1>
+        <p>VICTORY_CHURCH / ADMIN_CONSOLE</p>
+      </div>
+      <div class="spacer"></div>
+      <span class="pill">● LIVE</span>
+    </header>
+
+    <div class="admin-grid">
+      <section class="card" id="editor">
+        <h2><span class="num">01</span> 구절 편집 — 이사야 41:10</h2>
+        <label>구절 본문</label>
+        <textarea readonly>내가 너희에게 이르노니 두려워하지 말라 내가 너희와 함께 함이라 놀라지 말라 나는 네 하나님이 됨이라 내가 너를 굳세게 하리라 참으로 너를 도와주리라 참으로 나의 의로운 오른손으로 너를 붙들리라</textarea>
+        <label>출처</label>
+        <input type="text" value="이사야 41:10" readonly>
+        <label>표시 기간</label>
+        <div class="date-row">
+          <div><label style="margin-top:0">시작일</label><input type="date" value="2026-06-02"></div>
+          <span class="date-sep">→</span>
+          <div><label style="margin-top:0">종료일</label><input type="date" value="2026-06-08"></div>
+        </div>
+        <label>목소리 선택 (TTS)</label>
+        <select>
+          <option>목사님 C (브라이언 - Brian): 묵직함이 깔려있어 경건하고 설득력 있는 중년 남성 목소리</option>
+          <option>목사님 D (칼럼 - Callum): 다소 역동적이고 짙은 무게감이 실린 목소리</option>
+        </select>
+        <div class="row">
+          <button class="btn btn-ghost" type="button">새로 작성</button>
+          <button class="btn btn-primary" type="button">저장</button>
+        </div>
+        <div class="status ok">✓ SAVED — 메인 화면에 즉시 반영됩니다</div>
+        <div class="meta">LAST_MODIFIED: 2026-06-02 09:14</div>
+      </section>
+
+      <section class="card" id="listCard">
+        <h2><span class="num">02</span> 등록된 암송 구절</h2>
+        <div class="vlist">
+          <div class="vrow active">
+            <div class="vrow-top">
+              <span class="badge range">2026.06.02 → 2026.06.08</span>
+              <span class="badge now">진행 중</span>
+            </div>
+            <p class="vrow-text">내가 너희에게 이르노니 두려워하지 말라 내가 너희와 함께 함이라 놀라지 말라 나는 네 하나님이 됨이라…</p>
+            <div class="vrow-ref">REF: 이사야 41:10</div>
+            <div class="vrow-actions">
+              <button class="btn btn-ghost" type="button">편집</button>
+              <button class="btn btn-danger" type="button">삭제</button>
+            </div>
+          </div>
+          <div class="vrow">
+            <div class="vrow-top"><span class="badge range">2026.06.09 → 2026.06.15</span></div>
+            <p class="vrow-text">여호와는 나의 목자시니 내게 부족함이 없으리로다 그가 나를 푸른 풀밭에 누이시며…</p>
+            <div class="vrow-ref">REF: 시편 23:1</div>
+            <div class="vrow-actions">
+              <button class="btn btn-ghost" type="button">편집</button>
+              <button class="btn btn-danger" type="button">삭제</button>
+            </div>
+          </div>
+          <div class="vrow">
+            <div class="vrow-top"><span class="badge range">2026.05.26 → 2026.06.01</span></div>
+            <p class="vrow-text">항상 기뻐하라 쉬지 말고 기도하라 범사에 감사하라 이는 그리스도 예수 안에서…</p>
+            <div class="vrow-ref">REF: 데살로니가전서 5:16-18</div>
+            <div class="vrow-actions">
+              <button class="btn btn-ghost" type="button">편집</button>
+              <button class="btn btn-danger" type="button">삭제</button>
+            </div>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:14px">편집하려면 항목의 <b>편집</b>을 누르세요. 오늘 날짜가 포함된 구절이 메인 화면에 표시됩니다.</p>
+      </section>
+
+      <section class="card" id="audioCard">
+        <h2><span class="num">03</span> 구절 음성 녹음 (선택) <span class="label-link">AI_STUDIO ↗</span></h2>
+        <p class="hint" style="margin-top:0">녹음 파일을 올리면 메인 화면 "읽어주기"가 자동 음성(TTS) 대신 이 녹음을 재생합니다.</p>
+        <div class="preset">
+          <b>AI Studio Preset</b>
+          <p class="copy-row"><span class="copy-label">scene</span><code>A serene and reverent sanctuary.</code><button class="btn-copy" type="button">COPY</button></p>
+          <p class="copy-row"><span class="copy-label">speaker</span><code>Orus (Firm, Lower middle)</code><button class="btn-copy" type="button">COPY</button></p>
+        </div>
+        <label>녹음 파일</label>
+        <input type="text" value="isaiah_41_10_brian.m4a" readonly style="color:var(--text-2)">
+        <div class="row"><button class="btn btn-primary" type="button">업로드</button></div>
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line);">
+          <label style="margin-top:0">현재 등록된 녹음</label>
+          <p class="meta" style="text-align:left; margin:0 0 10px;">FILE: isaiah_41_10_brian.m4a · 2.1MB</p>
+          <div class="row"><button class="btn btn-ghost" style="color:var(--danger); border-color:#f3cdcd;" type="button">녹음 삭제 (TTS로 복귀)</button></div>
+        </div>
+      </section>
+
+      <section class="card" id="previewCard">
+        <h2><span class="num">04</span> 미리보기 (사용자 화면)</h2>
+        <div class="preview">
+          <span class="label">이번 주 암송 구절</span>
+          <p class="text">내가 너희에게 이르노니 두려워하지 말라 내가 너희와 함께 함이라 놀라지 말라 나는 네 하나님이 됨이라 내가 너를 굳세게 하리라 참으로 너를 도와주리라</p>
+          <span class="ref">— 이사야 41:10</span>
+        </div>
+        <p class="hint" style="margin-top:14px">저장하면 모든 사용자 화면에 실시간 반영됩니다.</p>
+      </section>
+    </div>
+  </div>
+</body>
+</html>
