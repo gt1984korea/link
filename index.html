@@ -258,7 +258,7 @@
       align-items: center;
       gap: 5px;
       font-family: inherit;
-      font-size: 12px;
+      font-size: 18px;
       font-weight: 700;
       color: var(--text-2);
       background: #f3f4f6;
@@ -762,6 +762,7 @@
         pastPanel.classList.add('hidden');
         pastToggle.classList.remove('open');
         pastToggle.setAttribute('aria-expanded', 'false');
+        pastToggleLabel.textContent = '지난 암송 구절';
         return;
       }
       past.forEach((v) => {
@@ -793,11 +794,13 @@
     }
 
     // 토글: 지난 구절 패널 열고 닫기
+    const pastToggleLabel = document.getElementById('pastToggleLabel');
     pastToggle.addEventListener('click', function () {
       const willOpen = pastPanel.classList.contains('hidden');
       pastPanel.classList.toggle('hidden', !willOpen);
       pastToggle.classList.toggle('open', willOpen);
       pastToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      pastToggleLabel.textContent = willOpen ? '닫기' : '지난 암송 구절';
       if (willOpen) {
         pastPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }

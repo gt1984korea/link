@@ -283,7 +283,14 @@
 
     <!-- 구절 음성 녹음 -->
     <section class="card hidden" id="audioCard">
-      <h2>구절 음성 녹음 (선택)</h2>
+      <h2 style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        구절 음성 녹음 (선택)
+        <a href="https://aistudio.google.com/generate-speech?model=gemini-3.1-flash-tts-preview"
+          target="_blank" rel="noopener"
+          class="badge range" style="text-decoration:none; font-weight:700;">
+          AI Studio에서 녹음 만들기 ↗
+        </a>
+      </h2>
       <p class="hint" style="margin-top:0">
         녹음 파일을 올리면 메인 화면 "읽어주기"가 자동 음성(TTS) 대신 이 녹음을 재생합니다.
         삭제하면 다시 자동 음성으로 돌아갑니다.
@@ -365,13 +372,17 @@
       return 'v' + Date.now() + Math.random().toString(36).slice(2, 8);
     }
 
-    // 입력값 미리보기에 즉시 반영
+    // 오늘 날짜를 기준으로 등록된 구절 중 "이번 주" 활성 구절을 계산해 미리보기에 반영
+    // (index.html의 classify() active 로직과 동일: 시작<=오늘<=종료, 여러 개면 startDate 최신 1개)
     function syncPreview() {
-      pvText.textContent = txt.value.trim() || '—';
-      pvRef.textContent  = refIn.value.trim();
+      const today = todayStr();
+      const actives = versesData
+        .filter(v => v && (v.text || '').trim() && isActive(v, today))
+        .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
+      const active = actives[0] || null;
+      pvText.textContent = active ? ((active.text || '').trim() || '—') : '—';
+      pvRef.textContent  = active ? (active.reference || '').trim() : '';
     }
-    txt.addEventListener('input', syncPreview);
-    refIn.addEventListener('input', syncPreview);
 
     // 게이트
     function unlock() {
@@ -415,6 +426,7 @@
     function renderList() {
       vlist.textContent = '';
       const today = todayStr();
+      syncPreview();
       const sorted = versesData.slice().sort((a, b) =>
         (b.startDate || '').localeCompare(a.startDate || '') ||
         ((b.createdAt || 0) - (a.createdAt || 0)));
