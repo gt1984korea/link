@@ -718,6 +718,9 @@
           if (!AudioContextClass) return;
 
           audioCtx = new AudioContextClass();
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
 
           // Direct 음성과 Reverb 음성 조절 Gain 노드 생성
           dryGain = audioCtx.createGain();
@@ -769,10 +772,12 @@
         }
       }
 
-      /* 지정한 MP3 파일('주의 빛 안에서.mp3')을 재생하는 배경음악 함수 */
+      /* 지정한 MP3 파일('bgm.mp3')을 재생하는 배경음악 함수 */
       function initBgmAudio() {
         if (bgmAudio) return;
-        bgmAudio = new Audio('주의 빛 안에서.mp3');
+        bgmAudio = new Audio('bgm.mp3');
+        bgmAudio.crossOrigin = 'anonymous'; // CORS 차단 방지용 anonymous 설정
+        bgmAudio.preload = 'auto'; // 리소스 사전 로드 강제
         bgmAudio.loop = true;
       }
 
@@ -785,6 +790,7 @@
 
           if (!bgmVolume) {
             bgmVolume = audioCtx.createGain();
+            bgmVolume.gain.setValueAtTime(0.0, audioCtx.currentTime); // 초기 볼륨 0 설정으로 팝 노이즈 차단
             bgmVolume.connect(convolver); // 성당 잔향 연결
             bgmVolume.connect(audioCtx.destination);
           }
@@ -797,10 +803,23 @@
           // 페이드인 처리 (목소리 크기와 조화를 이루도록 16% 볼륨으로 설정)
           const now = audioCtx.currentTime;
           bgmVolume.gain.cancelScheduledValues(now);
-          bgmVolume.gain.setValueAtTime(bgmVolume.gain.value, now);
+          bgmVolume.gain.setValueAtTime(bgmVolume.gain.value === 1.0 ? 0.0 : bgmVolume.gain.value, now);
           bgmVolume.gain.linearRampToValueAtTime(0.16, now + 3.0); // 3초 페이드인
 
-          bgmAudio.play().catch(e => console.warn('BGM play failed:', e));
+          // 브라우저 자동재생 제한 우회 처리를 보강하여 명시적으로 재생 실행
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          bgmAudio.play().catch(e => {
+            console.warn('BGM play failed, retrying on window click:', e);
+            // 사용자 제스처가 간혹 분실되었을 때를 대비한 백업 핸들러 등록
+            const retryPlay = () => {
+              bgmAudio.play().then(() => {
+                window.removeEventListener('click', retryPlay);
+              }).catch(err => console.warn('BGM retry failed:', err));
+            };
+            window.addEventListener('click', retryPlay);
+          });
         } catch (e) {
           console.warn('[BGM] Failed to play background audio file:', e);
         }
