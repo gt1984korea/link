@@ -1,13 +1,12 @@
 // Firebase 설정 (victorychurch-665a9)
-// ⚠️ 아래 값을 Firebase Console > 프로젝트 설정 > 내 앱(웹) 에서 복사해 채워주세요.
-// apiKey 는 공개되어도 무방합니다(보안은 Firestore 보안 규칙으로).
 export const firebaseConfig = {
-  apiKey: "REPLACE_ME_API_KEY",
+  apiKey: "AIzaSyDcz1pXcFf8a5vwjQSO7Xz4jU7F6lL_ZEs",
   authDomain: "victorychurch-665a9.firebaseapp.com",
   projectId: "victorychurch-665a9",
-  storageBucket: "victorychurch-665a9.appspot.com",
-  messagingSenderId: "REPLACE_ME_SENDER_ID",
-  appId: "REPLACE_ME_APP_ID"
+  storageBucket: "victorychurch-665a9.firebasestorage.app",
+  messagingSenderId: "520614301251",
+  appId: "1:520614301251:web:1d5394f050346f9c17cef6",
+  measurementId: "G-5FHZJHRSQF"
 };
 
 // 암송 구절 문서 경로: /site/memoryVerse

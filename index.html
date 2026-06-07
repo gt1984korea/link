@@ -215,7 +215,7 @@
       background: linear-gradient(180deg, #ffffff 0%, #f7faf8 100%);
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 20px 20px 18px;
+      padding: 24px 22px 22px;
       margin-bottom: 14px;
       position: relative;
       overflow: hidden;
@@ -224,46 +224,82 @@
       content: "";
       position: absolute;
       left: 0; top: 0; bottom: 0;
-      width: 3px;
+      width: 4px;
       background: var(--brand);
-      border-radius: 3px 0 0 3px;
+      border-radius: 4px 0 0 4px;
     }
     .verse .label {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 11px;
+      gap: 7px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--brand);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
+      letter-spacing: 0.03em;
+      margin-bottom: 14px;
     }
     .verse .label::before {
       content: "";
-      width: 5px; height: 5px;
+      width: 6px; height: 6px;
       border-radius: 50%;
       background: var(--brand);
     }
     .verse .text {
-      font-size: 15px;
-      line-height: 1.6;
+      font-size: 30px;
+      line-height: 1.85;
       color: var(--text);
-      font-weight: 500;
+      font-weight: 600;
       letter-spacing: -0.01em;
       white-space: pre-wrap;
       word-break: keep-all;
+      margin: 0;
     }
     .verse .ref {
       display: block;
-      margin-top: 10px;
-      font-size: 13px;
+      margin-top: 16px;
+      font-size: 22px;
       color: var(--text-2);
-      font-weight: 600;
+      font-weight: 700;
       text-align: right;
     }
     .verse.loading .text,
     .verse.loading .ref { opacity: 0.45; }
+    .verse.hidden { display: none; }
+
+    /* TTS 버튼 */
+    .tts-row {
+      margin-top: 18px;
+      display: flex;
+      justify-content: center;
+    }
+    .tts-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--brand);
+      background: var(--brand-dim);
+      border: 1.5px solid #b8e8d0;
+      border-radius: 50px;
+      padding: 10px 22px;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+      transition: background .15s ease, border-color .15s ease, transform .08s ease;
+    }
+    .tts-btn:hover { background: #d4f0e4; border-color: #8fd6b2; }
+    .tts-btn:active { transform: scale(.97); }
+    .tts-btn.playing {
+      color: #fff;
+      background: var(--brand);
+      border-color: var(--brand);
+      animation: tts-pulse 2s ease-in-out infinite;
+    }
+    @keyframes tts-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(43,182,115,.4); }
+      50%       { box-shadow: 0 0 0 8px rgba(43,182,115,0); }
+    }
 
     /* Footer */
     .footer {
@@ -316,10 +352,20 @@
     </header>
 
     <!-- 0. 이번 주 암송 구절 -->
-    <section class="verse loading" id="verseCard" aria-live="polite">
+    <section class="verse hidden" id="verseCard" aria-live="polite">
       <span class="label">이번 주 암송 구절</span>
-      <p class="text" id="verseText">불러오는 중…</p>
+      <h1 class="text" id="verseText"></h1>
       <span class="ref" id="verseRef"></span>
+      <div class="tts-row">
+        <button class="tts-btn" id="ttsBtn" type="button">
+          <svg id="ttsIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <span id="ttsBtnLabel">읽어주기</span>
+        </button>
+      </div>
     </section>
 
     <nav class="menu">
@@ -543,7 +589,7 @@
       if (cached && cached.text) {
         elText.textContent = cached.text;
         elRef.textContent  = cached.reference || '';
-        card.classList.remove('loading');
+        card.classList.remove('hidden');
       }
     } catch (e) {}
 
@@ -554,31 +600,37 @@
 
       onSnapshot(ref, (snap) => {
         if (!snap.exists()) {
-          elText.textContent = '아직 등록된 암송 구절이 없습니다.';
-          elRef.textContent  = '';
-          card.classList.remove('loading');
+          // 데이터 없음 → 카드 숨김
+          card.classList.add('hidden');
+          try { localStorage.removeItem('verseCache'); } catch (e) {}
           return;
         }
         const d = snap.data() || {};
         const text = (d.text || '').trim();
         const reference = (d.reference || '').trim();
-        elText.textContent = text || '아직 등록된 암송 구절이 없습니다.';
+        if (!text) {
+          // 텍스트가 비어 있으면 숨김
+          card.classList.add('hidden');
+          try { localStorage.removeItem('verseCache'); } catch (e) {}
+          return;
+        }
+        elText.textContent = text;
         elRef.textContent  = reference;
-        card.classList.remove('loading');
+        card.classList.remove('hidden');
         try { localStorage.setItem('verseCache', JSON.stringify({ text, reference })); } catch (e) {}
       }, (err) => {
         console.warn('[verse] snapshot error', err);
-        if (!elText.textContent || elText.textContent === '불러오는 중…') {
-          elText.textContent = '암송 구절을 불러올 수 없습니다.';
+        // 오류 시 캐시가 없으면 숨김 유지
+        if (!elText.textContent) {
+          card.classList.add('hidden');
         }
-        card.classList.remove('loading');
       });
     } catch (e) {
       console.warn('[verse] init failed', e);
-      if (elText.textContent === '불러오는 중…') {
-        elText.textContent = '암송 구절을 불러올 수 없습니다.';
+      // 초기화 실패 시 캐시가 없으면 숨김 유지
+      if (!elText.textContent) {
+        card.classList.add('hidden');
       }
-      card.classList.remove('loading');
     }
   </script>
 
@@ -587,5 +639,89 @@
     data-site-name="Victory Church"
     data-icon="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png"
     data-auto-banner="false"></script>
+
+  <!-- TTS -->
+  <script>
+    (function () {
+      const btn   = document.getElementById('ttsBtn');
+      const label = document.getElementById('ttsBtnLabel');
+      const icon  = document.getElementById('ttsIcon');
+      if (!btn || !window.speechSynthesis) return;
+
+      const ICON_PLAY = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
+      const ICON_STOP = `<rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" stroke="none"/>`;
+
+      let active = false;
+
+      function getVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        // 한국어 남성 목소리 우선, 없으면 한국어 아무거나
+        return voices.find(v => v.lang.startsWith('ko') && /male|남/i.test(v.name))
+            || voices.find(v => v.lang.startsWith('ko'))
+            || null;
+      }
+
+      function buildUtterance() {
+        const text = (document.getElementById('verseText').textContent || '').trim();
+        const ref  = (document.getElementById('verseRef').textContent  || '').trim();
+        if (!text) return null;
+        const utt = new SpeechSynthesisUtterance(text + (ref ? '\n' + ref : ''));
+        utt.lang   = 'ko-KR';
+        utt.rate   = 0.78;   // 느리고 근엄하게
+        utt.pitch  = 0.70;   // 낮은 음성
+        utt.volume = 1;
+        const v = getVoice();
+        if (v) utt.voice = v;
+        return utt;
+      }
+
+      function speak() {
+        if (!active) return;
+        const utt = buildUtterance();
+        if (!utt) return;
+        utt.onend = function () {
+          if (active) setTimeout(speak, 1200); // 한 번 읽은 후 1.2초 쉬고 반복
+        };
+        utt.onerror = function () {
+          if (active) setTimeout(speak, 2000);
+        };
+        window.speechSynthesis.speak(utt);
+      }
+
+      function startTTS() {
+        window.speechSynthesis.cancel();
+        active = true;
+        btn.classList.add('playing');
+        label.textContent = '멈추기';
+        icon.innerHTML = ICON_STOP;
+        // 음성 목록 로드 대기 후 시작
+        if (window.speechSynthesis.getVoices().length === 0) {
+          window.speechSynthesis.onvoiceschanged = function () {
+            window.speechSynthesis.onvoiceschanged = null;
+            speak();
+          };
+        } else {
+          speak();
+        }
+      }
+
+      function stopTTS() {
+        active = false;
+        window.speechSynthesis.cancel();
+        btn.classList.remove('playing');
+        label.textContent = '읽어주기';
+        icon.innerHTML = ICON_PLAY;
+      }
+
+      btn.addEventListener('click', function () {
+        if (active) stopTTS(); else startTTS();
+      });
+
+      // 페이지 숨김 시 자동 중지
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden && active) stopTTS();
+      });
+    })();
+  </script>
 </body>
 </html>
