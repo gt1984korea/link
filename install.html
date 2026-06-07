@@ -81,6 +81,24 @@
     }
     .sub b { color: var(--text); }
 
+    /* 인앱 안내: "새 화면은 이렇게 생겼어요" 예시 그림 */
+    .guide-preview {
+      margin: 4px auto 26px;
+      max-width: 260px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .guide-preview svg { display: block; max-width: 100%; height: auto; }
+    .guide-preview .cap {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-2);
+      text-align: center;
+    }
+    .guide-preview .cap b { color: #2563eb; }
+
     /* 중앙: CTA 버튼 */
     .cta-wrap { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
     .cta {
@@ -420,6 +438,30 @@
         <b>빅토리처치</b> 를 홈 화면에 추가하면<br>
         다음엔 한 번에 열 수 있어요.
       </p>
+
+      <!-- 인앱 안내 전용: 새로 열릴 화면 예시 그림 (기본 숨김, JS에서 isInApp일 때만 표시) -->
+      <div class="guide-preview" id="guidePreview" style="display:none">
+        <svg viewBox="0 0 260 196" xmlns="http://www.w3.org/2000/svg">
+          <!-- 새 화면 틀 -->
+          <rect x="14" y="8" width="232" height="180" rx="16" fill="#fff" stroke="#e5e7eb"/>
+          <!-- 주소창 -->
+          <rect x="30" y="22" width="200" height="18" rx="9" fill="#f3f4f6"/>
+          <rect x="40" y="28" width="9" height="6" rx="1" fill="none" stroke="#9ca3af" stroke-width="1"/>
+          <text x="135" y="34" font-size="8" text-anchor="middle" fill="#9ca3af">victorychurch-665a9.web.app</text>
+          <!-- 로고 + 안내 문구 -->
+          <circle cx="130" cy="74" r="20" fill="#eef2ff" stroke="#c7d2fe"/>
+          <text x="130" y="78" font-size="9" text-anchor="middle" fill="#4f46e5" font-weight="700">VC</text>
+          <rect x="98" y="102" width="64" height="8" rx="3" fill="#e5e7eb"/>
+          <rect x="86" y="116" width="88" height="6" rx="3" fill="#f3f4f6"/>
+          <!-- 강조된 버튼: 바로가기 만들기 -->
+          <g>
+            <circle cx="130" cy="158" r="30" fill="#2563eb" opacity=".16" class="a2hs-pulse"/>
+            <rect x="58" y="146" width="144" height="28" rx="14" fill="#2563eb"/>
+            <text x="130" y="164" font-size="11" text-anchor="middle" fill="#fff" font-weight="700">바로가기 만들기</text>
+          </g>
+        </svg>
+        <p class="cap">새 화면이 열리면 이렇게 생긴<br>파란 버튼 <b>‘바로가기 만들기’</b>가 보여요</p>
+      </div>
     </div>
 
     <div class="cta-wrap">
@@ -648,12 +690,23 @@
     var isAndroid = /android/i.test(ua);
     var isIOS = /iphone|ipad|ipod/i.test(ua) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    var isInApp = /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line|NAVER\(inapp/i.test(ua);
+    var inApp = {
+      kakao: /KAKAOTALK/i.test(ua),
+      instagram: /Instagram/i.test(ua),
+      facebook: /FBAN|FBAV|FB_IAB/i.test(ua),
+      line: /\bLine\b/i.test(ua),
+      naver: /NAVER\(inapp/i.test(ua) || /\bNAVER\b/i.test(ua)
+    };
+    var isInApp = inApp.kakao || inApp.instagram || inApp.facebook || inApp.line || inApp.naver;
+    var inAppName = inApp.kakao ? '카카오톡' : inApp.instagram ? '인스타그램' :
+                    inApp.facebook ? '페이스북' : inApp.line ? '라인' :
+                    inApp.naver ? '네이버' : '지금 보는 앱';
     var isStandalone =
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
       window.navigator.standalone === true;
 
     var root = document.getElementById('root');
+    var guidePreview = document.getElementById('guidePreview');
     var btn = document.getElementById('installBtn');
     var label = btn.querySelector('.label');
     var title = document.getElementById('title');
@@ -704,14 +757,57 @@
       } catch (e) {}
     }
 
+    // 현재 페이지(install.html) 주소를 그대로 외부 브라우저로 넘긴다.
+    // → 외부 브라우저에서 바로 이 페이지(=설치 버튼)가 뜨도록.
+    function currentPageUrl() {
+      return location.origin + location.pathname;
+    }
+
+    // 인앱(카카오톡/네이버 등) → 기본 브라우저로 한 번에 전환 시도
+    function openDefaultBrowser() {
+      var externalUrl = currentPageUrl();
+      var target = null;
+
+      if (inApp.kakao) {
+        target = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(externalUrl);
+      } else if (inApp.line) {
+        var sep = externalUrl.indexOf('?') >= 0 ? '&' : '?';
+        location.href = externalUrl + sep + 'openExternalBrowser=1';
+        return;
+      } else if (inApp.naver) {
+        target = 'naversearchapp://inappbrowser?url=' + encodeURIComponent(externalUrl) + '&target=new';
+      } else if (isAndroid) {
+        target = 'intent://' + externalUrl.replace(/^https?:\/\//, '') +
+                 '#Intent;scheme=' + (location.protocol.replace(':', '') || 'https') +
+                 ';package=com.android.chrome;end';
+      } else if (isIOS) {
+        var w = window.open(externalUrl, '_blank');
+        if (!w) { location.href = externalUrl; }
+        return;
+      }
+
+      if (target) {
+        location.href = target;
+        setTimeout(function () {
+          try { window.open(externalUrl, '_blank'); } catch (e) {}
+        }, 2000);
+      } else {
+        try { window.open(externalUrl, '_blank'); } catch (e) {}
+      }
+    }
+
     // ----- 인앱 브라우저 안내 -----
+    // 60대 이상 사용자도 헷갈리지 않도록: 버튼 1개 + "누르고 → 새 화면에서 한 번 더 누르기" 두 단계만 안내
     if (isInApp) {
-      title.textContent = '기본 브라우저로 열어주세요';
-      subtitle.innerHTML = '카카오톡 안에서는 바로가기를 만들 수 없어요.<br>오른쪽 위 메뉴 → <b>다른 브라우저로 열기</b>를 눌러주세요.';
-      label.textContent = '메인 페이지로';
-      btn.onclick = function () { location.href = './'; };
-      ctaHelp.textContent = '';
+      title.textContent = '버튼 2번이면 끝나요';
+      subtitle.innerHTML =
+        '① 아래 <b>큰 버튼</b>을 누르면 새 화면이 열려요<br>' +
+        '② 그 화면에서 <b>바로가기 만들기</b>를 한 번 더 눌러주세요';
+      label.textContent = '기본 브라우저로 열기';
+      btn.onclick = function () { openDefaultBrowser(); };
+      ctaHelp.textContent = inAppName + ' 안에서는 설치할 수 없어서 그래요';
       iosNote.style.display = 'none';
+      guidePreview.style.display = 'block';
     }
 
     // ----- PWA 설치 (안드로이드/데스크톱) -----
