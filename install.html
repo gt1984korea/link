@@ -719,6 +719,14 @@
     window.addEventListener('beforeinstallprompt', function (e) {
       e.preventDefault();
       deferredPrompt = e;
+      // 브라우저가 "설치 가능"이라고 판단했다는 건 = 현재 미설치 상태라는 확실한 신호.
+      // (uninstall 시 localStorage는 지워지지 않으므로) 낡은 a2hs_installed 기록을 정정한다.
+      if (root.classList.contains('done')) {
+        try { localStorage.removeItem('a2hs_installed'); } catch (e) {}
+        root.classList.remove('done');
+        title.textContent = '바로가기 설치';
+        subtitle.innerHTML = '<b>빅토리처치</b> 를 홈 화면에 추가하면<br>다음엔 한 번에 열 수 있어요.';
+      }
     });
     window.addEventListener('appinstalled', function () {
       try { localStorage.setItem('a2hs_installed', '1'); } catch (e) {}
