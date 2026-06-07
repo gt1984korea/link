@@ -155,6 +155,28 @@
       font-size: 12px; color: var(--text-3);
       margin-top: 8px; line-height: 1.5;
     }
+    .copy-row {
+      display: flex; align-items: center; gap: 8px;
+      margin: 6px 0 0;
+    }
+    .copy-row .copy-label {
+      flex: 0 0 auto; font-weight: 700; color: var(--text-2); width: 86px;
+    }
+    .copy-row code {
+      flex: 1; min-width: 0;
+      display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      background: #fff; border: 1px solid var(--line); border-radius: 6px;
+      padding: 4px 8px; font-size: 12px; color: var(--text);
+    }
+    .btn-copy {
+      flex: 0 0 auto;
+      font-family: inherit; font-size: 12px; font-weight: 700;
+      color: var(--brand); background: #fff; border: 1px solid var(--line);
+      border-radius: 6px; padding: 5px 10px; cursor: pointer;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .btn-copy:hover { background: var(--brand-dim); border-color: var(--brand); }
+    .btn-copy.copied { color: #fff; background: var(--brand); border-color: var(--brand); }
     a { color: var(--brand); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
@@ -212,6 +234,40 @@
     .vrow-actions .btn { padding: 9px 12px; font-size: 13px; }
     .btn-danger { background: #fff; color: var(--danger); border-color: #f3c7c7; }
     .btn-danger:hover { background: #fff5f5; }
+
+    /* PC 레이아웃: 좌측 등록된 구절 목록 / 우측 등록 폼 2단 구성 */
+    @media (min-width: 1024px) {
+      .wrap { max-width: 1240px; }
+      .admin-grid {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        grid-template-areas:
+          "list editor"
+          "list audio"
+          "list preview";
+        gap: 20px;
+        align-items: start;
+      }
+      #editor      { grid-area: editor; }
+      #audioCard   { grid-area: audio; }
+      #previewCard { grid-area: preview; }
+      #listCard {
+        grid-area: list;
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 40px);
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+      }
+      #listCard .vlist {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        padding-right: 4px;
+      }
+      #listCard #listHint { flex-shrink: 0; }
+    }
   </style>
 </head>
 <body>
@@ -234,6 +290,8 @@
       <div class="status err" id="gateStatus"></div>
       <p class="hint">※ 이 게이트는 단순 보호입니다. 실제 쓰기 보안은 Firestore 보안 규칙으로 합니다.</p>
     </section>
+
+    <div class="admin-grid">
 
     <!-- 편집 영역 -->
     <section class="card hidden" id="editor">
@@ -295,12 +353,24 @@
         녹음 파일을 올리면 메인 화면 "읽어주기"가 자동 음성(TTS) 대신 이 녹음을 재생합니다.
         삭제하면 다시 자동 음성으로 돌아갑니다.
       </p>
-      <p class="hint" style="margin-top:8px; padding:10px 12px; background:var(--brand-dim); border-radius:8px;">
-        <b>AI Studio 추천 설정</b><br>
-        Scene: <code>A serene and reverent sanctuary.</code><br>
-        Sample Context: <code>Read aloud in a deep, resonant, and authoritative narrative tone with a heavy gravitas. Maintain a steady, slow, and unhurried pace, speaking with profound wisdom</code><br>
-        Speaker: <code>Orus</code> (Firm, Lower middle pitch)
-      </p>
+      <div class="hint" id="aiStudioPreset" style="margin-top:8px; padding:10px 12px; background:var(--brand-dim); border-radius:8px;">
+        <b style="color:var(--text-2)">AI Studio 추천 설정</b>
+        <p class="copy-row">
+          <span class="copy-label">Scene</span>
+          <code>A serene and reverent sanctuary.</code>
+          <button type="button" class="btn-copy" data-copy="A serene and reverent sanctuary.">복사</button>
+        </p>
+        <p class="copy-row">
+          <span class="copy-label">Sample Context</span>
+          <code>Read aloud in a deep, resonant, and authoritative narrative tone with a heavy gravitas. Maintain a steady, slow, and unhurried pace, speaking with profound wisdom</code>
+          <button type="button" class="btn-copy" data-copy="Read aloud in a deep, resonant, and authoritative narrative tone with a heavy gravitas. Maintain a steady, slow, and unhurried pace, speaking with profound wisdom">복사</button>
+        </p>
+        <p class="copy-row">
+          <span class="copy-label">Speaker</span>
+          <code>Orus (Firm, Lower middle pitch)</code>
+          <button type="button" class="btn-copy" data-copy="Orus">복사</button>
+        </p>
+      </div>
 
       <label for="audioFile">녹음 파일 선택 (mp3, m4a, wav 등)</label>
       <input type="file" id="audioFile" accept="audio/*"
@@ -333,6 +403,8 @@
       </div>
       <p class="hint" style="margin-top:14px">저장하면 모든 사용자 화면에 실시간 반영됩니다.</p>
     </section>
+
+    </div>
 
   </div>
 
