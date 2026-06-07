@@ -185,6 +185,9 @@
   }
 
   // ---------- 7. 핵심: 추가 시도 ----------
+  function emit(name, detail) {
+    try { window.dispatchEvent(new CustomEvent(name, { detail: detail || {} })); } catch (e) {}
+  }
   function onAddClick() {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -192,6 +195,9 @@
         if (res && res.outcome === "accepted") {
           setLs(K.installed, "1");
           closeBanner();
+          emit("a2hs:result", { outcome: "accepted" });
+        } else {
+          emit("a2hs:result", { outcome: "dismissed" });
         }
         deferredPrompt = null;
       });
