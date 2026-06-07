@@ -228,6 +228,14 @@
       background: var(--brand);
       border-radius: 4px 0 0 4px;
     }
+    /* 라벨 행: 왼쪽 라벨 + 오른쪽 "지난 암송 구절" 버튼 */
+    .verse .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
     .verse .label {
       display: inline-flex;
       align-items: center;
@@ -236,7 +244,6 @@
       font-weight: 700;
       color: var(--brand);
       letter-spacing: 0.03em;
-      margin-bottom: 14px;
     }
     .verse .label::before {
       content: "";
@@ -244,6 +251,30 @@
       border-radius: 50%;
       background: var(--brand);
     }
+    /* "지난 암송 구절" 토글 버튼 (pill) */
+    .past-toggle {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-2);
+      background: #f3f4f6;
+      border: 1px solid var(--line);
+      border-radius: 50px;
+      padding: 6px 13px;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+      transition: background .15s ease, border-color .15s ease, color .15s ease;
+    }
+    .past-toggle:hover { background: #ebedf0; border-color: #d4d6dc; color: var(--text); }
+    .past-toggle:active { transform: scale(.97); }
+    .past-toggle svg { width: 14px; height: 14px; transition: transform .2s ease; }
+    .past-toggle.open { color: var(--brand); background: var(--brand-dim); border-color: #b8e8d0; }
+    .past-toggle.open svg { transform: rotate(180deg); }
+    .past-toggle.hidden { display: none; }
     .verse .text {
       font-size: 30px;
       line-height: 1.85;
@@ -265,6 +296,57 @@
     .verse.loading .text,
     .verse.loading .ref { opacity: 0.45; }
     .verse.hidden { display: none; }
+
+    /* 지난 암송 구절 리스트 패널 (verse 카드 위쪽에 표시) */
+    .past-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px 20px 8px;
+      margin-bottom: 14px;
+    }
+    .past-panel.hidden { display: none; }
+    .past-panel .past-head {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-2);
+      letter-spacing: 0.02em;
+      margin: 0 0 14px;
+    }
+    .past-list { display: flex; flex-direction: column; gap: 0; }
+    .past-item {
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }
+    .past-item:first-child { border-top: none; padding-top: 0; }
+    .past-item .past-range {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--brand);
+      background: var(--brand-dim);
+      border-radius: 6px;
+      padding: 3px 8px;
+      margin-bottom: 8px;
+      letter-spacing: 0;
+    }
+    .past-item .past-text {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text);
+      font-weight: 500;
+      white-space: pre-wrap;
+      word-break: keep-all;
+      margin: 0;
+    }
+    .past-item .past-ref {
+      display: block;
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-2);
+      font-weight: 700;
+      text-align: right;
+    }
 
     /* TTS 버튼 */
     .tts-row {
@@ -351,9 +433,21 @@
       <p>Victory Church · New Zealand</p>
     </header>
 
+    <!-- 0-a. 지난 암송 구절 리스트 (토글로 열림) -->
+    <section class="past-panel hidden" id="pastVerses" aria-live="polite">
+      <p class="past-head">지난 암송 구절</p>
+      <div class="past-list" id="pastList"></div>
+    </section>
+
     <!-- 0. 이번 주 암송 구절 -->
     <section class="verse hidden" id="verseCard" aria-live="polite">
-      <span class="label">이번 주 암송 구절</span>
+      <div class="label-row">
+        <span class="label">이번 주 암송 구절</span>
+        <button class="past-toggle hidden" id="pastToggle" type="button" aria-expanded="false">
+          <span id="pastToggleLabel">지난 암송 구절</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
       <h1 class="text" id="verseText"></h1>
       <span class="ref" id="verseRef"></span>
       <div class="tts-row">
@@ -582,16 +676,141 @@
     const card = document.getElementById('verseCard');
     const elText = document.getElementById('verseText');
     const elRef  = document.getElementById('verseRef');
+    const pastPanel  = document.getElementById('pastVerses');
+    const pastListEl = document.getElementById('pastList');
+    const pastToggle = document.getElementById('pastToggle');
+    const DEFAULT_VOICE = 'nPczCjzI2devNBz1zQrb'; // 기본값: Brian
 
-    // 마지막으로 본 값 캐시 (오프라인 첫 화면용)
+    // 오늘 날짜(로컬, 뉴질랜드 기준)를 YYYY-MM-DD 문자열로
+    function todayStr() {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+
+    // "2026-06-01" → "2026.06.01" / 범위 표시
+    function fmtDate(s) { return (s || '').replace(/-/g, '.'); }
+    function fmtRange(start, end) {
+      if (start && end) return `${fmtDate(start)} ~ ${fmtDate(end)}`;
+      if (start) return `${fmtDate(start)} ~`;
+      if (end) return `~ ${fmtDate(end)}`;
+      return '';
+    }
+
+    // 문서 데이터 → { active, past }
+    // verses 배열이 있으면 날짜 기준으로 분류, 없고 레거시 text만 있으면 항상 활성으로 간주(하위호환)
+    function classify(d) {
+      const today = todayStr();
+      let list = Array.isArray(d.verses) ? d.verses.slice() : [];
+      if (list.length === 0 && (d.text || '').trim()) {
+        // 레거시 단일 구절: 날짜 없음 → 항상 활성
+        list = [{ text: d.text, reference: d.reference, voiceId: d.voiceId,
+                  startDate: null, endDate: null }];
+      }
+      // 유효(본문 있음)한 항목만
+      list = list.filter(v => v && (v.text || '').trim());
+
+      // active: 시작일<=오늘<=종료일 (날짜 없으면 항상 활성). 여러 개면 startDate 최신 1개
+      const actives = list.filter(v => {
+        const okStart = !v.startDate || v.startDate <= today;
+        const okEnd   = !v.endDate   || today <= v.endDate;
+        return okStart && okEnd;
+      });
+      actives.sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
+      const active = actives[0] || null;
+
+      // past: 종료일이 오늘보다 과거. 종료일 내림차순
+      const past = list
+        .filter(v => v.endDate && v.endDate < today)
+        .sort((a, b) => (b.endDate || '').localeCompare(a.endDate || ''));
+
+      return { active, past };
+    }
+
+    function renderActive(active, sharedAudioUrl) {
+      if (!active) {
+        card.classList.add('hidden');
+        try { localStorage.removeItem('verseCache'); } catch (e) {}
+        return;
+      }
+      const text = (active.text || '').trim();
+      const reference = (active.reference || '').trim();
+      const voiceId = active.voiceId || DEFAULT_VOICE;
+      const audioUrl = (sharedAudioUrl || '').trim() || null; // 공유 녹음(있으면 TTS 대신 재생)
+
+      elText.textContent = text;
+      elRef.textContent  = reference;
+      card.classList.remove('hidden');
+
+      // 전역 상태 업데이트 및 이벤트 트리거 (TTS 스크립트가 구독)
+      window.currentTtsVoiceId = voiceId;
+      window.currentVerseAudioUrl = audioUrl;
+      try {
+        window.dispatchEvent(new CustomEvent('vc:voicechange', { detail: { voiceId } }));
+        window.dispatchEvent(new CustomEvent('vc:audiochange', { detail: { audioUrl } }));
+      } catch (e) {}
+
+      try {
+        localStorage.setItem('verseCache', JSON.stringify({ text, reference, voiceId, audioUrl }));
+      } catch (e) {}
+    }
+
+    function renderPast(past) {
+      pastListEl.textContent = '';
+      if (!past || past.length === 0) {
+        pastToggle.classList.add('hidden');
+        pastPanel.classList.add('hidden');
+        pastToggle.classList.remove('open');
+        pastToggle.setAttribute('aria-expanded', 'false');
+        return;
+      }
+      past.forEach((v) => {
+        const item = document.createElement('div');
+        item.className = 'past-item';
+
+        const range = fmtRange(v.startDate, v.endDate);
+        if (range) {
+          const r = document.createElement('span');
+          r.className = 'past-range';
+          r.textContent = range;
+          item.appendChild(r);
+        }
+        const p = document.createElement('p');
+        p.className = 'past-text';
+        p.textContent = (v.text || '').trim();
+        item.appendChild(p);
+
+        const ref = (v.reference || '').trim();
+        if (ref) {
+          const rf = document.createElement('span');
+          rf.className = 'past-ref';
+          rf.textContent = ref;
+          item.appendChild(rf);
+        }
+        pastListEl.appendChild(item);
+      });
+      pastToggle.classList.remove('hidden');
+    }
+
+    // 토글: 지난 구절 패널 열고 닫기
+    pastToggle.addEventListener('click', function () {
+      const willOpen = pastPanel.classList.contains('hidden');
+      pastPanel.classList.toggle('hidden', !willOpen);
+      pastToggle.classList.toggle('open', willOpen);
+      pastToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      if (willOpen) {
+        pastPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+
+    // 마지막으로 본 활성 구절 캐시 (오프라인 첫 화면용)
     try {
       const cached = JSON.parse(localStorage.getItem('verseCache') || 'null');
       if (cached && cached.text) {
         elText.textContent = cached.text;
         elRef.textContent  = cached.reference || '';
-        if (cached.voiceId) {
-          window.lastCachedVoiceId = cached.voiceId;
-        }
+        if (cached.voiceId) window.lastCachedVoiceId = cached.voiceId;
+        if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
         card.classList.remove('hidden');
       }
     } catch (e) {}
@@ -603,46 +822,23 @@
 
       onSnapshot(ref, (snap) => {
         if (!snap.exists()) {
-          // 데이터 없음 → 카드 숨김
-          card.classList.add('hidden');
-          try { localStorage.removeItem('verseCache'); } catch (e) {}
+          renderActive(null);
+          renderPast([]);
           return;
         }
         const d = snap.data() || {};
-        const text = (d.text || '').trim();
-        const reference = (d.reference || '').trim();
-        const voiceId = d.voiceId || 'nPczCjzI2devNBz1zQrb'; // 기본값: Brian
-
-        if (!text) {
-          // 텍스트가 비어 있으면 숨김
-          card.classList.add('hidden');
-          try { localStorage.removeItem('verseCache'); } catch (e) {}
-          return;
-        }
-        elText.textContent = text;
-        elRef.textContent  = reference;
-        card.classList.remove('hidden');
-
-        // 전역 상태 업데이트 및 이벤트 트리거
-        window.currentTtsVoiceId = voiceId;
-        try {
-          window.dispatchEvent(new CustomEvent('vc:voicechange', { detail: { voiceId } }));
-        } catch (e) {}
-
-        try { localStorage.setItem('verseCache', JSON.stringify({ text, reference, voiceId })); } catch (e) {}
+        const { active, past } = classify(d);
+        renderActive(active, d.audioUrl);
+        renderPast(past);
       }, (err) => {
         console.warn('[verse] snapshot error', err);
         // 오류 시 캐시가 없으면 숨김 유지
-        if (!elText.textContent) {
-          card.classList.add('hidden');
-        }
+        if (!elText.textContent) card.classList.add('hidden');
       });
     } catch (e) {
       console.warn('[verse] init failed', e);
       // 초기화 실패 시 캐시가 없으면 숨김 유지
-      if (!elText.textContent) {
-        card.classList.add('hidden');
-      }
+      if (!elText.textContent) card.classList.add('hidden');
     }
   </script>
 
@@ -667,12 +863,15 @@
       // Firestore에서 받아온 전역 설정 목소리 또는 캐시된 목소리 사용 (기본값: Brian)
       let VOICE_ID = window.currentTtsVoiceId || window.lastCachedVoiceId || 'nPczCjzI2devNBz1zQrb';
 
+      // 관리자가 올린 녹음 파일 URL — 있으면 TTS 대신 이 녹음을 재생
+      let recordingUrl = window.currentVerseAudioUrl || window.lastCachedAudioUrl || null;
+
       // 실시간으로 목사님 목소리 설정이 변경되는 이벤트를 구독
       window.addEventListener('vc:voicechange', function (e) {
         const newVoiceId = e.detail.voiceId;
         if (VOICE_ID !== newVoiceId) {
           VOICE_ID = newVoiceId;
-          
+
           // 목소리가 변경되면 캐시를 무효화하고 재생 중인 소리를 멈춤
           if (cachedUrl) {
             URL.revokeObjectURL(cachedUrl);
@@ -682,6 +881,15 @@
           if (active) {
             stopTTS();
           }
+        }
+      });
+
+      // 녹음 파일 등록/삭제가 실시간 반영되면 소스를 교체 (재생 중이면 멈춤)
+      window.addEventListener('vc:audiochange', function (e) {
+        const newUrl = (e.detail && e.detail.audioUrl) || null;
+        if (recordingUrl !== newUrl) {
+          recordingUrl = newUrl;
+          if (active) stopTTS();
         }
       });
 
@@ -896,9 +1104,59 @@
         return res.blob();
       }
 
+      /* 관리자가 올린 녹음 파일 재생 (TTS 대체) — Web Audio 체인을 거치지 않고
+         일반 오디오 엘리먼트로 직접 재생: 교차출처(CORS) 무음 문제를 피하고
+         사람이 녹음한 목소리를 리버브 없이 자연스럽게 들려준다. 배경음악은 그대로 깔린다. */
+      function playRecording(sessionId, startTime = null) {
+        if (!active || sessionId !== playSessionId || !recordingUrl) return;
+
+        label.textContent = '불러오는 중...';
+        curAudio = new Audio(recordingUrl);
+        curAudio.preload = 'auto';
+
+        curAudio.onended = function () {
+          if (active && sessionId === playSessionId) {
+            label.textContent = '멈추기';
+            // 완독 후 3.0초 음악만 흐른 뒤 반복 (outro cushion)
+            setTimeout(() => {
+              if (active && sessionId === playSessionId) play(sessionId);
+            }, 3000);
+          }
+        };
+        curAudio.onerror = function () {
+          if (active && sessionId === playSessionId) {
+            setTimeout(() => {
+              if (active && sessionId === playSessionId) play(sessionId);
+            }, 3000);
+          }
+        };
+
+        const startPlayback = () => {
+          if (!active || sessionId !== playSessionId) return;
+          label.textContent = '멈추기';
+          curAudio.play().catch(e => console.warn('[REC] 녹음 재생 실패:', e));
+        };
+
+        // 첫 시작일 때만 인트로 딜레이 5초 (배경음악이 먼저 잔잔히 깔리도록)
+        if (startTime) {
+          const elapsed = Date.now() - startTime;
+          const delay = Math.max(0, 5000 - elapsed);
+          label.textContent = '멈추기';
+          setTimeout(startPlayback, delay);
+        } else {
+          startPlayback();
+        }
+      }
+
       /* 재생 (캐시 확인 후 API 호출 또는 폴백) */
       async function play(sessionId, startTime = null) {
         if (!active || sessionId !== playSessionId) return;
+
+        // 녹음 파일이 등록되어 있으면 TTS 대신 녹음을 재생
+        if (recordingUrl) {
+          playRecording(sessionId, startTime);
+          return;
+        }
 
         const text = getFullText();
         if (!text) return;

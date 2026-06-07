@@ -157,6 +157,61 @@
     }
     a { color: var(--brand); text-decoration: none; }
     a:hover { text-decoration: underline; }
+
+    /* 날짜 입력(From ~ To) */
+    input[type="date"] {
+      width: 100%;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    input[type="date"]:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-dim);
+    }
+    .date-row { display: flex; gap: 10px; align-items: flex-end; }
+    .date-row > div { flex: 1; min-width: 0; }
+    .date-sep { padding-bottom: 11px; color: var(--text-3); font-weight: 700; }
+
+    /* 등록된 구절 목록 */
+    .vlist { display: flex; flex-direction: column; gap: 10px; }
+    .vlist-empty { font-size: 13px; color: var(--text-3); padding: 6px 0; }
+    .vrow {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .vrow.active { border-color: #b8e8d0; background: #f7fcf9; }
+    .vrow.dirty  { border-color: #f2d49a; background: #fffdf6; }
+    .vrow-top {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      border-radius: 6px; padding: 3px 8px; letter-spacing: 0;
+    }
+    .badge.range { color: var(--brand); background: var(--brand-dim); }
+    .badge.now   { color: #fff; background: var(--brand); }
+    .badge.dirty { color: #92660b; background: #fdeccb; }
+    .vrow-text {
+      font-size: 14px; line-height: 1.55; color: var(--text);
+      font-weight: 500; white-space: pre-wrap; word-break: keep-all;
+      margin: 0 0 4px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .vrow-ref { font-size: 12px; color: var(--text-2); font-weight: 600; }
+    .vrow-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .vrow-actions .btn { padding: 9px 12px; font-size: 13px; }
+    .btn-danger { background: #fff; color: var(--danger); border-color: #f3c7c7; }
+    .btn-danger:hover { background: #fff5f5; }
   </style>
 </head>
 <body>
@@ -182,13 +237,26 @@
 
     <!-- 편집 영역 -->
     <section class="card hidden" id="editor">
-      <h2>이번 주 암송 구절 편집</h2>
+      <h2 id="editorTitle">새 암송 구절 추가</h2>
 
       <label for="verseText">구절 본문</label>
       <textarea id="verseText" placeholder="예) 하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니…"></textarea>
 
       <label for="verseRef">출처</label>
       <input type="text" id="verseRef" placeholder="예) 요한복음 3:16">
+
+      <label>표시 기간 (이 기간에만 메인 화면에 표시됩니다)</label>
+      <div class="date-row">
+        <div>
+          <label for="verseStart" style="margin-top:0">시작일</label>
+          <input type="date" id="verseStart">
+        </div>
+        <span class="date-sep">~</span>
+        <div>
+          <label for="verseEnd" style="margin-top:0">종료일</label>
+          <input type="date" id="verseEnd">
+        </div>
+      </div>
 
       <label for="voiceSelect">목소리 선택 (TTS)</label>
       <select id="voiceSelect" style="width: 100%; font-family: inherit; font-size: 15px; color: var(--text); background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; outline: none; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease;">
@@ -197,11 +265,49 @@
       </select>
 
       <div class="row">
-        <button class="btn btn-ghost" id="btnReload" type="button">불러오기</button>
+        <button class="btn btn-ghost" id="btnNew" type="button">새로 작성</button>
         <button class="btn btn-primary" id="btnSave" type="button">저장</button>
       </div>
       <div class="status" id="saveStatus"></div>
       <div class="meta" id="updatedMeta"></div>
+    </section>
+
+    <!-- 등록된 구절 목록 -->
+    <section class="card hidden" id="listCard">
+      <h2>등록된 암송 구절</h2>
+      <div class="vlist" id="vlist"></div>
+      <p class="hint" id="listHint" style="margin-top:14px">
+        편집하려면 항목의 <b>편집</b>을 누르세요. 오늘 날짜가 포함된 구절이 메인 화면에 표시됩니다.
+      </p>
+    </section>
+
+    <!-- 구절 음성 녹음 -->
+    <section class="card hidden" id="audioCard">
+      <h2>구절 음성 녹음 (선택)</h2>
+      <p class="hint" style="margin-top:0">
+        녹음 파일을 올리면 메인 화면 "읽어주기"가 자동 음성(TTS) 대신 이 녹음을 재생합니다.
+        삭제하면 다시 자동 음성으로 돌아갑니다.
+      </p>
+
+      <label for="audioFile">녹음 파일 선택 (mp3, m4a, wav 등)</label>
+      <input type="file" id="audioFile" accept="audio/*"
+        style="width:100%; font-family:inherit; font-size:14px; color:var(--text); margin-top:2px;">
+
+      <div class="row">
+        <button class="btn btn-primary" id="btnUpload" type="button" disabled>업로드</button>
+      </div>
+      <div class="status" id="audioStatus"></div>
+
+      <!-- 현재 등록된 녹음 -->
+      <div id="currentAudio" class="hidden" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line);">
+        <label style="margin-top:0">현재 등록된 녹음</label>
+        <p class="meta" id="audioName" style="text-align:left; margin:0 0 8px; color:var(--text-2);"></p>
+        <audio id="audioPreview" controls preload="none" style="width:100%;"></audio>
+        <div class="row">
+          <button class="btn btn-ghost" id="btnDeleteAudio" type="button"
+            style="color:var(--danger); border-color:#f3c7c7;">녹음 삭제 (TTS로 복귀)</button>
+        </div>
+      </div>
     </section>
 
     <!-- 미리보기 -->
@@ -219,16 +325,45 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp }
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp, deleteField }
       from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject }
+      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
     import { firebaseConfig, VERSE_DOC_PATH, ADMIN_PASSCODE } from "./firebase-config.js";
 
     const $ = (id) => document.getElementById(id);
     const gate = $('gate'), editor = $('editor'), previewCard = $('previewCard');
     const passInput = $('passInput'), gateStatus = $('gateStatus');
     const txt = $('verseText'), refIn = $('verseRef');
+    const startIn = $('verseStart'), endIn = $('verseEnd');
+    const voiceSel = $('voiceSelect'), editorTitle = $('editorTitle');
+    const listCard = $('listCard'), vlist = $('vlist');
     const pvText = $('pvText'), pvRef = $('pvRef');
     const saveStatus = $('saveStatus'), updatedMeta = $('updatedMeta');
+    const DEFAULT_VOICE = 'nPczCjzI2devNBz1zQrb';
+
+    // 등록된 구절 목록(메모리) 및 현재 편집 중인 구절 id
+    let versesData = [];
+    let editingId = null;
+
+    // 날짜 유틸 (로컬 YYYY-MM-DD)
+    function todayStr(offset = 0) {
+      const d = new Date();
+      if (offset) d.setDate(d.getDate() + offset);
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+    function fmtRange(s, e) {
+      const f = (x) => (x || '').replace(/-/g, '.');
+      if (s && e) return `${f(s)} ~ ${f(e)}`;
+      if (s) return `${f(s)} ~`;
+      if (e) return `~ ${f(e)}`;
+      return '기간 미설정';
+    }
+    function genId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'v' + Date.now() + Math.random().toString(36).slice(2, 8);
+    }
 
     // 입력값 미리보기에 즉시 반영
     function syncPreview() {
@@ -253,10 +388,12 @@
     passInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') unlock(); });
 
     // Firebase
-    let db, ref;
+    let db, ref, storage;
+    const AUDIO_PATH = 'audio/memoryVerse'; // Storage 내 녹음 파일 경로(고정)
     function initDb() {
       const app = initializeApp(firebaseConfig);
       db = getFirestore(app);
+      storage = getStorage(app);
       ref = doc(db, VERSE_DOC_PATH.collection, VERSE_DOC_PATH.id);
     }
 
@@ -267,22 +404,147 @@
       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
+    // 오늘 기준 활성 여부(시작<=오늘<=종료, 날짜 없으면 항상 활성)
+    function isActive(v, today) {
+      const okS = !v.startDate || v.startDate <= today;
+      const okE = !v.endDate   || today <= v.endDate;
+      return okS && okE;
+    }
+
+    // 등록된 구절 목록 렌더링
+    function renderList() {
+      vlist.textContent = '';
+      const today = todayStr();
+      const sorted = versesData.slice().sort((a, b) =>
+        (b.startDate || '').localeCompare(a.startDate || '') ||
+        ((b.createdAt || 0) - (a.createdAt || 0)));
+
+      if (sorted.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'vlist-empty';
+        p.textContent = '아직 등록된 구절이 없습니다. 위 양식에서 새 구절을 추가하세요.';
+        vlist.appendChild(p);
+        return;
+      }
+
+      sorted.forEach((v) => {
+        const active = isActive(v, today);
+        const row = document.createElement('div');
+        row.className = 'vrow' + (active ? ' active' : '');
+
+        const top = document.createElement('div');
+        top.className = 'vrow-top';
+        const rb = document.createElement('span');
+        rb.className = 'badge range';
+        rb.textContent = fmtRange(v.startDate, v.endDate);
+        top.appendChild(rb);
+        if (active) {
+          const nb = document.createElement('span');
+          nb.className = 'badge now';
+          nb.textContent = '진행 중';
+          top.appendChild(nb);
+        }
+        row.appendChild(top);
+
+        const tx = document.createElement('p');
+        tx.className = 'vrow-text';
+        tx.textContent = (v.text || '').trim();
+        row.appendChild(tx);
+
+        if ((v.reference || '').trim()) {
+          const rf = document.createElement('div');
+          rf.className = 'vrow-ref';
+          rf.textContent = v.reference.trim();
+          row.appendChild(rf);
+        }
+
+        const act = document.createElement('div');
+        act.className = 'vrow-actions';
+        const eb = document.createElement('button');
+        eb.className = 'btn btn-ghost'; eb.type = 'button'; eb.textContent = '편집';
+        eb.addEventListener('click', () => startEdit(v.id));
+        const db2 = document.createElement('button');
+        db2.className = 'btn btn-danger'; db2.type = 'button'; db2.textContent = '삭제';
+        db2.addEventListener('click', () => deleteVerse(v.id));
+        act.appendChild(eb); act.appendChild(db2);
+        row.appendChild(act);
+
+        vlist.appendChild(row);
+      });
+    }
+
+    // 새 구절 작성 모드로 초기화
+    function newVerse() {
+      editingId = null;
+      txt.value = ''; refIn.value = '';
+      startIn.value = todayStr();
+      endIn.value = todayStr(6);
+      voiceSel.value = DEFAULT_VOICE;
+      editorTitle.textContent = '새 암송 구절 추가';
+      saveStatus.textContent = ''; saveStatus.className = 'status';
+      syncPreview();
+    }
+
+    // 기존 구절 편집 모드
+    function startEdit(id) {
+      const v = versesData.find(x => x.id === id);
+      if (!v) return;
+      editingId = id;
+      txt.value = v.text || '';
+      refIn.value = v.reference || '';
+      startIn.value = v.startDate || '';
+      endIn.value = v.endDate || '';
+      voiceSel.value = v.voiceId || DEFAULT_VOICE;
+      editorTitle.textContent = '구절 편집';
+      saveStatus.textContent = ''; saveStatus.className = 'status';
+      syncPreview();
+      editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function deleteVerse(id) {
+      const v = versesData.find(x => x.id === id);
+      if (!v) return;
+      if (!confirm('이 구절을 삭제할까요?\n\n' + (v.text || '').trim().slice(0, 40))) return;
+      versesData = versesData.filter(x => x.id !== id);
+      try {
+        await persistVerses();
+        if (editingId === id) newVerse();
+        renderList();
+        saveStatus.textContent = '삭제되었습니다.';
+        saveStatus.className = 'status ok';
+      } catch (e) {
+        saveStatus.textContent = '삭제 실패: ' + (e.message || e);
+        saveStatus.className = 'status err';
+      }
+    }
+
+    async function persistVerses() {
+      await setDoc(ref, { verses: versesData, updatedAt: serverTimestamp() }, { merge: true });
+    }
+
     async function reload() {
       saveStatus.textContent = ''; saveStatus.className = 'status';
       try {
         const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const d = snap.data() || {};
-          txt.value   = d.text || '';
+        const d = snap.exists() ? (snap.data() || {}) : {};
+        versesData = Array.isArray(d.verses) ? d.verses.slice() : [];
+        updatedMeta.textContent = d.updatedAt ? `마지막 수정: ${formatTime(d.updatedAt)}` : '';
+        renderAudio(d);
+        renderList();
+
+        // 마이그레이션: verses 배열이 없고 레거시 단일 구절만 있으면
+        // 편집기에 미리 채워서 관리자가 기간 확인 후 저장하도록 유도
+        if (versesData.length === 0 && (d.text || '').trim()) {
+          newVerse();
+          txt.value = d.text || '';
           refIn.value = d.reference || '';
-          $('voiceSelect').value = d.voiceId || 'nPczCjzI2devNBz1zQrb';
-          updatedMeta.textContent = d.updatedAt ? `마지막 수정: ${formatTime(d.updatedAt)}` : '';
+          voiceSel.value = d.voiceId || DEFAULT_VOICE;
+          syncPreview();
+          saveStatus.textContent = '기존 구절을 불러왔습니다. 표시 기간을 확인하고 저장하세요.';
+          saveStatus.className = 'status';
         } else {
-          txt.value = ''; refIn.value = '';
-          $('voiceSelect').value = 'nPczCjzI2devNBz1zQrb';
-          updatedMeta.textContent = '아직 저장된 구절이 없습니다.';
+          newVerse();
         }
-        syncPreview();
       } catch (e) {
         saveStatus.textContent = '불러오기 실패: ' + (e.message || e);
         saveStatus.className = 'status err';
@@ -292,19 +554,37 @@
     async function save() {
       const text = txt.value.trim();
       const reference = refIn.value.trim();
-      const voiceId = $('voiceSelect').value;
+      const voiceId = voiceSel.value;
+      const startDate = startIn.value;
+      const endDate = endIn.value;
       if (!text) {
         saveStatus.textContent = '구절 본문을 입력하세요.';
-        saveStatus.className = 'status err';
-        return;
+        saveStatus.className = 'status err'; return;
+      }
+      if (!startDate || !endDate) {
+        saveStatus.textContent = '표시 기간(시작일·종료일)을 선택하세요.';
+        saveStatus.className = 'status err'; return;
+      }
+      if (startDate > endDate) {
+        saveStatus.textContent = '시작일이 종료일보다 늦을 수 없습니다.';
+        saveStatus.className = 'status err'; return;
       }
       const btn = $('btnSave');
       btn.disabled = true;
       saveStatus.textContent = '저장 중…';
       saveStatus.className = 'status';
       try {
-        await setDoc(ref, { text, reference, voiceId, updatedAt: serverTimestamp() }, { merge: true });
-        saveStatus.textContent = '저장되었습니다. 사용자 화면에 즉시 반영됩니다.';
+        if (editingId) {
+          const i = versesData.findIndex(x => x.id === editingId);
+          if (i >= 0) versesData[i] = { ...versesData[i], text, reference, voiceId, startDate, endDate };
+          else versesData.push({ id: editingId, text, reference, voiceId, startDate, endDate, createdAt: Date.now() });
+        } else {
+          versesData.push({ id: genId(), text, reference, voiceId, startDate, endDate, createdAt: Date.now() });
+        }
+        await persistVerses();
+        renderList();
+        newVerse();
+        saveStatus.textContent = '저장되었습니다. 메인 화면에 즉시 반영됩니다.';
         saveStatus.className = 'status ok';
       } catch (e) {
         saveStatus.textContent = '저장 실패: ' + (e.message || e);
@@ -314,24 +594,120 @@
       }
     }
 
-    $('btnReload').addEventListener('click', reload);
+    $('btnNew').addEventListener('click', newVerse);
     $('btnSave').addEventListener('click', save);
+
+    /* ── 구절 음성 녹음 (Firebase Storage) ── */
+    const audioFile    = $('audioFile');
+    const btnUpload    = $('btnUpload');
+    const audioStatus  = $('audioStatus');
+    const currentAudio = $('currentAudio');
+    const audioPreview = $('audioPreview');
+    const audioNameEl  = $('audioName');
+    const btnDeleteAudio = $('btnDeleteAudio');
+
+    // 문서 데이터로 현재 녹음 표시
+    function renderAudio(d) {
+      if (d && d.audioUrl) {
+        audioPreview.src = d.audioUrl;
+        audioNameEl.textContent = d.audioName || '등록된 녹음';
+        currentAudio.classList.remove('hidden');
+      } else {
+        audioPreview.removeAttribute('src');
+        currentAudio.classList.add('hidden');
+      }
+    }
+
+    // 파일 선택 시 업로드 버튼 활성화
+    audioFile.addEventListener('change', () => {
+      btnUpload.disabled = !audioFile.files || audioFile.files.length === 0;
+    });
+
+    async function uploadAudio() {
+      const file = audioFile.files && audioFile.files[0];
+      if (!file) return;
+      // 안전장치: 너무 큰 파일은 경고 (40MB)
+      if (file.size > 40 * 1024 * 1024) {
+        audioStatus.textContent = '파일이 너무 큽니다(40MB 초과). 더 작은 파일을 사용하세요.';
+        audioStatus.className = 'status err';
+        return;
+      }
+      btnUpload.disabled = true;
+      audioStatus.textContent = '업로드 중…';
+      audioStatus.className = 'status';
+      try {
+        const sref = storageRef(storage, AUDIO_PATH);
+        await uploadBytes(sref, file, { contentType: file.type || 'audio/mpeg' });
+        const url = await getDownloadURL(sref);
+        await setDoc(ref, {
+          audioUrl: url,
+          audioPath: AUDIO_PATH,
+          audioName: file.name,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        audioStatus.textContent = '녹음이 등록되었습니다. 이제 읽어주기가 이 녹음을 재생합니다.';
+        audioStatus.className = 'status ok';
+        audioFile.value = '';
+        renderAudio({ audioUrl: url, audioName: file.name });
+      } catch (e) {
+        audioStatus.textContent = '업로드 실패: ' + (e.message || e);
+        audioStatus.className = 'status err';
+      } finally {
+        btnUpload.disabled = !audioFile.files || audioFile.files.length === 0;
+      }
+    }
+
+    async function deleteAudio() {
+      if (!confirm('등록된 녹음을 삭제하고 자동 음성(TTS)으로 되돌릴까요?')) return;
+      btnDeleteAudio.disabled = true;
+      audioStatus.textContent = '삭제 중…';
+      audioStatus.className = 'status';
+      try {
+        try {
+          await deleteObject(storageRef(storage, AUDIO_PATH));
+        } catch (e) {
+          // 파일이 이미 없으면 무시하고 필드만 정리
+          if (!(e && e.code === 'storage/object-not-found')) throw e;
+        }
+        await setDoc(ref, {
+          audioUrl: deleteField(),
+          audioPath: deleteField(),
+          audioName: deleteField(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        audioStatus.textContent = '녹음을 삭제했습니다. 읽어주기가 자동 음성으로 돌아갑니다.';
+        audioStatus.className = 'status ok';
+        renderAudio({});
+      } catch (e) {
+        audioStatus.textContent = '삭제 실패: ' + (e.message || e);
+        audioStatus.className = 'status err';
+      } finally {
+        btnDeleteAudio.disabled = false;
+      }
+    }
+
+    btnUpload.addEventListener('click', uploadAudio);
+    btnDeleteAudio.addEventListener('click', deleteAudio);
 
     function enterAdmin() {
       gate.classList.add('hidden');
       editor.classList.remove('hidden');
+      listCard.classList.remove('hidden');
+      $('audioCard').classList.remove('hidden');
       previewCard.classList.remove('hidden');
       try { initDb(); } catch (e) {
         saveStatus.textContent = 'Firebase 초기화 실패: ' + (e.message || e);
         saveStatus.className = 'status err';
         return;
       }
-      // 실시간으로 다른 기기 변경도 반영
+      // 실시간으로 다른 기기 변경도 반영 (편집기는 건드리지 않고 목록/메타/녹음만 갱신)
       onSnapshot(ref, (snap) => {
         if (!snap.exists()) return;
         const d = snap.data() || {};
-        // 사용자가 편집 중이지 않을 때만 동기화 — 단순화를 위해 항상 메타만 갱신
         updatedMeta.textContent = d.updatedAt ? `마지막 수정: ${formatTime(d.updatedAt)}` : '';
+        renderAudio(d);
+        versesData = Array.isArray(d.verses) ? d.verses.slice() : [];
+        renderList();
       });
       reload();
     }

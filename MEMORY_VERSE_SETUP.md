@@ -76,10 +76,63 @@ firebase deploy --only hosting
 
 ## 데이터 구조
 
-Firestore 경로 `site/memoryVerse`:
+Firestore 경로 `site/memoryVerse` (단일 문서 — 별도 컬렉션을 만들지 않으므로 보안 규칙 변경 불필요):
 
 | 필드        | 타입       | 설명               |
 |-------------|------------|--------------------|
-| `text`      | string     | 구절 본문          |
-| `reference` | string     | 출처 (예: 요 3:16) |
+| `verses`    | array      | 표시 기간이 지정된 구절 목록 (아래 항목 구조 참고) |
+| `audioUrl`  | string     | (선택) 공유 녹음 파일 다운로드 URL — 있으면 읽어주기가 TTS 대신 재생 |
+| `audioPath` | string     | (선택) Storage 경로 (`audio/memoryVerse`) — 삭제 시 사용 |
+| `audioName` | string     | (선택) 원본 파일명 (admin 표시용) |
 | `updatedAt` | timestamp  | 서버 기준 수정 시각 |
+
+`verses` 배열의 각 항목:
+
+| 필드        | 타입    | 설명               |
+|-------------|---------|--------------------|
+| `id`        | string  | 고유 id (`crypto.randomUUID()`) |
+| `text`      | string  | 구절 본문          |
+| `reference` | string  | 출처 (예: 요 3:16) |
+| `voiceId`   | string  | TTS 목소리 ID      |
+| `startDate` | string  | 표시 시작일 `YYYY-MM-DD` (로컬, 양 끝 포함) |
+| `endDate`   | string  | 표시 종료일 `YYYY-MM-DD` |
+| `createdAt` | number  | 생성 시각 `Date.now()` (배열 안에는 `serverTimestamp()` 사용 불가) |
+
+**표시 규칙**: 메인 화면(`index.html`)은 오늘 날짜가 `startDate ~ endDate`(양 끝 포함) 안에 드는
+구절을 "이번 주 암송 구절"로 표시합니다. 해당하는 구절이 없으면 카드를 숨깁니다(여러 개면 `startDate`
+가장 최근 1개). 종료일이 지난 구절은 "지난 암송 구절" 버튼을 누르면 리스트(텍스트만)로 펼쳐 보입니다.
+녹음 파일은 구절별이 아니라 **하나만 공유**하며 현재 활성 구절의 읽어주기에 적용됩니다.
+
+> 하위호환: `verses` 배열이 없고 옛 최상위 `text` 필드만 있는 문서는 "항상 활성" 단일 구절로 취급됩니다.
+> `admin.html` 을 열면 그 구절이 편집기에 자동으로 채워지며, 표시 기간을 확인하고 저장하면 `verses`
+> 배열로 이전(migration)됩니다.
+
+---
+
+# 구절 음성 녹음 기능 — 설정 가이드
+
+`admin.html` 에서 녹음 파일을 올리면 메인 화면 **읽어주기**가 자동 음성(TTS) 대신
+그 녹음을 재생합니다(배경음악은 그대로 깔림). 삭제하면 다시 TTS로 돌아갑니다.
+
+## 1. Firebase Storage 활성화
+
+1. https://console.firebase.google.com → 프로젝트 `victorychurch-665a9` 선택
+2. 좌측 메뉴 **Build → Storage → 시작하기**
+3. 위치는 Firestore 와 같은 리전 권장(예: `australia-southeast1`)
+4. 모드: **프로덕션 모드**로 시작
+
+## 2. Storage 보안 규칙 적용
+
+`storage.rules` 파일을 Firebase Console → **Storage → Rules** 탭에 붙여넣고 **게시**.
+(기본은 `allow write: if true` — Firestore 와 동일하게 admin 비밀번호 게이트로만 보호.
+진짜 보안이 필요하면 파일 주석의 Firebase Authentication 방식으로 교체하세요.)
+
+> CLI 로도 배포 가능: `firebase deploy --only storage`
+
+## 3. 사용
+
+- 관리자(`/admin`) → "구절 음성 녹음" 카드 → 파일 선택 후 **업로드**
+- 업로드 즉시 모든 사용자 화면의 읽어주기가 그 녹음을 재생
+- "녹음 삭제(TTS로 복귀)" 버튼으로 언제든 자동 음성으로 되돌림
+
+> 재생은 일반 오디오 엘리먼트로 직접 하므로 별도의 Storage CORS 설정은 필요 없습니다.

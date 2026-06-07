@@ -34,10 +34,27 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   `ignore` list excludes `public/`, `tests/`, `docs/`, `*.md`, `_*` scratch files, and `*.bak.*`.
   The `public/` folder is a stale duplicate of the served files — treat root files as the source
   of truth and ignore `public/` unless deliberately cleaning it up.
-- **Firestore is the only backend.** `index.html` subscribes (`onSnapshot`) to `site/memoryVerse`
-  for real-time verse updates; `admin.html` writes to it (`setDoc ... merge`). Doc fields:
-  `text`, `reference`, `voiceId`, `updatedAt`. Path is defined once in `firebase-config.js`
-  as `VERSE_DOC_PATH`.
+- **Firestore + Storage are the backend.** `index.html` subscribes (`onSnapshot`) to
+  `site/memoryVerse` for real-time verse updates; `admin.html` writes to it (`setDoc ... merge`).
+  The doc holds a **`verses` array** — each entry `{ id, text, reference, voiceId, startDate,
+  endDate ("YYYY-MM-DD"), createdAt }` — plus shared recording fields `audioUrl` / `audioPath` /
+  `audioName` and `updatedAt` at the top level. Path is defined once in `firebase-config.js` as
+  `VERSE_DOC_PATH`. Everything stays in this **single doc** (no subcollection) so the existing
+  `/site/{docId}` rules suffice. Note: array entries use `Date.now()` for `createdAt` because
+  Firestore rejects `serverTimestamp()` inside arrays.
+- **Date-gated verse display.** `index.html` shows the verse whose `startDate ≤ today ≤ endDate`
+  (inclusive, local date; newest `startDate` wins) as "이번 주 암송 구절", and **hides the card** if
+  none match. Verses whose `endDate < today` are listed (text only) under the "지난 암송 구절"
+  toggle (`classify()` in `index.html`). `admin.html` manages the list with native `<input
+  type="date">` From~To pickers. Back-compat: a legacy doc with only a top-level `text` field is
+  treated as an always-active verse, and admin pre-fills it for one-click migration into `verses`.
+- **Read-aloud audio source priority:** if `audioUrl` is set (an admin-uploaded recording in
+  Firebase Storage at `audio/memoryVerse`, rules in `storage.rules`), the "읽어주기" button plays
+  that recording instead of ElevenLabs TTS. The recording is played via a plain `Audio` element
+  (NOT routed through the Web Audio chain) deliberately — routing cross-origin Storage media
+  through `createMediaElementSource` causes silent playback without CORS config, and a human
+  recording shouldn't get the synthetic-voice reverb/EQ. BGM (same-origin `bgm.mp3`) still plays
+  underneath. See `playRecording()` in `index.html` and `MEMORY_VERSE_SETUP.md`.
 - **`admin.html` (served at `/admin` via `cleanUrls`)** is gated only by `ADMIN_PASSCODE` in
   `firebase-config.js` — this is screen-level UX, NOT security. Real write protection must come
   from `firestore.rules`. Currently the rules `allow write: if true` on `/site/{docId}`; the file

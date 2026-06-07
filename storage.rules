@@ -1,0 +1,22 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // 구절 낭독 녹음 파일: 누구나 읽기 가능(메인 화면 재생용)
+    match /audio/{fileName} {
+      allow read: if true;
+
+      // ⚠️ admin.html 비밀번호 게이트는 화면 보호용일 뿐 보안이 아닙니다.
+      // 진짜 쓰기 보안이 필요하면 firestore.rules 와 동일하게
+      // Firebase Authentication 으로 교체하세요:
+      //   allow write: if request.auth != null
+      //                && request.auth.token.email in ['admin@victorychurch.nz'];
+      allow write: if true;
+    }
+
+    // 그 외 모든 경로는 차단
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
