@@ -699,59 +699,184 @@
       let wetGain    = null;
       let convolver  = null;
 
-      function initAudioContext(audioElement) {
+      /* 은은한 성경 낭독 분위기를 위한 배경 음악(BGM) 오디오 노드 및 상태 관리 */
+      let bgmOscs     = [];
+      let bgmGains    = [];
+      let bgmFilter   = null;
+      let bgmVolume   = null;
+      let bgmInterval = null;
+
+      function ensureAudioContext() {
+        if (audioCtx) {
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          return;
+        }
+
         try {
           const AudioContextClass = window.AudioContext || window.webkitAudioContext;
           if (!AudioContextClass) return;
 
-          if (!audioCtx) {
-            audioCtx = new AudioContextClass();
+          audioCtx = new AudioContextClass();
 
-            // Direct 음성과 Reverb 음성 조절 Gain 노드 생성
-            dryGain = audioCtx.createGain();
-            wetGain = audioCtx.createGain();
+          // Direct 음성과 Reverb 음성 조절 Gain 노드 생성
+          dryGain = audioCtx.createGain();
+          wetGain = audioCtx.createGain();
 
-            dryGain.gain.value = 0.85; // 본래 목소리는 명료하게 유지
-            wetGain.gain.value = 0.28; // 목사님 설교단상 느낌의 웅장한 잔향감 부여 (28%)
+          dryGain.gain.value = 0.85; // 본래 목소리는 명료하게 유지
+          wetGain.gain.value = 0.28; // 목사님 설교단상 느낌의 웅장한 잔향감 부여 (28%)
 
-            // 합성 임펄스 응답 생성 (성당/대형 강단 울림 시뮬레이션)
-            const duration = 2.4; // 잔향 시간 2.4초
-            const decay = 2.0;
-            const sampleRate = audioCtx.sampleRate;
-            const length = sampleRate * duration;
-            const impulse = audioCtx.createBuffer(2, length, sampleRate);
-            const left = impulse.getChannelData(0);
-            const right = impulse.getChannelData(1);
+          // 합성 임펄스 응답 생성 (성당/대형 강단 울림 시뮬레이션)
+          const duration = 2.4; // 잔향 시간 2.4초
+          const decay = 2.0;
+          const sampleRate = audioCtx.sampleRate;
+          const length = sampleRate * duration;
+          const impulse = audioCtx.createBuffer(2, length, sampleRate);
+          const left = impulse.getChannelData(0);
+          const right = impulse.getChannelData(1);
 
-            for (let i = 0; i < length; i++) {
-              const percent = i / length;
-              // 지수 감쇄하는 화이트 노이즈로 공간 울림 효과 구현
-              const val = (Math.random() * 2 - 1) * Math.pow(1 - percent, decay);
-              left[i] = val;
-              right[i] = val;
-            }
-
-            convolver = audioCtx.createConvolver();
-            convolver.buffer = impulse;
-
-            // 연결 구조: source -> dryGain -> destination
-            //           source -> convolver -> wetGain -> destination
-            dryGain.connect(audioCtx.destination);
-            convolver.connect(wetGain);
-            wetGain.connect(audioCtx.destination);
+          for (let i = 0; i < length; i++) {
+            const percent = i / length;
+            // 지수 감쇄하는 화이트 노이즈로 공간 울림 효과 구현
+            const val = (Math.random() * 2 - 1) * Math.pow(1 - percent, decay);
+            left[i] = val;
+            right[i] = val;
           }
 
-          if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-          }
+          convolver = audioCtx.createConvolver();
+          convolver.buffer = impulse;
 
+          // 연결 구조: source -> dryGain -> destination
+          //           source -> convolver -> wetGain -> destination
+          dryGain.connect(audioCtx.destination);
+          convolver.connect(wetGain);
+          wetGain.connect(audioCtx.destination);
+        } catch (e) {
+          console.warn('[WebAudio] Reverb initialization failed:', e);
+        }
+      }
+
+      function initAudioContext(audioElement) {
+        ensureAudioContext();
+        if (!audioCtx) return;
+        try {
           // HTMLMediaElement 소스 노드 생성 후 이펙터 체인에 연결
           const source = audioCtx.createMediaElementSource(audioElement);
           source.connect(dryGain);
           source.connect(convolver);
         } catch (e) {
-          console.warn('[WebAudio] Reverb initialization failed:', e);
+          console.warn('[WebAudio] Source connection failed:', e);
         }
+      }
+
+      /* 성당/예배당 분위기의 은은한 패드(Pad) 배경음악 합성 함수 */
+      function startBgm() {
+        ensureAudioContext();
+        if (!audioCtx || !convolver) return;
+
+        try {
+          // 이미 BGM이 켜져 있으면 무시
+          if (bgmInterval || bgmOscs.length > 0) return;
+
+          // BGM 전체 볼륨 (목소리를 방해하지 않는 3.5% 크기로 조절)
+          bgmVolume = audioCtx.createGain();
+          bgmVolume.gain.setValueAtTime(0.0, audioCtx.currentTime);
+          bgmVolume.gain.linearRampToValueAtTime(0.035, audioCtx.currentTime + 3.0); // 3초 동안 서서히 페이드인
+
+          // 고음역대를 완전히 깎아 아날로그 신디사이저 패드처럼 부드럽고 따뜻하게 가공
+          bgmFilter = audioCtx.createBiquadFilter();
+          bgmFilter.type = 'lowpass';
+          bgmFilter.frequency.setValueAtTime(260, audioCtx.currentTime);
+
+          bgmFilter.connect(bgmVolume);
+          // 성당 울림 이펙트에도 믹스하여 잔향감 극대화
+          bgmVolume.connect(convolver);
+          bgmVolume.connect(audioCtx.destination);
+
+          // 평화롭고 거룩한 분위기의 코드 진행 (Fmaj7 -> Am -> Cmaj7 -> Gsus4)
+          const chords = [
+            [174.61, 261.63, 329.63, 440.00],        // F3, C4, E4, A4 (Fmaj7)
+            [110.00, 220.00, 261.63, 329.63, 440.00], // A2, A3, C4, E4, A4 (Am)
+            [130.81, 196.00, 261.63, 329.63, 493.88], // C3, G3, C4, E4, B4 (Cmaj7)
+            [98.00, 196.00, 293.66, 349.23, 392.00]   // G2, G3, D4, F4, G4 (Gsus4/G7)
+          ];
+
+          let currentChordIdx = 0;
+
+          function playChord(frequencies, isFirst = false) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const fadeTime = isFirst ? 0.2 : 3.5; // 매우 완만하고 자연스러운 크로스페이드
+
+            // 기존 진행음 페이드아웃 및 제거
+            bgmGains.forEach(g => {
+              g.gain.cancelScheduledValues(now);
+              g.gain.linearRampToValueAtTime(0.0, now + fadeTime);
+            });
+            const oldOscs = bgmOscs;
+            setTimeout(() => {
+              oldOscs.forEach(o => { try { o.stop(); } catch (e) {} });
+            }, fadeTime * 1000 + 500);
+
+            bgmOscs = [];
+            bgmGains = [];
+
+            // 새 진행음 오실레이터 생성 (따뜻한 삼각파 사용)
+            frequencies.forEach(freq => {
+              const osc = audioCtx.createOscillator();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(freq, now);
+
+              const gainNode = audioCtx.createGain();
+              gainNode.gain.setValueAtTime(0.0, now);
+              gainNode.gain.linearRampToValueAtTime(0.18 / frequencies.length, now + fadeTime);
+
+              osc.connect(gainNode);
+              gainNode.connect(bgmFilter);
+
+              osc.start(now);
+              bgmOscs.push(osc);
+              bgmGains.push(gainNode);
+            });
+
+            // 필터의 컷오프 주파수를 미세하게 변동시켜 입체감 형성
+            bgmFilter.frequency.cancelScheduledValues(now);
+            bgmFilter.frequency.setValueAtTime(bgmFilter.frequency.value, now);
+            bgmFilter.frequency.linearRampToValueAtTime(210 + Math.random() * 80, now + 7.0);
+          }
+
+          playChord(chords[currentChordIdx], true);
+
+          bgmInterval = setInterval(() => {
+            if (!audioCtx || audioCtx.state === 'suspended') return;
+            currentChordIdx = (currentChordIdx + 1) % chords.length;
+            playChord(chords[currentChordIdx]);
+          }, 9000); // 9초 간격으로 잔잔하게 화음 순환
+
+        } catch (e) {
+          console.warn('[BGM] Failed to play procedural background pad:', e);
+        }
+      }
+
+      function stopBgm() {
+        if (bgmInterval) {
+          clearInterval(bgmInterval);
+          bgmInterval = null;
+        }
+        const now = audioCtx ? audioCtx.currentTime : 0;
+        if (bgmVolume && audioCtx) {
+          bgmVolume.gain.cancelScheduledValues(now);
+          bgmVolume.gain.linearRampToValueAtTime(0.0, now + 2.0); // 2초에 걸쳐 아주 서서히 페이드아웃
+        }
+        const oldOscs = bgmOscs;
+        bgmOscs = [];
+        bgmGains = [];
+        setTimeout(() => {
+          oldOscs.forEach(o => { try { o.stop(); } catch (e) {} });
+          bgmVolume = null;
+          bgmFilter = null;
+        }, 2200);
       }
 
       function getFullText() {
@@ -858,10 +983,10 @@
         label.textContent = '불러오는 중...';
         icon.innerHTML = ICON_STOP;
         
-        // 클릭 시 사용자 제스처 이벤트 내에서 AudioContext 활성화 보장
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
+        // 클릭 시 사용자 제스처 이벤트 내에서 AudioContext 활성화 보장 및 BGM 켜기
+        ensureAudioContext();
+        startBgm();
+        
         play();
       }
 
@@ -869,6 +994,7 @@
         active = false;
         if (curAudio) { curAudio.pause(); curAudio = null; }
         if (window.speechSynthesis) window.speechSynthesis.cancel();
+        stopBgm();
         btn.classList.remove('playing');
         label.textContent = '읽어주기';
         icon.innerHTML = ICON_PLAY;
