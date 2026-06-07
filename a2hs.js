@@ -333,10 +333,21 @@
     sheet.classList.add("show");
   }
 
-  // 외부 전환 URL에 자동 설치 트리거 파라미터를 붙임
+  // 외부 전환 URL에 자동 설치 트리거 플래그를 붙임.
+  // 카카오톡 등 일부 인앱이 쿼리스트링을 변조하는 사례가 있어
+  // 쿼리(?install=1) + 해시(#install) 둘 다 붙여 보존 가능성을 높인다.
   function urlWithInstallFlag(baseUrl) {
-    if (/[?&]install=1\b/.test(baseUrl)) return baseUrl;
-    return baseUrl + (baseUrl.indexOf("?") >= 0 ? "&" : "?") + "install=1";
+    var u = baseUrl;
+    if (!/[?&]install=1\b/.test(u)) {
+      u = u.split("#")[0] + (u.split("#")[0].indexOf("?") >= 0 ? "&" : "?") + "install=1";
+    }
+    if (!/#install\b/.test(u)) {
+      u = u + "#install";
+    }
+    return u;
+  }
+  function hasInstallFlag() {
+    return /[?&]install=1\b/.test(location.search) || /#install\b/.test(location.hash);
   }
 
   // 인앱 → 외부 브라우저로 자동 전환
@@ -567,32 +578,80 @@
   }
 
   // 외부 브라우저로 진입 시 자동 설치 트리거
-  // 인앱에서 "바로가기 만들기" 누르면 ?install=1 이 붙어 외부 브라우저로 열리고,
-  // 여기서 이 파라미터를 보면 자동으로 onAddClick()을 실행한다.
-  // 무한 루프를 막기 위해 인앱 브라우저에서는 동작하지 않음.
+  //
+  // ⚠️ 중요: beforeinstallprompt.prompt() 는 "사용자 제스처(클릭/탭)" 컨텍스트에서만
+  // 동작합니다. setTimeout 안에서 직접 호출하면 브라우저가 무시합니다.
+  // 그래서 자동 트리거는 "곧바로 prompt()" 가 아니라,
+  // "큰 자동 오버레이 버튼을 띄워서 사용자가 한 번 탭하면 즉시 설치"되도록 설계합니다.
   function autoInstallIfRequested() {
     if (isInApp) return;                       // 인앱은 자동 실행 금지 (루프 방지)
     if (isStandalone) return;                  // 이미 설치된 상태
     if (ls(K.installed) === "1") return;       // 이미 설치 기록
-    if (!/[?&]install=1\b/.test(location.search)) return;
+    if (!hasInstallFlag()) return;             // ?install=1 또는 #install 필요
 
-    // beforeinstallprompt 가 잡힐 시간을 약간 줌. (보통 즉시 발생)
-    function fire() {
-      // 안내 시트 또는 네이티브 프롬프트 표시
-      try { onAddClick(); } catch (e) {}
-      // URL 정리 — 새로고침 시 다시 트리거되지 않도록
-      try {
-        var clean = location.href.replace(/([?&])install=1(&|$)/, function (_, p1, p2) {
-          return p2 === "&" ? p1 : "";
-        }).replace(/[?&]$/, "");
-        history.replaceState(null, "", clean);
-      } catch (e) {}
+    // URL 즉시 정리 — 새로고침 시 다시 트리거되지 않도록
+    try {
+      var cleanSearch = location.search
+        .replace(/([?&])install=1(&|$)/, function (_, p1, p2) { return p2 === "&" ? p1 : ""; })
+        .replace(/[?&]$/, "");
+      var cleanHash = location.hash.replace(/#install\b/, "");
+      history.replaceState(null, "", location.pathname + cleanSearch + cleanHash);
+    } catch (e) {}
+
+    showAutoInstallOverlay();
+  }
+
+  // 자동 진입 시 표시되는 풀스크린 안내 오버레이
+  // 큰 버튼 1개 — 사용자가 탭하면 즉시 설치 흐름 시작 (제스처 컨텍스트 보장)
+  function showAutoInstallOverlay() {
+    var overlay = document.createElement("div");
+    overlay.id = "a2hs-auto";
+    overlay.style.cssText =
+      "position:fixed;inset:0;z-index:2147483646;" +
+      "background:rgba(255,255,255,.98);" +
+      "display:flex;flex-direction:column;align-items:center;justify-content:center;" +
+      "padding:32px 24px calc(32px + env(safe-area-inset-bottom));" +
+      "font-family:-apple-system,BlinkMacSystemFont,'Pretendard Variable',Pretendard,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;" +
+      "text-align:center;color:#111;";
+
+    var iconUrl = CFG.icon || "icon-192.png";
+    overlay.innerHTML =
+      '<div style="width:96px;height:96px;border-radius:22px;overflow:hidden;background:#fff;' +
+        'box-shadow:0 8px 28px rgba(16,26,63,.18);display:flex;align-items:center;justify-content:center;margin-bottom:22px">' +
+        '<img src="' + iconUrl + '" alt="" style="width:88%;height:auto">' +
+      '</div>' +
+      '<div style="font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px">' +
+        '바로가기 설치를 시작할게요' +
+      '</div>' +
+      '<div style="font-size:15px;color:#6b7280;line-height:1.5;margin-bottom:28px;max-width:300px">' +
+        '<b style="color:#111">' + escapeHtml(CFG.siteName) + '</b> 을 홈 화면에 추가하면<br>' +
+        '다음엔 한 번에 열 수 있어요.' +
+      '</div>' +
+      '<button id="a2hs-auto-go" type="button" style="' +
+        'width:100%;max-width:340px;background:#2bb673;color:#fff;border:0;border-radius:14px;' +
+        'font-size:18px;font-weight:800;padding:18px;cursor:pointer;' +
+        'box-shadow:0 10px 24px -8px rgba(43,182,115,.5)">바로가기 만들기</button>' +
+      '<button id="a2hs-auto-skip" type="button" style="' +
+        'margin-top:12px;background:transparent;border:0;color:#6b7280;font-size:14px;font-weight:600;' +
+        'padding:10px 16px;cursor:pointer">나중에 하기</button>';
+
+    document.body.appendChild(overlay);
+
+    function close() {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     }
 
-    // 안드로이드 크롬은 beforeinstallprompt 가 약간 지연될 수 있으므로 잠시 대기.
-    // 그 사이 deferredPrompt 가 잡히면 onAddClick 이 네이티브 다이얼로그를 즉시 띄움.
-    setTimeout(fire, 700);
+    overlay.querySelector("#a2hs-auto-skip").addEventListener("click", close);
+    overlay.querySelector("#a2hs-auto-go").addEventListener("click", function () {
+      // 사용자 제스처 컨텍스트에서 호출 → prompt() 가 정상 동작
+      close();
+      onAddClick();
+    });
+
+    // 'appinstalled' 발생 시 오버레이 닫기
+    window.addEventListener("appinstalled", close, { once: true });
   }
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", autoInstallIfRequested);
   } else {
