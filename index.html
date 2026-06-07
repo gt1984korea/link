@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Victory Church — 뉴질랜드 빅토리처치</title>
+  <title>Victory Church ???댁쭏?쒕뱶 鍮낇넗由ъ쿂移?/title>
 
   <link rel="manifest" href="manifest.webmanifest?v=2">
   <meta name="theme-color" content="#ffffff">
@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-title" content="Victory Church">
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <!-- Pretendard (원본 사이트와 동일) -->
+  <!-- Pretendard (?먮낯 ?ъ씠?몄? ?숈씪) -->
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 
@@ -23,12 +23,12 @@
       --bg:       #ffffff;
       --surface:  #ffffff;
       --line:     #e9eaee;
-      --text:     #363636;     /* 원본 본문색 */
+      --text:     #363636;     /* ?먮낯 蹂몃Ц??*/
       --text-2:   #6b7280;
       --text-3:   #9ca3af;
-      --brand:    #2bb673;     /* 원본 민트그린 */
+      --brand:    #2bb673;     /* ?먮낯 誘쇳듃洹몃┛ */
       --brand-dim:#e7f6ef;
-      --navy:     #101a3f;     /* 로고 네이비 */
+      --navy:     #101a3f;     /* 濡쒓퀬 ?ㅼ씠鍮?*/
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -145,7 +145,7 @@
       display: flex; align-items: center; justify-content: center;
     }
 
-    /* Primary item (설치 버튼) */
+    /* Primary item (?ㅼ튂 踰꾪듉) */
     .item.primary {
       background: var(--brand);
       border-color: var(--brand);
@@ -157,7 +157,7 @@
     .item.primary .t2 { color: rgba(255,255,255,.85); }
     .item.primary .chev { color: rgba(255,255,255,.85); }
 
-    /* 아이콘 색상 — 일반 카드 */
+    /* ?꾩씠肄??됱긽 ???쇰컲 移대뱶 */
     .item.home .ic   { background: #eef2ff; color: #4f46e5; }
     .item.youtube .ic{ background: #fee2e2; color: #dc2626; }
     .item.live .ic   { background: #fef3c7; color: #d97706; position: relative; }
@@ -174,7 +174,7 @@
       100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
     }
 
-    /* 설치 완료 상태 */
+    /* ?ㅼ튂 ?꾨즺 ?곹깭 */
     .item.primary.installed {
       background: var(--brand-dim);
       border-color: #c8ecd9;
@@ -185,7 +185,7 @@
     .item.primary.installed .t2 { color: #3b8e69; }
     .item.primary.installed .chev { color: var(--brand); }
 
-    /* 로딩 상태 */
+    /* 濡쒕뵫 ?곹깭 */
     .item.primary.loading { cursor: progress; }
     .item.primary.loading .chev { opacity: 0; }
     .item.primary.loading .spinner {
@@ -266,7 +266,7 @@
     .verse.loading .ref { opacity: 0.45; }
     .verse.hidden { display: none; }
 
-    /* TTS 버튼 */
+    /* TTS 踰꾪듉 */
     .tts-row {
       margin-top: 18px;
       display: flex;
@@ -345,15 +345,15 @@
 
     <header class="header">
       <div class="logo">
-        <img src="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png" alt="Victory Church 로고">
+        <img src="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png" alt="Victory Church 濡쒓퀬">
       </div>
-      <h1>뉴질랜드 빅토리처치</h1>
-      <p>Victory Church · New Zealand</p>
+      <h1>?댁쭏?쒕뱶 鍮낇넗由ъ쿂移?/h1>
+      <p>Victory Church 쨌 New Zealand</p>
     </header>
 
-    <!-- 0. 이번 주 암송 구절 -->
+    <!-- 0. ?대쾲 二??붿넚 援ъ젅 -->
     <section class="verse hidden" id="verseCard" aria-live="polite">
-      <span class="label">이번 주 암송 구절</span>
+      <span class="label">?대쾲 二??붿넚 援ъ젅</span>
       <h1 class="text" id="verseText"></h1>
       <span class="ref" id="verseRef"></span>
       <div class="tts-row">
@@ -363,14 +363,14 @@
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
           </svg>
-          <span id="ttsBtnLabel">읽어주기</span>
+          <span id="ttsBtnLabel">?쎌뼱二쇨린</span>
         </button>
       </div>
     </section>
 
     <nav class="menu">
 
-      <!-- 1. 바로가기 설치 -->
+      <!-- 1. 諛붾줈媛湲??ㅼ튂 -->
       <button class="item primary" id="btnInstall" type="button" data-a2hs>
         <span class="ic">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -380,8 +380,8 @@
           </svg>
         </span>
         <span class="body">
-          <span class="t1">이 페이지 바로가기 만들기</span>
-          <span class="t2">홈 화면에 추가하면 다음엔 한 번에 열려요</span>
+          <span class="t1">???섏씠吏 諛붾줈媛湲?留뚮뱾湲?/span>
+          <span class="t2">???붾㈃??異붽??섎㈃ ?ㅼ쓬????踰덉뿉 ?대젮??/span>
         </span>
         <span class="chev">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
@@ -389,7 +389,7 @@
         <span class="progress"></span>
       </button>
 
-      <!-- 2. 홈페이지 -->
+      <!-- 2. ?덊럹?댁? -->
       <button class="item home" id="btnHome" type="button">
         <span class="ic">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -399,7 +399,7 @@
           </svg>
         </span>
         <span class="body">
-          <span class="t1">교회 홈페이지</span>
+          <span class="t1">援먰쉶 ?덊럹?댁?</span>
           <span class="t2">victorychurch.nz</span>
         </span>
         <span class="chev">
@@ -407,7 +407,7 @@
         </span>
       </button>
 
-      <!-- 3. 유튜브 -->
+      <!-- 3. ?좏뒠釉?-->
       <button class="item youtube" id="btnYoutube" type="button">
         <span class="ic">
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -415,15 +415,15 @@
           </svg>
         </span>
         <span class="body">
-          <span class="t1">유튜브 채널</span>
-          <span class="t2">설교 영상 보기 · @nzvictory</span>
+          <span class="t1">?좏뒠釉?梨꾨꼸</span>
+          <span class="t2">?ㅺ탳 ?곸긽 蹂닿린 쨌 @nzvictory</span>
         </span>
         <span class="chev">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
         </span>
       </button>
 
-      <!-- 4. 라이브 -->
+      <!-- 4. ?쇱씠釉?-->
       <button class="item live" id="btnLive" type="button">
         <span class="ic">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -433,8 +433,8 @@
           </svg>
         </span>
         <span class="body">
-          <span class="t1">실시간 라이브</span>
-          <span class="t2">예배 함께 드리기</span>
+          <span class="t1">?ㅼ떆媛??쇱씠釉?/span>
+          <span class="t2">?덈같 ?④퍡 ?쒕━湲?/span>
         </span>
         <span class="chev">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
@@ -443,14 +443,14 @@
 
     </nav>
 
-    <div class="footer">© Victory Church NZ</div>
+    <div class="footer">짤 Victory Church NZ</div>
 
   </div>
 
-  <div class="toast" id="toast">바로가기 설치 완료</div>
+  <div class="toast" id="toast">諛붾줈媛湲??ㅼ튂 ?꾨즺</div>
 
   <script>
-    // 외부 링크
+    // ?몃? 留곹겕
     function openExternal(url) {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
@@ -464,8 +464,7 @@
       openExternal('https://www.youtube.com/@nzvictory/streams');
     });
 
-    // 토스트
-    var toastEl = document.getElementById('toast');
+    // ?좎뒪??    var toastEl = document.getElementById('toast');
     var toastTimer = null;
     function showToast(msg) {
       toastEl.textContent = msg;
@@ -474,21 +473,20 @@
       toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2400);
     }
 
-    // 설치 버튼 상태 관리
-    var installBtn = document.getElementById('btnInstall');
+    // ?ㅼ튂 踰꾪듉 ?곹깭 愿由?    var installBtn = document.getElementById('btnInstall');
     var installLoadingTimer = null;
 
     function setInstalled() {
       stopLoading();
       installBtn.classList.add('installed');
-      installBtn.querySelector('.t1').textContent = '바로가기가 설치되어 있어요';
-      installBtn.querySelector('.t2').textContent = '홈 화면 아이콘에서 바로 열어보세요';
+      installBtn.querySelector('.t1').textContent = '諛붾줈媛湲곌? ?ㅼ튂?섏뼱 ?덉뼱??;
+      installBtn.querySelector('.t2').textContent = '???붾㈃ ?꾩씠肄섏뿉??諛붾줈 ?댁뼱蹂댁꽭??;
     }
     function startLoading() {
       if (installBtn.classList.contains('installed')) return;
       installBtn.classList.add('loading');
       installBtn.setAttribute('aria-busy', 'true');
-      // 로딩 중 스피너 노드 (없으면 추가)
+      // 濡쒕뵫 以??ㅽ뵾???몃뱶 (?놁쑝硫?異붽?)
       if (!installBtn.querySelector('.spinner')) {
         var s = document.createElement('span');
         s.className = 'spinner';
@@ -504,16 +502,16 @@
       installLoadingTimer = null;
     }
 
-    // 클릭 → 로딩 시작 (a2hs.js 핸들러보다 먼저)
-    // 안전장치: 'appinstalled' 이벤트가 끝내 안 오면 30초 후 로딩만 해제
-    // (안내 시트로 흐른 경우, 사용자가 수동 설치 중인 경우 등)
+    // ?대┃ ??濡쒕뵫 ?쒖옉 (a2hs.js ?몃뱾?щ낫??癒쇱?)
+    // ?덉쟾?μ튂: 'appinstalled' ?대깽?멸? ?앸궡 ???ㅻ㈃ 30珥???濡쒕뵫留??댁젣
+    // (?덈궡 ?쒗듃濡??먮Ⅸ 寃쎌슦, ?ъ슜?먭? ?섎룞 ?ㅼ튂 以묒씤 寃쎌슦 ??
     installBtn.addEventListener('click', function () {
       if (installBtn.classList.contains('installed')) return;
       startLoading();
       installLoadingTimer = setTimeout(function () { stopLoading(); }, 30000);
     }, true);
 
-    // 안내 시트 닫힘 감지 → 로딩 해제 (안내 시트로 분기된 경우)
+    // ?덈궡 ?쒗듃 ?ロ옒 媛먯? ??濡쒕뵫 ?댁젣 (?덈궡 ?쒗듃濡?遺꾧린??寃쎌슦)
     function observeSheet() {
       var sheet = document.querySelector('.a2hs-sheet');
       if (!sheet) { return setTimeout(observeSheet, 300); }
@@ -524,28 +522,24 @@
     }
     observeSheet();
 
-    // ⭐ 진짜 설치 완료: 'appinstalled' 이벤트
-    // OS가 PWA를 홈 화면/시작 메뉴에 실제로 설치한 직후 발생.
-    // → 이때만 완료 표시 + 토스트
-    window.addEventListener('appinstalled', function () {
+    // 狩?吏꾩쭨 ?ㅼ튂 ?꾨즺: 'appinstalled' ?대깽??    // OS媛 PWA瑜????붾㈃/?쒖옉 硫붾돱???ㅼ젣濡??ㅼ튂??吏곹썑 諛쒖깮.
+    // ???대븣留??꾨즺 ?쒖떆 + ?좎뒪??    window.addEventListener('appinstalled', function () {
       try { localStorage.setItem('a2hs_installed', '1'); } catch (e) {}
       setInstalled();
-      showToast('바로가기 설치 완료');
+      showToast('諛붾줈媛湲??ㅼ튂 ?꾨즺');
     });
 
-    // 네이티브 프롬프트 결과 처리
-    // - accepted: 사용자가 "설치"를 눌렀을 뿐, 실제 완료는 아직 → 로딩 유지
-    //   ('appinstalled' 이벤트가 곧 와서 완료 처리함)
-    // - dismissed: 사용자가 거절 → 로딩 해제, 완료 표시 ❌
-    window.addEventListener('a2hs:result', function (e) {
+    // ?ㅼ씠?곕툕 ?꾨＼?꾪듃 寃곌낵 泥섎━
+    // - accepted: ?ъ슜?먭? "?ㅼ튂"瑜??뚮???肉? ?ㅼ젣 ?꾨즺???꾩쭅 ??濡쒕뵫 ?좎?
+    //   ('appinstalled' ?대깽?멸? 怨?????꾨즺 泥섎━??
+    // - dismissed: ?ъ슜?먭? 嫄곗젅 ??濡쒕뵫 ?댁젣, ?꾨즺 ?쒖떆 ??    window.addEventListener('a2hs:result', function (e) {
       if (!e.detail) return;
       if (e.detail.outcome === 'dismissed') {
         stopLoading();
       }
-      // accepted 인 경우 일부러 아무것도 하지 않음 — appinstalled 대기
-    });
+      // accepted ??寃쎌슦 ?쇰????꾨Т寃껊룄 ?섏? ?딆쓬 ??appinstalled ?湲?    });
 
-    // standalone (이미 홈 화면 앱으로 열린 경우) — 조용히 완료 상태 표시
+    // standalone (?대? ???붾㈃ ?깆쑝濡??대┛ 寃쎌슦) ??議곗슜???꾨즺 ?곹깭 ?쒖떆
     function checkStandalone() {
       var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                        || window.navigator.standalone === true;
@@ -557,7 +551,7 @@
     }
     checkStandalone();
 
-    // display-mode 변경 감지 — 브라우저에서 PWA로 모드가 바뀌는 순간 잡힘
+    // display-mode 蹂寃?媛먯? ??釉뚮씪?곗??먯꽌 PWA濡?紐⑤뱶媛 諛붾뚮뒗 ?쒓컙 ?≫옒
     if (window.matchMedia) {
       try {
         window.matchMedia('(display-mode: standalone)').addEventListener('change', function (e) {
@@ -566,13 +560,12 @@
       } catch (err) {}
     }
 
-    // 서비스워커
-    if ("serviceWorker" in navigator) {
+    // ?쒕퉬?ㅼ썙而?    if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function(){});
     }
   </script>
 
-  <!-- 암송 구절: Firestore 실시간 구독 -->
+  <!-- ?붿넚 援ъ젅: Firestore ?ㅼ떆媛?援щ룆 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getFirestore, doc, onSnapshot }
@@ -583,7 +576,7 @@
     const elText = document.getElementById('verseText');
     const elRef  = document.getElementById('verseRef');
 
-    // 마지막으로 본 값 캐시 (오프라인 첫 화면용)
+    // 留덉?留됱쑝濡?蹂?媛?罹먯떆 (?ㅽ봽?쇱씤 泥??붾㈃??
     try {
       const cached = JSON.parse(localStorage.getItem('verseCache') || 'null');
       if (cached && cached.text) {
@@ -600,7 +593,7 @@
 
       onSnapshot(ref, (snap) => {
         if (!snap.exists()) {
-          // 데이터 없음 → 카드 숨김
+          // ?곗씠???놁쓬 ??移대뱶 ?④?
           card.classList.add('hidden');
           try { localStorage.removeItem('verseCache'); } catch (e) {}
           return;
@@ -609,7 +602,7 @@
         const text = (d.text || '').trim();
         const reference = (d.reference || '').trim();
         if (!text) {
-          // 텍스트가 비어 있으면 숨김
+          // ?띿뒪?멸? 鍮꾩뼱 ?덉쑝硫??④?
           card.classList.add('hidden');
           try { localStorage.removeItem('verseCache'); } catch (e) {}
           return;
@@ -620,140 +613,147 @@
         try { localStorage.setItem('verseCache', JSON.stringify({ text, reference })); } catch (e) {}
       }, (err) => {
         console.warn('[verse] snapshot error', err);
-        // 오류 시 캐시가 없으면 숨김 유지
+        // ?ㅻ쪟 ??罹먯떆媛 ?놁쑝硫??④? ?좎?
         if (!elText.textContent) {
           card.classList.add('hidden');
         }
       });
     } catch (e) {
       console.warn('[verse] init failed', e);
-      // 초기화 실패 시 캐시가 없으면 숨김 유지
+      // 珥덇린???ㅽ뙣 ??罹먯떆媛 ?놁쑝硫??④? ?좎?
       if (!elText.textContent) {
         card.classList.add('hidden');
       }
     }
   </script>
 
-  <!-- A2HS 위젯 -->
+  <!-- A2HS ?꾩젽 -->
   <script src="a2hs.js" defer
     data-site-name="Victory Church"
     data-icon="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png"
     data-auto-banner="false"></script>
 
-  <!-- TTS -->
+  <!-- TTS (ElevenLabs) -->
   <script>
     (function () {
       const btn   = document.getElementById('ttsBtn');
       const label = document.getElementById('ttsBtnLabel');
       const icon  = document.getElementById('ttsIcon');
-      if (!btn || !window.speechSynthesis) return;
+      if (!btn) return;
+
+      /* ?? ElevenLabs ?ㅼ젙 ?? */
+      const XI_KEY   = '0fb32fdf3fa82c68378bcf9a8e5de0a0acef05ceb7b0012c054b8ebbb0b831fe';
+      const VOICE_ID = 'pNInz6obpgDQGcFmaJgB'; // Adam ??multilingual ?⑥꽦 (?쒓뎅??理쒖쟻)
+      const MODEL    = 'eleven_multilingual_v2';
 
       const ICON_PLAY = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
       const ICON_STOP = `<rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" stroke="none"/>`;
 
-      let active = false;
-      let lineIndex = 0;
-      let lines = [];
+      let active     = false;
+      let curAudio   = null;
+      let cachedUrl  = null;
+      let cachedText = '';
 
-      /* ── 고품질 한국어 남성 목소리 우선 선택 ── */
-      function getVoice() {
-        const all = window.speechSynthesis.getVoices();
-        const ko  = all.filter(v => v.lang.startsWith('ko'));
-
-        // 우선순위: 알려진 자연스러운 남성 목소리
-        const priority = [
-          v => /google.*한국어|google.*korean/i.test(v.name),   // Android Chrome — 가장 자연스러움
-          v => /microsoft.*injoon/i.test(v.name),               // Windows 남성
-          v => /microsoft.*kangkang/i.test(v.name),             // Windows 남성2
-          v => /yuna/i.test(v.name),                            // macOS/iOS Yuna
-          v => /male|남성|남자/i.test(v.name),
-        ];
-
-        for (const test of priority) {
-          const found = ko.find(test);
-          if (found) return found;
-        }
-        return ko[0] || null;  // 한국어 아무거나
-      }
-
-      /* ── 텍스트를 줄 단위로 쪼개기 (자연스러운 쉼표 역할) ── */
-      function buildLines() {
+      function getFullText() {
         const text = (document.getElementById('verseText').textContent || '').trim();
         const ref  = (document.getElementById('verseRef').textContent  || '').trim();
-        if (!text) return [];
-
-        // 줄바꿈 & 마침표·쉼표로 끊기
-        const chunks = text
-          .split(/\n|(?<=[。.!?])\s*/)
-          .map(s => s.trim())
-          .filter(Boolean);
-
-        if (ref) chunks.push(ref);
-        return chunks;
+        return text + (ref ? '\n\n' + ref : '');
       }
 
-      /* ── 한 줄 읽기 (재귀 반복) ── */
-      function readLine() {
+      /* ?? ElevenLabs API ?몄텧 ?? */
+      async function fetchSpeech(text) {
+        const res = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
+          {
+            method: 'POST',
+            headers: {
+              'Accept': 'audio/mpeg',
+              'Content-Type': 'application/json',
+              'xi-api-key': XI_KEY
+            },
+            body: JSON.stringify({
+              text,
+              model_id: MODEL,
+              voice_settings: {
+                stability: 0.68,          // ?쒗쁽????                similarity_boost: 0.88,   // 紐⑹냼由??좊챸??                style: 0.32,              // ?먯뿰?ㅻ윭???듭뼇
+                use_speaker_boost: true   // ?뚯쭏 媛뺥솕
+              }
+            })
+          }
+        );
+        if (!res.ok) throw new Error('ElevenLabs ' + res.status);
+        return res.blob();
+      }
+
+      /* ?? ?ъ깮 (罹먯떆 ??API ???대갚 ?쒖꽌) ?? */
+      async function play() {
         if (!active) return;
 
-        if (lineIndex >= lines.length) {
-          // 전체 완독 → 2초 쉬고 처음부터 반복
-          lineIndex = 0;
-          setTimeout(readLine, 2000);
-          return;
-        }
+        const text = getFullText();
+        if (!text) return;
 
-        const utt = new SpeechSynthesisUtterance(lines[lineIndex]);
-        utt.lang   = 'ko-KR';
-        utt.rate   = 0.92;   // 사람과 비슷한 자연스러운 속도
-        utt.pitch  = 0.88;   // 약간 낮되 로봇 느낌 없는 남성 톤
-        utt.volume = 1;
+        label.textContent = '遺덈윭?ㅻ뒗 以묅?;
 
-        const v = getVoice();
-        if (v) utt.voice = v;
-
-        utt.onend = function () {
+        try {
+          // 媛숈? 援ъ젅?대㈃ ?ъ궗??(API ?덉빟)
+          if (text !== cachedText || !cachedUrl) {
+            const blob = await fetchSpeech(text);
+            if (!active) return;
+            if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+            cachedUrl  = URL.createObjectURL(blob);
+            cachedText = text;
+          }
           if (!active) return;
-          lineIndex++;
-          // 줄 사이 자연스러운 호흡 (짧은 줄은 더 길게)
-          const pause = lines[lineIndex - 1].length < 10 ? 600 : 350;
-          setTimeout(readLine, pause);
-        };
-        utt.onerror = function () {
-          if (active) { lineIndex++; setTimeout(readLine, 500); }
-        };
 
+          curAudio = new Audio(cachedUrl);
+          curAudio.onended = function () {
+            if (active) {
+              label.textContent = '硫덉텛湲?;
+              setTimeout(play, 2500); // ?꾨룆 ??2.5珥??ш퀬 諛섎났
+            }
+          };
+          curAudio.onerror = function () {
+            if (active) setTimeout(play, 3000);
+          };
+          label.textContent = '硫덉텛湲?;
+          curAudio.play();
+
+        } catch (e) {
+          console.warn('[TTS] ElevenLabs ?ㅽ뙣, 湲곕낯 ?뚯꽦?쇰줈 ?꾪솚:', e);
+          label.textContent = '硫덉텛湲?;
+          fallback(text);
+        }
+      }
+
+      /* ?? Web Speech API ?대갚 ?? */
+      function fallback(text) {
+        if (!window.speechSynthesis || !active) return;
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.lang  = 'ko-KR';
+        utt.rate  = 0.92;
+        utt.pitch = 0.88;
+        const voices = window.speechSynthesis.getVoices();
+        const v = voices.find(v => v.lang.startsWith('ko'));
+        if (v) utt.voice = v;
+        utt.onend = () => { if (active) setTimeout(() => fallback(text), 2000); };
         window.speechSynthesis.speak(utt);
       }
 
-      /* ── 시작 ── */
+      /* ?? ?쒖옉 / 硫덉땄 ?? */
       function startTTS() {
-        window.speechSynthesis.cancel();
-        lines = buildLines();
-        if (!lines.length) return;
-        lineIndex = 0;
         active = true;
         btn.classList.add('playing');
-        label.textContent = '멈추기';
+        label.textContent = '遺덈윭?ㅻ뒗 以묅?;
         icon.innerHTML = ICON_STOP;
-
-        // 음성 목록 로드 대기
-        if (window.speechSynthesis.getVoices().length === 0) {
-          window.speechSynthesis.onvoiceschanged = function () {
-            window.speechSynthesis.onvoiceschanged = null;
-            readLine();
-          };
-        } else {
-          readLine();
-        }
+        play();
       }
 
-      /* ── 멈춤 ── */
       function stopTTS() {
         active = false;
-        window.speechSynthesis.cancel();
+        if (curAudio) { curAudio.pause(); curAudio = null; }
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
         btn.classList.remove('playing');
-        label.textContent = '읽어주기';
+        label.textContent = '?쎌뼱二쇨린';
         icon.innerHTML = ICON_PLAY;
       }
 
@@ -761,12 +761,13 @@
         if (active) stopTTS(); else startTTS();
       });
 
-      // 화면 숨김 시 자동 중지
+      // ?붾㈃ ?④? ???먮룞 以묒?
       document.addEventListener('visibilitychange', function () {
         if (document.hidden && active) stopTTS();
       });
     })();
   </script>
+
 
 </body>
 </html>
