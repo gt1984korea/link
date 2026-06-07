@@ -5,3 +5,15 @@
  HTTP  2026. 6. 8. 오전 9:37:21 ::1 Returned 301 in 1 ms
  HTTP  2026. 6. 8. 오전 9:37:21 ::1 GET /install
  HTTP  2026. 6. 8. 오전 9:37:21 ::1 Returned 200 in 9 ms
+ HTTP  2026. 6. 8. 오전 9:37:40 ::1 GET /install.html
+ HTTP  2026. 6. 8. 오전 9:37:40 ::1 Returned 301 in 2 ms
+ HTTP  2026. 6. 8. 오전 9:37:40 ::1 GET /install
+ HTTP  2026. 6. 8. 오전 9:37:40 ::1 Returned 200 in 11 ms
+ HTTP  2026. 6. 8. 오전 9:37:40 ::1 GET /sw.js
+ HTTP  2026. 6. 8. 오전 9:37:40 ::1 Returned 200 in 9 ms
+ HTTP  2026. 6. 8. 오전 9:37:42 ::1 GET /install.html
+ HTTP  2026. 6. 8. 오전 9:37:42 ::1 Returned 301 in 1 ms
+ HTTP  2026. 6. 8. 오전 9:37:42 ::1 GET /install
+ HTTP  2026. 6. 8. 오전 9:37:42 ::1 Returned 200 in 2 ms
+ HTTP  2026. 6. 8. 오전 9:37:42 ::1 GET /sw.js
+ HTTP  2026. 6. 8. 오전 9:37:42 ::1 Returned 200 in 3 ms
