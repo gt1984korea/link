@@ -779,6 +779,32 @@
     btnUpload.addEventListener('click', uploadAudio);
     btnDeleteAudio.addEventListener('click', deleteAudio);
 
+    // AI Studio 추천 설정 복사 버튼
+    $('aiStudioPreset').addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-copy');
+      if (!btn) return;
+      try {
+        await navigator.clipboard.writeText(btn.dataset.copy);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = btn.dataset.copy;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      const original = btn.textContent;
+      btn.textContent = '복사됨';
+      btn.classList.add('copied');
+      clearTimeout(btn._resetTimer);
+      btn._resetTimer = setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1200);
+    });
+
     function enterAdmin() {
       gate.classList.add('hidden');
       editor.classList.remove('hidden');
