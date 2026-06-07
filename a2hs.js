@@ -539,8 +539,10 @@
 
   // [iOS Step 3] 추가 확정 화면 — 우측 상단 "추가" 강조
   function iosVisualAddScreen() {
+    var iconUrl = CFG.icon || "icon-192.png";
     return '' +
 '<svg viewBox="0 0 260 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="홈 화면에 추가 확정 화면">' +
+  '<defs><clipPath id="a2hs-add-ic-clip"><rect x="40" y="64" width="60" height="60" rx="13"/></clipPath></defs>' +
   '<rect x="20" y="10" width="220" height="160" rx="14" fill="#fff" stroke="#e5e7eb"/>' +
   // 헤더: 취소 / 제목 / 추가
   '<text x="42" y="34" font-size="12" fill="#6b7280">취소</text>' +
@@ -552,10 +554,10 @@
     '<text x="209" y="34" font-size="12" fill="#fff" text-anchor="middle" font-weight="800">추가</text>' +
   '</g>' +
   '<line x1="30" y1="50" x2="230" y2="50" stroke="#e5e7eb"/>' +
-  // 미리보기 카드
+  // 미리보기 카드 — 실제 앱 아이콘 사용
   '<rect x="40" y="64" width="60" height="60" rx="13" fill="#eff6ff" stroke="#dbeafe"/>' +
-  '<text x="70" y="100" font-size="9" fill="#1d4ed8" text-anchor="middle" font-weight="800">VIC</text>' +
-  '<text x="70" y="110" font-size="6" fill="#1d4ed8" text-anchor="middle" font-weight="700">CHURCH</text>' +
+  '<image href="' + iconUrl + '" x="40" y="64" width="60" height="60" ' +
+    'clip-path="url(#a2hs-add-ic-clip)" preserveAspectRatio="xMidYMid slice"/>' +
   '<rect x="112" y="68" width="110" height="14" rx="4" fill="#f3f4f6"/>' +
   '<text x="118" y="78" font-size="9" fill="#111" font-weight="700">빅토리처치</text>' +
   '<rect x="112" y="88" width="100" height="9" rx="3" fill="#f3f4f6"/>' +

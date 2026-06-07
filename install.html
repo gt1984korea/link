@@ -125,6 +125,23 @@
       color: var(--text-3);
       margin-top: 14px;
     }
+    .cta-fallback {
+      display: block;
+      width: 100%;
+      margin-top: 14px;
+      background: transparent;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      color: var(--text-2);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      padding: 13px;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .cta-fallback:active { background: #f3f4f6; }
 
     /* iOS 안내 카드 (iOS에서만 표시) */
     .ios-note {
@@ -490,6 +507,11 @@
       </button>
       <p class="cta-help" id="ctaHelp">버튼을 누르면 설치 안내가 시작돼요</p>
 
+      <!-- 인앱 안내 전용: 자동 전환이 안 될 때를 위한 최후 수단(주소 복사) -->
+      <button class="cta-fallback" id="copyLinkBtn" type="button" style="display:none">
+        새 화면이 안 열리면, 여기를 눌러 주소 복사하기
+      </button>
+
       <!-- iOS 전용 안내 -->
       <div class="ios-note" id="iosNote">
         <b>📱 아이폰 안내 (iOS 26 기준)</b><br>
@@ -707,6 +729,7 @@
 
     var root = document.getElementById('root');
     var guidePreview = document.getElementById('guidePreview');
+    var copyLinkBtn = document.getElementById('copyLinkBtn');
     var btn = document.getElementById('installBtn');
     var label = btn.querySelector('.label');
     var title = document.getElementById('title');
@@ -763,6 +786,29 @@
       return location.origin + location.pathname;
     }
 
+    // 클립보드 복사: 앱마다 메뉴가 달라 자동 전환이 막혀도
+    // "복사 → 사파리/크롬에 붙여넣기"는 어떤 인앱 브라우저에서도 통하는 최후 수단.
+    function copyTextToClipboard(text, done) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+        return;
+      }
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(ok);
+      } catch (e) {
+        done(false);
+      }
+    }
+
     // 인앱(카카오톡/네이버 등) → 기본 브라우저로 한 번에 전환 시도
     function openDefaultBrowser() {
       var externalUrl = currentPageUrl();
@@ -808,6 +854,24 @@
       ctaHelp.textContent = inAppName + ' 안에서는 설치할 수 없어서 그래요';
       iosNote.style.display = 'none';
       guidePreview.style.display = 'block';
+
+      // 자동 전환이 막히는 기기를 위한 최후 수단: 주소 복사 후 수동으로 붙여넣기
+      copyLinkBtn.style.display = 'block';
+      copyLinkBtn.onclick = function () {
+        copyTextToClipboard(currentPageUrl(), function (ok) {
+          if (ok) {
+            showDialog(
+              '사파리(또는 크롬) 앱을 열고\n주소창을 길게 눌러 [붙여넣기]를 선택해 주세요.',
+              '주소를 복사했어요'
+            );
+          } else {
+            showDialog(
+              '복사에 실패했어요.\n화면 위 주소창의 주소를 직접 따라 입력해 주세요.\n\n' + currentPageUrl(),
+              '복사할 수 없어요'
+            );
+          }
+        });
+      };
     }
 
     // ----- PWA 설치 (안드로이드/데스크톱) -----
