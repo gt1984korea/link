@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 사이트 공용 콘텐츠: 누구나 읽기 가능, 쓰기는 금지(아래 주석 참고)
+    match /site/{docId} {
+      allow read: if true;
+
+      // ⚠️ 기본은 클라이언트 쓰기 차단입니다.
+      // admin.html 의 비밀번호 게이트는 화면 보호용일 뿐 보안이 아닙니다.
+      // 진짜 쓰기 보안은 다음 중 한 가지 방식을 선택해 적용하세요:
+      //
+      // 1) 가장 간단 — 일시적으로 열어두기 (소규모 / 신뢰된 관리자만):
+      //    allow write: if true;
+      //
+      // 2) Firebase Authentication 사용 (권장):
+      //    - Firebase Console > Authentication 활성화 후 관리자 계정 생성
+      //    - admin.html 에 signInWithEmailAndPassword 추가
+      //    - 아래 규칙으로 교체:
+      //    allow write: if request.auth != null
+      //                 && request.auth.token.email in ['admin@victorychurch.nz'];
+      //
+      // 3) 커스텀 클레임 사용 (다수 관리자):
+      //    allow write: if request.auth != null && request.auth.token.admin == true;
+
+      allow write: if false;
+    }
+
+    // 그 외 모든 경로는 차단
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
