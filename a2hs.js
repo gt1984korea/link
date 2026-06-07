@@ -258,33 +258,20 @@
         addCopyButton(extra);
       }
     } else if (isInApp) {
-      h.textContent = "인터넷 앱으로 열어 주세요";
+      // 인앱 브라우저: 안내 + "바로가기 만들기" 한 개 버튼만
+      // 버튼 누르면 외부 브라우저(크롬/사파리)로 자동 전환 시도
       var appName = inApp.kakao ? "카카오톡" : inApp.instagram ? "인스타그램" :
                     inApp.facebook ? "페이스북" : inApp.line ? "라인" :
                     inApp.naver ? "네이버" : "지금 보는 앱";
-      sub.innerHTML = "<b>" + appName + "</b> 안에서는 바로가기를 못 만들어요.<br>" +
-                      (isIOS ? "사파리" : "크롬") + "(휴대폰 인터넷)으로 열면 만들 수 있어요.";
-      if (isAndroid) {
-        steps.innerHTML =
-          step(1, '화면 오른쪽 위 ' + DOTS + ' (점 세 개) 를 누르세요') +
-          step(2, '<b>다른 브라우저로 열기</b> 를 누르세요') +
-          step(3, '열린 화면에서 다시 <b>바로가기 만들기</b> 를 누르세요');
-        if (inApp.kakao) {
-          var btn = document.createElement("button");
-          btn.className = "a2hs-copy";
-          btn.textContent = "크롬으로 바로 열기";
-          btn.onclick = function () {
-            location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
-          };
-          extra.appendChild(btn);
-        }
-      } else {
-        steps.innerHTML =
-          step(1, '화면 아래(또는 위) ' + DOTS + ' 를 누르세요') +
-          step(2, '<b>사파리로 열기</b> 를 누르세요') +
-          step(3, '열린 화면에서 다시 <b>바로가기 만들기</b> 를 누르세요');
-      }
-      addCopyButton(extra);
+      h.textContent = appName + " 안에서는 바로가기를 못 만들어요";
+      sub.innerHTML = "아래 <b>바로가기 만들기</b> 를 누르면<br>" +
+                      "기본 브라우저로 자동으로 열려요.";
+
+      var openBtn = document.createElement("button");
+      openBtn.className = "a2hs-copy";
+      openBtn.textContent = "바로가기 만들기";
+      openBtn.onclick = function () { openInExternalBrowser(); };
+      extra.appendChild(openBtn);
     } else if (isIOS) {
       h.textContent = "이렇게 따라 하세요";
       sub.textContent = "아이폰에서는 아래 3단계로 첫 화면에 바로가기를 만들어요.";
@@ -301,6 +288,50 @@
         step(3, '<b>추가</b> 를 누르면 끝!');
     }
     sheet.classList.add("show");
+  }
+
+  // 인앱 → 외부 브라우저로 자동 전환
+  // 각 앱의 공식 외부 열기 스킴 사용. 실패하면 새창 폴백.
+  function openInExternalBrowser() {
+    var url = location.href;
+    var target = null;
+
+    if (inApp.kakao) {
+      // 카카오톡: 외부 브라우저 강제 오픈
+      target = "kakaotalk://web/openExternal?url=" + encodeURIComponent(url);
+    } else if (inApp.line) {
+      // 라인: openExternalBrowser=true 쿼리 추가
+      var sep = url.indexOf("?") >= 0 ? "&" : "?";
+      location.href = url + sep + "openExternalBrowser=1";
+      return;
+    } else if (inApp.naver) {
+      // 네이버 인앱: 외부 브라우저 스킴
+      target = "naversearchapp://inappbrowser?url=" + encodeURIComponent(url) + "&target=new";
+    } else if (isAndroid) {
+      // 안드로이드 일반: 크롬 인텐트로 외부 전환
+      target = "intent://" + url.replace(/^https?:\/\//, "") +
+               "#Intent;scheme=" + (location.protocol.replace(":", "") || "https") +
+               ";package=com.android.chrome;end";
+    } else if (isIOS) {
+      // iOS 인스타/페북 등: 사파리로 직접 보낼 공식 스킴이 없음
+      // → 새창 시도 후, 차단되면 안내
+      var w = window.open(url, "_blank");
+      if (!w) {
+        alert("오른쪽 위 메뉴(···)에서 '사파리로 열기'를 눌러 주세요.");
+      }
+      return;
+    }
+
+    if (target) {
+      // 스킴 호출
+      location.href = target;
+      // 2초 뒤에도 페이지에 머물러 있으면 새창 폴백
+      setTimeout(function () {
+        try { window.open(url, "_blank"); } catch (e) {}
+      }, 2000);
+    } else {
+      try { window.open(url, "_blank"); } catch (e) {}
+    }
   }
 
   function addCopyButton(container) {
