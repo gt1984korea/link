@@ -640,118 +640,127 @@
     data-icon="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png"
     data-auto-banner="false"></script>
 
-  <!-- TTS -->
+  <!-- TTS (ElevenLabs) -->
   <script>
     (function () {
       const btn   = document.getElementById('ttsBtn');
       const label = document.getElementById('ttsBtnLabel');
       const icon  = document.getElementById('ttsIcon');
-      if (!btn || !window.speechSynthesis) return;
+      if (!btn) return;
+
+      /* ElevenLabs 설정 */
+      const XI_KEY   = '0fb32fdf3fa82c68378bcf9a8e5de0a0acef05ceb7b0012c054b8ebbb0b831fe';
+      const VOICE_ID = 'pNInz6obpgDQGcFmaJgB'; // Adam (eleven_multilingual_v2) - 한국어 최적
+      const MODEL    = 'eleven_multilingual_v2';
 
       const ICON_PLAY = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
       const ICON_STOP = `<rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" stroke="none"/>`;
 
-      let active = false;
-      let lineIndex = 0;
-      let lines = [];
+      let active     = false;
+      let curAudio   = null;
+      let cachedUrl  = null;
+      let cachedText = '';
 
-      /* ── 고품질 한국어 남성 목소리 우선 선택 ── */
-      function getVoice() {
-        const all = window.speechSynthesis.getVoices();
-        const ko  = all.filter(v => v.lang.startsWith('ko'));
-
-        // 우선순위: 알려진 자연스러운 남성 목소리
-        const priority = [
-          v => /google.*한국어|google.*korean/i.test(v.name),   // Android Chrome — 가장 자연스러움
-          v => /microsoft.*injoon/i.test(v.name),               // Windows 남성
-          v => /microsoft.*kangkang/i.test(v.name),             // Windows 남성2
-          v => /yuna/i.test(v.name),                            // macOS/iOS Yuna
-          v => /male|남성|남자/i.test(v.name),
-        ];
-
-        for (const test of priority) {
-          const found = ko.find(test);
-          if (found) return found;
-        }
-        return ko[0] || null;  // 한국어 아무거나
-      }
-
-      /* ── 텍스트를 줄 단위로 쪼개기 (자연스러운 쉼표 역할) ── */
-      function buildLines() {
+      function getFullText() {
         const text = (document.getElementById('verseText').textContent || '').trim();
         const ref  = (document.getElementById('verseRef').textContent  || '').trim();
-        if (!text) return [];
-
-        // 줄바꿈 & 마침표·쉼표로 끊기
-        const chunks = text
-          .split(/\n|(?<=[。.!?])\s*/)
-          .map(s => s.trim())
-          .filter(Boolean);
-
-        if (ref) chunks.push(ref);
-        return chunks;
+        return text + (ref ? '\n\n' + ref : '');
       }
 
-      /* ── 한 줄 읽기 (재귀 반복) ── */
-      function readLine() {
+      /* ElevenLabs API 호출 */
+      async function fetchSpeech(text) {
+        const res = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
+          {
+            method: 'POST',
+            headers: {
+              'Accept': 'audio/mpeg',
+              'Content-Type': 'application/json',
+              'xi-api-key': XI_KEY
+            },
+            body: JSON.stringify({
+              text,
+              model_id: MODEL,
+              voice_settings: {
+                stability: 0.68,          // 감정 표현력 안정화
+                similarity_boost: 0.88,   // 목소리 선명도
+                style: 0.32,              // 자연스러운 억양
+                use_speaker_boost: true   // 음질 강화
+              }
+            })
+          }
+        );
+        if (!res.ok) throw new Error('ElevenLabs ' + res.status);
+        return res.blob();
+      }
+
+      /* 재생 (캐시 확인 후 API 호출 또는 폴백) */
+      async function play() {
         if (!active) return;
 
-        if (lineIndex >= lines.length) {
-          // 전체 완독 → 2초 쉬고 처음부터 반복
-          lineIndex = 0;
-          setTimeout(readLine, 2000);
-          return;
-        }
+        const text = getFullText();
+        if (!text) return;
 
-        const utt = new SpeechSynthesisUtterance(lines[lineIndex]);
-        utt.lang   = 'ko-KR';
-        utt.rate   = 0.92;   // 사람과 비슷한 자연스러운 속도
-        utt.pitch  = 0.88;   // 약간 낮되 로봇 느낌 없는 남성 톤
-        utt.volume = 1;
+        label.textContent = '불러오는 중...';
 
-        const v = getVoice();
-        if (v) utt.voice = v;
-
-        utt.onend = function () {
+        try {
+          // 같은 구절이면 캐시 사용 (API 호출 절약)
+          if (text !== cachedText || !cachedUrl) {
+            const blob = await fetchSpeech(text);
+            if (!active) return;
+            if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+            cachedUrl  = URL.createObjectURL(blob);
+            cachedText = text;
+          }
           if (!active) return;
-          lineIndex++;
-          // 줄 사이 자연스러운 호흡 (짧은 줄은 더 길게)
-          const pause = lines[lineIndex - 1].length < 10 ? 600 : 350;
-          setTimeout(readLine, pause);
-        };
-        utt.onerror = function () {
-          if (active) { lineIndex++; setTimeout(readLine, 500); }
-        };
 
+          curAudio = new Audio(cachedUrl);
+          curAudio.onended = function () {
+            if (active) {
+              label.textContent = '멈추기';
+              setTimeout(play, 2500); // 완독 후 2.5초 쉬고 반복
+            }
+          };
+          curAudio.onerror = function () {
+            if (active) setTimeout(play, 3000);
+          };
+          label.textContent = '멈추기';
+          curAudio.play();
+
+        } catch (e) {
+          console.warn('[TTS] ElevenLabs 실패, 기본 음성으로 전환:', e);
+          label.textContent = '멈추기';
+          fallback(text);
+        }
+      }
+
+      /* Web Speech API 폴백 */
+      function fallback(text) {
+        if (!window.speechSynthesis || !active) return;
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.lang  = 'ko-KR';
+        utt.rate  = 0.92;
+        utt.pitch = 0.88;
+        const voices = window.speechSynthesis.getVoices();
+        const v = voices.find(v => v.lang.startsWith('ko'));
+        if (v) utt.voice = v;
+        utt.onend = () => { if (active) setTimeout(() => fallback(text), 2000); };
         window.speechSynthesis.speak(utt);
       }
 
-      /* ── 시작 ── */
+      /* 시작 / 멈춤 */
       function startTTS() {
-        window.speechSynthesis.cancel();
-        lines = buildLines();
-        if (!lines.length) return;
-        lineIndex = 0;
         active = true;
         btn.classList.add('playing');
-        label.textContent = '멈추기';
+        label.textContent = '불러오는 중...';
         icon.innerHTML = ICON_STOP;
-
-        // 음성 목록 로드 대기
-        if (window.speechSynthesis.getVoices().length === 0) {
-          window.speechSynthesis.onvoiceschanged = function () {
-            window.speechSynthesis.onvoiceschanged = null;
-            readLine();
-          };
-        } else {
-          readLine();
-        }
+        play();
       }
 
-      /* ── 멈춤 ── */
       function stopTTS() {
         active = false;
-        window.speechSynthesis.cancel();
+        if (curAudio) { curAudio.pause(); curAudio = null; }
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
         btn.classList.remove('playing');
         label.textContent = '읽어주기';
         icon.innerHTML = ICON_PLAY;
