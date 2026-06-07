@@ -650,7 +650,9 @@
 
       /* ElevenLabs 설정 */
       const XI_KEY   = '0fb32fdf3fa82c68378bcf9a8e5de0a0acef05ceb7b0012c054b8ebbb0b831fe';
-      const VOICE_ID = 'H9ihk5yaEtJLXjhBgRaF'; // Tarquin - Posh & English RP
+      // - '8yL2rVx40vjDeu5pTbg6': Kim (차분하고 묵직한 중년 남성 목소리 - 목사님 느낌)
+      // - 'oMb1n2v5lej4lcqCGPY4': David Bae (부드럽고 차분한 남성 목소리)
+      const VOICE_ID = '8yL2rVx40vjDeu5pTbg6'; 
       const MODEL    = 'eleven_multilingual_v2';
 
       const ICON_PLAY = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>`;
@@ -661,13 +663,74 @@
       let cachedUrl  = null;
       let cachedText = '';
 
+      /* Web Audio API를 활용한 교회/대성당 잔향(Reverb) 이펙터 설정 */
+      let audioCtx   = null;
+      let dryGain    = null;
+      let wetGain    = null;
+      let convolver  = null;
+
+      function initAudioContext(audioElement) {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+
+          if (!audioCtx) {
+            audioCtx = new AudioContextClass();
+
+            // Direct 음성과 Reverb 음성 조절 Gain 노드 생성
+            dryGain = audioCtx.createGain();
+            wetGain = audioCtx.createGain();
+
+            dryGain.gain.value = 0.85; // 본래 목소리는 명료하게 유지
+            wetGain.gain.value = 0.28; // 목사님 설교단상 느낌의 웅장한 잔향감 부여 (28%)
+
+            // 합성 임펄스 응답 생성 (성당/대형 강단 울림 시뮬레이션)
+            const duration = 2.4; // 잔향 시간 2.4초
+            const decay = 2.0;
+            const sampleRate = audioCtx.sampleRate;
+            const length = sampleRate * duration;
+            const impulse = audioCtx.createBuffer(2, length, sampleRate);
+            const left = impulse.getChannelData(0);
+            const right = impulse.getChannelData(1);
+
+            for (let i = 0; i < length; i++) {
+              const percent = i / length;
+              // 지수 감쇄하는 화이트 노이즈로 공간 울림 효과 구현
+              const val = (Math.random() * 2 - 1) * Math.pow(1 - percent, decay);
+              left[i] = val;
+              right[i] = val;
+            }
+
+            convolver = audioCtx.createConvolver();
+            convolver.buffer = impulse;
+
+            // 연결 구조: source -> dryGain -> destination
+            //           source -> convolver -> wetGain -> destination
+            dryGain.connect(audioCtx.destination);
+            convolver.connect(wetGain);
+            wetGain.connect(audioCtx.destination);
+          }
+
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+
+          // HTMLMediaElement 소스 노드 생성 후 이펙터 체인에 연결
+          const source = audioCtx.createMediaElementSource(audioElement);
+          source.connect(dryGain);
+          source.connect(convolver);
+        } catch (e) {
+          console.warn('[WebAudio] Reverb initialization failed:', e);
+        }
+      }
+
       function getFullText() {
         const text = (document.getElementById('verseText').textContent || '').trim();
         const ref  = (document.getElementById('verseRef').textContent  || '').trim();
         return text + (ref ? '\n\n' + ref : '');
       }
 
-      /* ElevenLabs API 호출 */
+      /* ElevenLabs API 호출 (목사님 톤 튜닝 적용) */
       async function fetchSpeech(text) {
         const res = await fetch(
           `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
@@ -682,10 +745,10 @@
               text,
               model_id: MODEL,
               voice_settings: {
-                stability: 0.68,          // 감정 표현력 안정화
-                similarity_boost: 0.88,   // 목소리 선명도
-                style: 0.32,              // 자연스러운 억양
-                use_speaker_boost: true   // 음질 강화
+                stability: 0.78,          // 안정성 높임 (중후하고 신뢰감 있는 억양 유지)
+                similarity_boost: 0.85,   // 선명도 높임
+                style: 0.0,               // 감정 기복을 최소화하여 정중하고 경건하게 낭독
+                use_speaker_boost: true   // 기본 음질 강화 활성화
               }
             })
           }
@@ -715,6 +778,10 @@
           if (!active) return;
 
           curAudio = new Audio(cachedUrl);
+          
+          // 재생 전 Web Audio API 공간계 이펙터 연결
+          initAudioContext(curAudio);
+
           curAudio.onended = function () {
             if (active) {
               label.textContent = '멈추기';
@@ -754,6 +821,11 @@
         btn.classList.add('playing');
         label.textContent = '불러오는 중...';
         icon.innerHTML = ICON_STOP;
+        
+        // 클릭 시 사용자 제스처 이벤트 내에서 AudioContext 활성화 보장
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
         play();
       }
 
