@@ -385,6 +385,101 @@
       </select>
     </section>
 
+    <!-- 인스타그램 게시물 (메인 화면 인스타 섹션에 1개 노출) -->
+    <section class="card hidden" id="instaCard">
+      <h2>인스타그램 게시물 (1개)</h2>
+      <p class="hint" style="margin-top:0">
+        인스타그램은 자동 피드 임베드가 막혀 있어, 보여줄 게시물 1개를 직접 골라 등록합니다.
+        등록하면 메인 화면 "인스타그램" 섹션을 펼칠 때 그 게시물이 표시됩니다.
+        비우고 저장하면 안내 문구로 되돌아갑니다.
+      </p>
+      <p class="hint" style="margin-top:8px">
+        ※ <b>공개 게시물</b>만 표시됩니다. 인스타그램 앱/웹에서 게시물 → 공유 → "링크 복사"로 주소를 가져오세요.
+      </p>
+
+      <label for="instaUrl">게시물 주소 (URL)</label>
+      <input type="text" id="instaUrl" inputmode="url"
+        placeholder="예) https://www.instagram.com/p/XXXXXXXXXXX/">
+
+      <div class="row">
+        <button class="btn btn-ghost" id="btnInstaClear" type="button">비우기</button>
+        <button class="btn btn-primary" id="btnInstaSave" type="button">저장</button>
+      </div>
+      <div class="status" id="instaStatus"></div>
+
+      <!-- 현재 등록된 게시물 -->
+      <div id="currentInsta" class="hidden" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line);">
+        <label style="margin-top:0">현재 등록된 게시물</label>
+        <p class="copy-row" style="margin-top:4px">
+          <code id="instaCurrentUrl"></code>
+          <a id="instaOpen" class="btn-copy" href="#" target="_blank" rel="noopener" style="text-decoration:none;">열기 ↗</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- 페이스북 게시물 (메인 화면 페이스북 섹션에 1개 노출) -->
+    <section class="card hidden" id="fbCard">
+      <h2>페이스북 게시물 (1개)</h2>
+      <p class="hint" style="margin-top:0">
+        보여줄 페이스북 게시물 1개를 등록합니다. 등록하면 메인 화면 "페이스북" 섹션을 펼칠 때 그 게시물이 표시됩니다.
+        <b>등록하지 않으면</b> 페이스북 버튼을 누를 때 곧바로 페이지로 이동합니다.
+      </p>
+      <p class="hint" style="margin-top:8px">
+        ※ <b>공개 게시물</b>만 표시됩니다. 페이스북에서 게시물 → ⋯(더보기) → "링크 복사"로 주소를 가져오세요.
+      </p>
+
+      <label for="fbUrl">게시물 주소 (URL)</label>
+      <input type="text" id="fbUrl" inputmode="url"
+        placeholder="예) https://www.facebook.com/.../posts/XXXX 또는 https://www.facebook.com/share/p/XXXX/">
+
+      <div class="row">
+        <button class="btn btn-ghost" id="btnFbClear" type="button">비우기</button>
+        <button class="btn btn-primary" id="btnFbSave" type="button">저장</button>
+      </div>
+      <div class="status" id="fbStatus"></div>
+
+      <!-- 현재 등록된 게시물 -->
+      <div id="currentFb" class="hidden" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line);">
+        <label style="margin-top:0">현재 등록된 게시물</label>
+        <p class="copy-row" style="margin-top:4px">
+          <code id="fbCurrentUrl"></code>
+          <a id="fbOpen" class="btn-copy" href="#" target="_blank" rel="noopener" style="text-decoration:none;">열기 ↗</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- 최신 영상 (메인 화면 유튜브 섹션에 노출) -->
+    <section class="card hidden" id="ytCard">
+      <h2>최신 영상 (유튜브)</h2>
+      <p class="hint" style="margin-top:0">
+        메인 화면 "유튜브 채널 → 최신 소식"에 보여줄 영상입니다.
+        새 설교 영상을 올린 뒤, 그 영상의 <b>유튜브 링크</b>를 붙여넣고 저장하세요.
+        비우면 자동(최신 시도)으로 되돌아갑니다.
+      </p>
+      <p class="hint" style="margin-top:8px">
+        ※ 유튜브 앱/웹에서 영상 → 공유 → "링크 복사"로 주소를 가져오세요.
+      </p>
+
+      <label for="ytUrl">영상 주소 (URL)</label>
+      <input type="text" id="ytUrl" inputmode="url"
+        placeholder="예) https://www.youtube.com/watch?v=XXXXXXXXXXX 또는 https://youtu.be/XXXXXXXXXXX">
+
+      <div class="row">
+        <button class="btn btn-ghost" id="btnYtClear" type="button">비우기</button>
+        <button class="btn btn-primary" id="btnYtSave" type="button">저장</button>
+      </div>
+      <div class="status" id="ytStatus"></div>
+
+      <!-- 현재 등록된 영상 -->
+      <div id="currentYt" class="hidden" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line);">
+        <label style="margin-top:0">현재 등록된 영상</label>
+        <div style="position:relative; width:100%; padding-top:56.25%; border-radius:10px; overflow:hidden; background:#000; margin-top:6px;">
+          <iframe id="ytPreview" style="position:absolute; inset:0; width:100%; height:100%; border:0;"
+            allow="encrypted-media" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+    </section>
+
     </div>
 
     <div class="col-list">
@@ -627,6 +722,9 @@
         versesData = Array.isArray(d.verses) ? d.verses.slice() : [];
         updatedMeta.textContent = d.updatedAt ? `마지막 수정: ${formatTime(d.updatedAt)}` : '';
         renderAudio(d);
+        renderInsta(d);
+        renderFb(d);
+        renderYt(d);
         renderList();
 
         // 마이그레이션: verses 배열이 없고 레거시 단일 구절만 있으면
@@ -786,6 +884,246 @@
     btnUpload.addEventListener('click', uploadAudio);
     btnDeleteAudio.addEventListener('click', deleteAudio);
 
+    /* ── 인스타그램 게시물 (단일 URL) ── */
+    const instaUrl       = $('instaUrl');
+    const btnInstaSave   = $('btnInstaSave');
+    const btnInstaClear  = $('btnInstaClear');
+    const instaStatus    = $('instaStatus');
+    const currentInsta   = $('currentInsta');
+    const instaCurrentUrl= $('instaCurrentUrl');
+    const instaOpen      = $('instaOpen');
+
+    // 인스타 게시물 URL 형식 검증 (게시물/릴스/IGTV 허용)
+    function isValidInstaUrl(u) {
+      return /^https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[\w-]+\/?/i.test(u);
+    }
+
+    // 문서 데이터로 현재 등록된 게시물 표시 (편집 중 입력값은 건드리지 않음)
+    function renderInsta(d) {
+      const url = (d && typeof d.instagramUrl === 'string') ? d.instagramUrl.trim() : '';
+      if (document.activeElement !== instaUrl) instaUrl.value = url;
+      if (url) {
+        instaCurrentUrl.textContent = url;
+        instaOpen.href = url;
+        currentInsta.classList.remove('hidden');
+      } else {
+        currentInsta.classList.add('hidden');
+      }
+    }
+
+    async function saveInsta() {
+      const url = instaUrl.value.trim();
+      if (!url) {
+        instaStatus.textContent = '주소를 입력하거나 "비우기"를 누르세요.';
+        instaStatus.className = 'status err';
+        return;
+      }
+      if (!isValidInstaUrl(url)) {
+        instaStatus.textContent = '인스타그램 게시물 주소 형식이 아닙니다. (예: https://www.instagram.com/p/XXXX/)';
+        instaStatus.className = 'status err';
+        return;
+      }
+      btnInstaSave.disabled = true;
+      instaStatus.textContent = '저장 중…';
+      instaStatus.className = 'status';
+      try {
+        await setDoc(ref, { instagramUrl: url, updatedAt: serverTimestamp() }, { merge: true });
+        instaStatus.textContent = '저장되었습니다. 메인 화면 인스타그램 섹션에 반영됩니다.';
+        instaStatus.className = 'status ok';
+        renderInsta({ instagramUrl: url });
+      } catch (e) {
+        instaStatus.textContent = '저장 실패: ' + (e.message || e);
+        instaStatus.className = 'status err';
+      } finally {
+        btnInstaSave.disabled = false;
+      }
+    }
+
+    async function clearInsta() {
+      if (!confirm('등록된 인스타그램 게시물을 비울까요?\n메인 화면은 안내 문구로 돌아갑니다.')) return;
+      btnInstaClear.disabled = true;
+      instaStatus.textContent = '비우는 중…';
+      instaStatus.className = 'status';
+      try {
+        await setDoc(ref, { instagramUrl: deleteField(), updatedAt: serverTimestamp() }, { merge: true });
+        instaUrl.value = '';
+        instaStatus.textContent = '비웠습니다. 메인 화면은 안내 문구로 표시됩니다.';
+        instaStatus.className = 'status ok';
+        renderInsta({});
+      } catch (e) {
+        instaStatus.textContent = '비우기 실패: ' + (e.message || e);
+        instaStatus.className = 'status err';
+      } finally {
+        btnInstaClear.disabled = false;
+      }
+    }
+
+    btnInstaSave.addEventListener('click', saveInsta);
+    btnInstaClear.addEventListener('click', clearInsta);
+
+    /* ── 페이스북 게시물 (단일 URL) ── */
+    const fbUrl        = $('fbUrl');
+    const btnFbSave    = $('btnFbSave');
+    const btnFbClear   = $('btnFbClear');
+    const fbStatus     = $('fbStatus');
+    const currentFb    = $('currentFb');
+    const fbCurrentUrl = $('fbCurrentUrl');
+    const fbOpen       = $('fbOpen');
+
+    // 페이스북 게시물 URL 형식 검증 (페이스북 도메인이면 허용 — 게시물 형식이 다양함)
+    function isValidFbUrl(u) {
+      return /^https?:\/\/(www\.|m\.|web\.|fb\.)?facebook\.com\/.+/i.test(u) ||
+             /^https?:\/\/fb\.watch\/.+/i.test(u);
+    }
+
+    // 문서 데이터로 현재 등록된 게시물 표시 (편집 중 입력값은 건드리지 않음)
+    function renderFb(d) {
+      const url = (d && typeof d.facebookPostUrl === 'string') ? d.facebookPostUrl.trim() : '';
+      if (document.activeElement !== fbUrl) fbUrl.value = url;
+      if (url) {
+        fbCurrentUrl.textContent = url;
+        fbOpen.href = url;
+        currentFb.classList.remove('hidden');
+      } else {
+        currentFb.classList.add('hidden');
+      }
+    }
+
+    async function saveFb() {
+      const url = fbUrl.value.trim();
+      if (!url) {
+        fbStatus.textContent = '주소를 입력하거나 "비우기"를 누르세요.';
+        fbStatus.className = 'status err';
+        return;
+      }
+      if (!isValidFbUrl(url)) {
+        fbStatus.textContent = '페이스북 게시물 주소 형식이 아닙니다. (예: https://www.facebook.com/.../posts/XXXX)';
+        fbStatus.className = 'status err';
+        return;
+      }
+      btnFbSave.disabled = true;
+      fbStatus.textContent = '저장 중…';
+      fbStatus.className = 'status';
+      try {
+        await setDoc(ref, { facebookPostUrl: url, updatedAt: serverTimestamp() }, { merge: true });
+        fbStatus.textContent = '저장되었습니다. 메인 화면 페이스북 섹션에 반영됩니다.';
+        fbStatus.className = 'status ok';
+        renderFb({ facebookPostUrl: url });
+      } catch (e) {
+        fbStatus.textContent = '저장 실패: ' + (e.message || e);
+        fbStatus.className = 'status err';
+      } finally {
+        btnFbSave.disabled = false;
+      }
+    }
+
+    async function clearFb() {
+      if (!confirm('등록된 페이스북 게시물을 비울까요?\n메인 화면 페이스북 버튼은 바로 링크 이동으로 돌아갑니다.')) return;
+      btnFbClear.disabled = true;
+      fbStatus.textContent = '비우는 중…';
+      fbStatus.className = 'status';
+      try {
+        await setDoc(ref, { facebookPostUrl: deleteField(), updatedAt: serverTimestamp() }, { merge: true });
+        fbUrl.value = '';
+        fbStatus.textContent = '비웠습니다. 페이스북 버튼은 바로 링크 이동으로 동작합니다.';
+        fbStatus.className = 'status ok';
+        renderFb({});
+      } catch (e) {
+        fbStatus.textContent = '비우기 실패: ' + (e.message || e);
+        fbStatus.className = 'status err';
+      } finally {
+        btnFbClear.disabled = false;
+      }
+    }
+
+    btnFbSave.addEventListener('click', saveFb);
+    btnFbClear.addEventListener('click', clearFb);
+
+    /* ── 최신 영상 (유튜브 단일 영상) ── */
+    const ytUrl        = $('ytUrl');
+    const btnYtSave    = $('btnYtSave');
+    const btnYtClear   = $('btnYtClear');
+    const ytStatus     = $('ytStatus');
+    const currentYt    = $('currentYt');
+    const ytPreview    = $('ytPreview');
+
+    // 유튜브 링크/ID에서 11자 영상 ID 추출 (watch?v=, youtu.be/, /embed/, /shorts/, /live/)
+    function parseYtId(s) {
+      s = (s || '').trim();
+      if (!s) return '';
+      if (/^[\w-]{11}$/.test(s)) return s;
+      const m = s.match(/(?:v=|\/embed\/|youtu\.be\/|\/shorts\/|\/live\/)([\w-]{11})/);
+      return m ? m[1] : '';
+    }
+
+    // 문서 데이터로 현재 등록된 영상 표시 (편집 중 입력값은 건드리지 않음)
+    function renderYt(d) {
+      const raw = (d && (d.youtubeVideoId || d.youtubeUrl)) || '';
+      const id = parseYtId(raw);
+      if (document.activeElement !== ytUrl) {
+        ytUrl.value = (d && typeof d.youtubeUrl === 'string' && d.youtubeUrl.trim()) ? d.youtubeUrl.trim()
+                    : (id ? 'https://youtu.be/' + id : '');
+      }
+      if (id) {
+        ytPreview.src = 'https://www.youtube-nocookie.com/embed/' + id + '?rel=0';
+        currentYt.classList.remove('hidden');
+      } else {
+        ytPreview.removeAttribute('src');
+        currentYt.classList.add('hidden');
+      }
+    }
+
+    async function saveYt() {
+      const raw = ytUrl.value.trim();
+      if (!raw) {
+        ytStatus.textContent = '주소를 입력하거나 "비우기"를 누르세요.';
+        ytStatus.className = 'status err';
+        return;
+      }
+      const id = parseYtId(raw);
+      if (!id) {
+        ytStatus.textContent = '유튜브 영상 주소 형식이 아닙니다. (예: https://youtu.be/XXXXXXXXXXX)';
+        ytStatus.className = 'status err';
+        return;
+      }
+      btnYtSave.disabled = true;
+      ytStatus.textContent = '저장 중…';
+      ytStatus.className = 'status';
+      try {
+        await setDoc(ref, { youtubeVideoId: id, youtubeUrl: raw, updatedAt: serverTimestamp() }, { merge: true });
+        ytStatus.textContent = '저장되었습니다. 메인 화면 유튜브 섹션에 반영됩니다.';
+        ytStatus.className = 'status ok';
+        renderYt({ youtubeVideoId: id, youtubeUrl: raw });
+      } catch (e) {
+        ytStatus.textContent = '저장 실패: ' + (e.message || e);
+        ytStatus.className = 'status err';
+      } finally {
+        btnYtSave.disabled = false;
+      }
+    }
+
+    async function clearYt() {
+      if (!confirm('등록된 영상을 비울까요?\n메인 화면은 자동(최신 시도)으로 돌아갑니다.')) return;
+      btnYtClear.disabled = true;
+      ytStatus.textContent = '비우는 중…';
+      ytStatus.className = 'status';
+      try {
+        await setDoc(ref, { youtubeVideoId: deleteField(), youtubeUrl: deleteField(), updatedAt: serverTimestamp() }, { merge: true });
+        ytUrl.value = '';
+        ytStatus.textContent = '비웠습니다. 메인 화면은 자동으로 표시됩니다.';
+        ytStatus.className = 'status ok';
+        renderYt({});
+      } catch (e) {
+        ytStatus.textContent = '비우기 실패: ' + (e.message || e);
+        ytStatus.className = 'status err';
+      } finally {
+        btnYtClear.disabled = false;
+      }
+    }
+
+    btnYtSave.addEventListener('click', saveYt);
+    btnYtClear.addEventListener('click', clearYt);
+
     // AI Studio 추천 설정 복사 버튼
     $('aiStudioPreset').addEventListener('click', async (e) => {
       const btn = e.target.closest('.btn-copy');
@@ -817,6 +1155,9 @@
       editor.classList.remove('hidden');
       listCard.classList.remove('hidden');
       $('audioCard').classList.remove('hidden');
+      $('instaCard').classList.remove('hidden');
+      $('fbCard').classList.remove('hidden');
+      $('ytCard').classList.remove('hidden');
       previewCard.classList.remove('hidden');
       try { initDb(); } catch (e) {
         saveStatus.textContent = 'Firebase 초기화 실패: ' + (e.message || e);
@@ -829,6 +1170,9 @@
         const d = snap.data() || {};
         updatedMeta.textContent = d.updatedAt ? `마지막 수정: ${formatTime(d.updatedAt)}` : '';
         renderAudio(d);
+        renderInsta(d);
+        renderFb(d);
+        renderYt(d);
         versesData = Array.isArray(d.verses) ? d.verses.slice() : [];
         renderList();
       });
