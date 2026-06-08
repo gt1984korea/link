@@ -1,10 +1,13 @@
-const { chromium } = require('playwright');
+const { webkit } = require('playwright');
 const path = require('path');
 
 async function run() {
-  console.log('Launching browser...');
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext();
+  console.log('Launching WebKit browser...');
+  const browser = await webkit.launch({ headless: true });
+  const context = await browser.newContext({
+    locale: 'ko-KR',
+    timezoneId: 'Pacific/Auckland',
+  });
   const page = await context.newPage();
 
   // 브라우저 내 콘솔 로그 수집

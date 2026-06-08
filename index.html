@@ -325,6 +325,29 @@
     .verse.loading .ref { opacity: 0.45; }
     .verse.hidden { display: none; }
 
+    /* 종이에 글씨를 쓰듯 잉크가 번져 선명해지는 애니메이션 효과 */
+    @keyframes inkWrite {
+      0% {
+        opacity: 0;
+        filter: blur(4px);
+      }
+      60% {
+        opacity: 0.6;
+        filter: blur(1.5px);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0);
+      }
+    }
+
+    .writing-char {
+      display: inline;
+      opacity: 0;
+      animation: inkWrite 0.35s ease-out forwards;
+      white-space: pre-wrap;
+    }
+
     /* 지난 암송 구절 리스트 패널 (verse 카드 위쪽에 표시) */
     .past-panel {
       background: var(--surface);
@@ -1128,13 +1151,43 @@
     }
 
     function typeWriter(el, text, speed, callback) {
-      el.textContent = '';
+      el.textContent = ''; // 기존 내용 비우기
       let i = 0;
+      
       function type() {
         if (i < text.length) {
-          el.textContent += text.charAt(i);
+          const char = text.charAt(i);
+          
+          if (char === '\n') {
+            const br = document.createElement('br');
+            el.appendChild(br);
+          } else {
+            const span = document.createElement('span');
+            span.className = 'writing-char';
+            span.textContent = char;
+            el.appendChild(span);
+          }
+          
           i++;
-          typeTimers.push(setTimeout(type, speed));
+          
+          // 자연스러운 종이 글쓰기 템포 (Human-like pacing)
+          let delay = speed;
+          
+          // 1. 랜덤 미세 딜레이 변동 (-15ms ~ +15ms)
+          const randomNoise = Math.floor(Math.random() * 30) - 15;
+          delay += randomNoise;
+          
+          // 2. 글자 종류에 따른 호흡 딜레이
+          const nextChar = text.charAt(i - 1);
+          if (nextChar === '\n') {
+            delay = 450; // 줄바꿈 후 숨고르기
+          } else if (nextChar === ' ') {
+            delay = 130; // 단어 띄어쓰기 간격
+          } else if (/[.,?!~]/.test(nextChar)) {
+            delay = 350; // 쉼표/마침표 후 멈춤
+          }
+          
+          typeTimers.push(setTimeout(type, Math.max(20, delay)));
         } else if (callback) {
           callback();
         }
