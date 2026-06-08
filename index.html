@@ -335,11 +335,29 @@
     }
     .past-panel.hidden { display: none; }
     .past-panel .past-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 13px;
       font-weight: 700;
       color: var(--text-2);
       letter-spacing: 0.02em;
       margin: 0 0 14px;
+    }
+    .past-close-btn {
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--brand);
+      cursor: pointer;
+      padding: 2px 8px;
+      margin-right: -8px;
+      transition: color .15s ease;
+    }
+    .past-close-btn:hover {
+      color: var(--text);
     }
     .past-list { display: flex; flex-direction: column; gap: 0; }
     .past-item {
@@ -705,7 +723,7 @@
       <div class="label-row">
         <span class="label">이번 주 성경 구절</span>
         <button class="past-toggle hidden" id="pastToggle" type="button" aria-expanded="false">
-          <span id="pastToggleLabel">지난주 성경</span>
+          <span id="pastToggleLabel">과거 성경</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
       </div>
@@ -725,7 +743,10 @@
 
     <!-- 0-a. 지난 암송 구절 리스트 (토글로 열림) -->
     <section class="past-panel hidden" id="pastVerses" aria-live="polite">
-      <p class="past-head">지난주 성경</p>
+      <div class="past-head">
+        <span>과거 성경</span>
+        <button class="past-close-btn" id="pastCloseBtn" type="button">닫기</button>
+      </div>
       <div class="past-list" id="pastList"></div>
     </section>
 
@@ -1199,7 +1220,7 @@
         pastPanel.classList.add('hidden');
         pastToggle.classList.remove('open');
         pastToggle.setAttribute('aria-expanded', 'false');
-        pastToggleLabel.textContent = '지난주 성경';
+        pastToggleLabel.textContent = '과거 성경';
         pastShownCount = PAST_PAGE_SIZE;
         return;
       }
@@ -1232,7 +1253,7 @@
       pastPanel.classList.toggle('hidden', !willOpen);
       pastToggle.classList.toggle('open', willOpen);
       pastToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-      pastToggleLabel.textContent = willOpen ? '닫기' : '지난주 성경';
+      pastToggleLabel.textContent = willOpen ? '닫기' : '과거 성경';
       if (willOpen) {
         const firstItem = pastListEl.querySelector('.past-item');
         if (firstItem) {
@@ -1244,6 +1265,17 @@
         }
       }
     });
+
+    const pastCloseBtn = document.getElementById('pastCloseBtn');
+    if (pastCloseBtn) {
+      pastCloseBtn.addEventListener('click', function () {
+        pastPanel.classList.add('hidden');
+        pastToggle.classList.remove('open');
+        pastToggle.setAttribute('aria-expanded', 'false');
+        pastToggleLabel.textContent = '과거 성경';
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
 
     // 마지막으로 본 활성 구절 캐시 (오프라인 첫 화면용)
     try {
