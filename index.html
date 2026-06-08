@@ -432,6 +432,16 @@
       border-radius: 12px; background: #f3f4f6; display: block;
     }
 
+    /* 인스타 공식 임베드 — embed.js가 박는 고정 폭을 덮어써 카드 가로 폭에 맞춤
+       (.instagram-media 는 처리 전 blockquote / 처리 후 iframe 양쪽에 모두 붙는 클래스) */
+    #igMount { width: 100%; }
+    #igMount .instagram-media {
+      margin: 0 auto !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+
     /* TTS 버튼 */
     .tts-row {
       margin-top: 18px;
@@ -1613,6 +1623,25 @@
         igMountedUrl = null;
         if (open) processInstagram();
         else renderInstagramMount();
+      });
+
+      // 화면 폭이 바뀌면(회전·창 크기 변경) 인스타 임베드를 다시 그려 가로 폭 재계산
+      // embed.js는 처리 시점의 폭을 iframe에 고정하므로, 폭이 실제로 바뀐 경우에만 재처리
+      var igResizeTimer = null;
+      var igLastWidth = 0;
+      window.addEventListener('resize', function () {
+        var mount = document.getElementById('igMount');
+        if (!mount || !window.vcInstagramUrl) return;
+        var preview = mount.closest('.channel-preview');
+        if (!preview || preview.classList.contains('hidden')) return; // 닫혀 있으면 무시
+        var w = Math.round(mount.clientWidth);
+        if (!w || w === igLastWidth) return; // 폭 변화 없으면 무시(주소창 높이 변화 등)
+        igLastWidth = w;
+        clearTimeout(igResizeTimer);
+        igResizeTimer = setTimeout(function () {
+          igMountedUrl = null;        // 강제로 blockquote 다시 심기
+          processInstagram();         // embed.js가 새 폭으로 iframe 재생성
+        }, 250);
       });
 
       /* ── 페이스북 게시물 임베드 (관리자가 admin에서 등록한 1개) ── */
