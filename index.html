@@ -28,6 +28,11 @@
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 
+  <!-- Google Fonts: Nanum Myeongjo (Classic Bible) & Gowun Batang (Clean serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --bg:       #ffffff;
@@ -164,8 +169,8 @@
       white-space: nowrap;
       display: flex; align-items: center; justify-content: center;
     }
-    /* 외부 링크 항목(라이브·홈페이지)의 "바로가기" 단어는 브랜드 색으로 */
-    .item.home .chev, .item.live .chev { color: var(--brand); }
+    /* 외부 링크 항목(라이브·홈페이지)의 "바로가기" 단어는 검정색으로 */
+    .item.home .chev, .item.live .chev { color: #000000; }
 
     /* Primary item (설치 버튼) */
     .item.primary {
@@ -241,20 +246,12 @@
     /* Memory verse card */
     .verse {
       background: linear-gradient(180deg, #ffffff 0%, #f6f8fc 100%);
-      border: 1px solid var(--line);
+      border: 1.5px solid var(--brand);
       border-radius: 16px;
       padding: 24px 22px 22px;
       margin-bottom: 14px;
       position: relative;
       overflow: hidden;
-    }
-    .verse::before {
-      content: "";
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 4px;
-      background: var(--brand);
-      border-radius: 4px 0 0 4px;
     }
     /* 라벨 행: 왼쪽 라벨 + 오른쪽 "지난 암송 구절" 버튼 */
     .verse .label-row {
@@ -281,33 +278,36 @@
     }
     /* "지난 암송 구절" 토글 버튼 (pill) */
     .past-toggle {
+      position: absolute;
+      right: 0;
       flex: 0 0 auto;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       font-family: inherit;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--text-2);
       background: #f3f4f6;
-      border: 1px solid var(--line);
+      border: 1.5px solid var(--line);
       border-radius: 50px;
-      padding: 6px 13px;
+      padding: 8px 16px;
       cursor: pointer;
       letter-spacing: -0.01em;
-      transition: background .15s ease, border-color .15s ease, color .15s ease;
+      transition: background .15s ease, border-color .15s ease, color .15s ease, transform .08s ease;
     }
     .past-toggle:hover { background: #ebedf0; border-color: #d4d6dc; color: var(--text); }
     .past-toggle:active { transform: scale(.97); }
-    .past-toggle svg { width: 14px; height: 14px; transition: transform .2s ease; }
+    .past-toggle svg { width: 16px; height: 16px; transition: transform .2s ease; }
     .past-toggle.open { color: var(--brand); background: var(--brand-dim); border-color: #c7d4ec; }
     .past-toggle.open svg { transform: rotate(180deg); }
     .past-toggle.hidden { display: none; }
     .verse .text {
-      font-size: 30px;
+      font-family: 'Nanum Myeongjo', 'Gowun Batang', Batang, 'Times New Roman', serif;
+      font-size: 28px;
       line-height: 1.85;
       color: var(--text);
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: -0.01em;
       white-space: pre-wrap;
       word-break: keep-all;
@@ -315,9 +315,10 @@
       text-align: center;
     }
     .verse .ref {
+      font-family: 'Gowun Batang', 'Nanum Myeongjo', Batang, serif;
       display: block;
       margin-top: 16px;
-      font-size: 22px;
+      font-size: 18px;
       color: var(--text-2);
       font-weight: 700;
       text-align: center;
@@ -344,10 +345,17 @@
     }
     .past-list { display: flex; flex-direction: column; gap: 0; }
     .past-item {
-      padding: 14px 0;
+      padding: 14px 10px;
       border-top: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      outline: none;
     }
-    .past-item:first-child { border-top: none; padding-top: 0; }
+    .past-item:first-child { border-top: none; }
+    .past-item:hover {
+      background-color: #f6f8fc;
+    }
     .past-item .past-range {
       display: inline-block;
       font-size: 12px;
@@ -360,18 +368,20 @@
       letter-spacing: 0;
     }
     .past-item .past-text {
-      font-size: 19px;
+      font-family: 'Nanum Myeongjo', 'Gowun Batang', Batang, 'Times New Roman', serif;
+      font-size: 18px;
       line-height: 1.75;
       color: var(--text);
-      font-weight: 500;
+      font-weight: 700;
       white-space: pre-wrap;
       word-break: keep-all;
       margin: 0;
     }
     .past-item .past-ref {
+      font-family: 'Gowun Batang', 'Nanum Myeongjo', Batang, serif;
       display: block;
       margin-top: 10px;
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text-2);
       font-weight: 700;
       text-align: right;
@@ -405,7 +415,7 @@
       flex: none;
       font-size: 14px;
       font-weight: 700;
-      color: var(--brand);
+      color: #000000;
       white-space: nowrap;
     }
     .channel-head.open {
@@ -415,7 +425,7 @@
       border-bottom-right-radius: 0 !important;
       border-bottom-color: transparent !important;
     }
-    .channel-head.open .chev { color: var(--brand); }
+    .channel-head.open .chev { color: #000000; }
 
     /* 미리보기 패널 */
     .channel-preview {
@@ -518,6 +528,8 @@
       margin-top: 18px;
       display: flex;
       justify-content: center;
+      align-items: center;
+      position: relative;
     }
     .tts-btn {
       display: inline-flex;
@@ -593,6 +605,84 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* Verse Detail Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: #ffffff;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 20px;
+      padding: 36px 24px 30px;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+      border: 1.5px solid var(--brand);
+      transform: translateY(20px);
+      transition: transform 0.2s ease;
+      position: relative;
+    }
+    .modal-overlay.show .modal-content {
+      transform: translateY(0);
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-2);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .modal-close:hover {
+      background: #f3f4f6;
+      color: var(--text);
+    }
+    .modal-close svg {
+      width: 20px;
+      height: 20px;
+    }
+    .modal-body-text {
+      font-family: 'Nanum Myeongjo', 'Gowun Batang', Batang, 'Times New Roman', serif;
+      font-size: 26px;
+      line-height: 1.8;
+      color: var(--text);
+      font-weight: 700;
+      text-align: center;
+      white-space: pre-wrap;
+      word-break: keep-all;
+      margin: 0 0 20px;
+    }
+    .modal-body-ref {
+      font-family: 'Gowun Batang', 'Nanum Myeongjo', Batang, serif;
+      display: block;
+      font-size: 18px;
+      color: var(--text-2);
+      font-weight: 700;
+      text-align: center;
+      margin: 0;
+    }
+
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
       .item.live .ic::after { animation: none; }
@@ -612,20 +702,10 @@
       <p class="pastor">담임목사 : 이 달 견 (Rev. James Lee)</p>
     </header>
 
-    <!-- 0-a. 지난 암송 구절 리스트 (토글로 열림) -->
-    <section class="past-panel hidden" id="pastVerses" aria-live="polite">
-      <p class="past-head">지난 암송 구절</p>
-      <div class="past-list" id="pastList"></div>
-    </section>
-
     <!-- 0. 이번 주 암송 구절 -->
     <section class="verse hidden" id="verseCard" aria-live="polite">
       <div class="label-row">
-        <span class="label">이번 주 암송 구절</span>
-        <button class="past-toggle hidden" id="pastToggle" type="button" aria-expanded="false">
-          <span id="pastToggleLabel">지난 암송 구절</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
+        <span class="label">이번 주 성경 구절</span>
       </div>
       <h1 class="text" id="verseText"></h1>
       <span class="ref" id="verseRef"></span>
@@ -638,7 +718,17 @@
           </svg>
           <span id="ttsBtnLabel">읽어주기</span>
         </button>
+        <button class="past-toggle hidden" id="pastToggle" type="button" aria-expanded="false">
+          <span id="pastToggleLabel">지난주 성경</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
       </div>
+    </section>
+
+    <!-- 0-a. 지난 암송 구절 리스트 (토글로 열림) -->
+    <section class="past-panel hidden" id="pastVerses" aria-live="polite">
+      <p class="past-head">지난주 성경</p>
+      <div class="past-list" id="pastList"></div>
     </section>
 
     <nav class="menu">
@@ -783,6 +873,20 @@
 
   <div class="toast" id="toast">바로가기 설치 완료</div>
 
+  <!-- 말씀 상세 보기 모달 -->
+  <div class="modal-overlay" id="verseModal" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <button class="modal-close" id="modalCloseBtn" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div class="modal-body-text" id="modalVerseText"></div>
+      <div class="modal-body-ref" id="modalVerseRef"></div>
+    </div>
+  </div>
+
   <script>
     // 외부 링크
     function openExternal(url) {
@@ -806,6 +910,31 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2400);
     }
+
+    // 말씀 모달 제어
+    var verseModal = document.getElementById('verseModal');
+    var modalVerseText = document.getElementById('modalVerseText');
+    var modalVerseRef = document.getElementById('modalVerseRef');
+    var modalCloseBtn = document.getElementById('modalCloseBtn');
+
+    function openVerseModal(text, ref) {
+      modalVerseText.textContent = (text || '').trim();
+      modalVerseRef.textContent = (ref || '').trim();
+      verseModal.classList.add('show');
+      document.body.style.overflow = 'hidden'; // 스크롤 방지
+    }
+
+    function closeVerseModal() {
+      verseModal.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    modalCloseBtn.addEventListener('click', closeVerseModal);
+    verseModal.addEventListener('click', function (e) {
+      if (e.target === verseModal) {
+        closeVerseModal();
+      }
+    });
 
     // 설치 버튼 상태 관리
     var installBtn = document.getElementById('btnInstall');
@@ -1044,13 +1173,6 @@
       const item = document.createElement('div');
       item.className = 'past-item';
 
-      const range = fmtRange(v.startDate, v.endDate);
-      if (range) {
-        const r = document.createElement('span');
-        r.className = 'past-range';
-        r.textContent = range;
-        item.appendChild(r);
-      }
       const p = document.createElement('p');
       p.className = 'past-text';
       p.textContent = (v.text || '').trim();
@@ -1063,6 +1185,12 @@
         rf.textContent = ref;
         item.appendChild(rf);
       }
+
+      // 클릭 시 팝업 모달 열기
+      item.addEventListener('click', function () {
+        openVerseModal(v.text, v.reference);
+      });
+
       return item;
     }
 
@@ -1075,7 +1203,7 @@
         pastPanel.classList.add('hidden');
         pastToggle.classList.remove('open');
         pastToggle.setAttribute('aria-expanded', 'false');
-        pastToggleLabel.textContent = '지난 암송 구절';
+        pastToggleLabel.textContent = '지난주 성경';
         pastShownCount = PAST_PAGE_SIZE;
         return;
       }
@@ -1108,9 +1236,16 @@
       pastPanel.classList.toggle('hidden', !willOpen);
       pastToggle.classList.toggle('open', willOpen);
       pastToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-      pastToggleLabel.textContent = willOpen ? '닫기' : '지난 암송 구절';
+      pastToggleLabel.textContent = willOpen ? '닫기' : '지난주 성경';
       if (willOpen) {
-        pastPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const firstItem = pastListEl.querySelector('.past-item');
+        if (firstItem) {
+          firstItem.setAttribute('tabindex', '-1');
+          firstItem.focus({ preventScroll: true });
+          firstItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          pastPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
     });
 
