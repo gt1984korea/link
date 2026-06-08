@@ -158,9 +158,14 @@
     .item .chev {
       flex: 0 0 auto;
       color: var(--text-3);
-      width: 20px;
+      min-width: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
       display: flex; align-items: center; justify-content: center;
     }
+    /* 외부 링크 항목(라이브·홈페이지)의 "바로가기" 단어는 브랜드 색으로 */
+    .item.home .chev, .item.live .chev { color: var(--brand); }
 
     /* Primary item (설치 버튼) */
     .item.primary {
@@ -176,7 +181,7 @@
       font-weight: 800;
     }
     .item.primary .t2 { color: rgba(255,255,255,.85); }
-    .item.primary .chev { color: rgba(255,255,255,.85); }
+    .item.primary .chev { color: #ffd166; }
 
     /* 아이콘 색상 — 일반 카드 */
     .item.home .ic   { background: #eef2ff; color: #4f46e5; }
@@ -393,11 +398,17 @@
     /* ===== 채널 최신 소식 (버튼 누르면 그 아래로 미리보기 펼침) ===== */
     /* .channel = 버튼(헤더) + 미리보기 패널을 묶는 래퍼. .menu의 flex 자식이 됨 */
     .channel { display: flex; flex-direction: column; }
-    /* 아코디언 헤더(.item) 우측 화살표는 펼침 시 회전 */
-    .channel-head .chev svg { transition: transform .2s ease; }
+    /* 아코디언 헤더(.item) 우측 표시 — 화살표 대신 단어 라벨(60대 가독성) */
+    .channel-head .chev {
+      width: auto;
+      flex: none;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brand);
+      white-space: nowrap;
+    }
     .channel-head.open { border-color: #c7d4ec; background: var(--brand-dim); }
     .channel-head.open .chev { color: var(--brand); }
-    .channel-head.open .chev svg { transform: rotate(180deg); }
 
     /* 미리보기 패널 */
     .channel-preview {
@@ -615,9 +626,7 @@
           <span class="t1">이 페이지 <span class="hl">바로가기</span> 만들기</span>
           <span class="t2">앱 바로가기 추가하면 다음엔 한 번에 열려요</span>
         </span>
-        <span class="chev">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-        </span>
+        <span class="chev">바로가기</span>
         <span class="progress"></span>
       </button>
 
@@ -634,9 +643,7 @@
           <span class="t1">실시간 라이브</span>
           <span class="t2">예배 함께 드리기</span>
         </span>
-        <span class="chev">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-        </span>
+        <span class="chev">바로가기</span>
       </button>
 
       <!-- 3. 교회 홈페이지 -->
@@ -652,14 +659,12 @@
           <span class="t1">교회 홈페이지</span>
           <span class="t2">victorychurch.nz</span>
         </span>
-        <span class="chev">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-        </span>
+        <span class="chev">바로가기</span>
       </button>
 
       <!-- 3. 유튜브 (누르면 최신 영상 미리보기 펼침) -->
       <div class="channel">
-        <button class="item youtube channel-head" id="btnYoutube" type="button" aria-expanded="false">
+        <button class="item youtube channel-head" id="btnYoutube" type="button" data-href="https://www.youtube.com/@nzvictory/videos" aria-expanded="false">
           <span class="ic">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8C22 15.2 22 12 22 12s0-3.2-.4-4.8zM10 15V9l5.2 3L10 15z"/>
@@ -669,9 +674,7 @@
             <span class="t1">유튜브 채널</span>
             <span class="t2">설교 영상 보기 · @nzvictory</span>
           </span>
-          <span class="chev">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </span>
+          <span class="chev">바로가기</span>
         </button>
         <div class="channel-preview hidden">
           <!-- 최신 설교 영상 임베드.
@@ -688,16 +691,12 @@
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
           </div>
-          <a class="view-all" href="https://www.youtube.com/@nzvictory/videos" target="_blank" rel="noopener noreferrer">
-            전체 보기
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-          </a>
         </div>
       </div>
 
       <!-- 4. 페이스북 (관리자가 등록한 게시물이 있을 때만 펼침, 없으면 바로 링크) -->
       <div class="channel">
-        <button class="item facebook channel-head" id="btnFacebook" type="button" aria-expanded="false">
+        <button class="item facebook channel-head" id="btnFacebook" type="button" data-href="https://www.facebook.com/people/Victory-Church-NZ/100075886399936/" aria-expanded="false">
           <span class="ic">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/>
@@ -707,25 +706,19 @@
             <span class="t1">페이스북</span>
             <span class="t2">교회 소식 보기</span>
           </span>
-          <span class="chev">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </span>
+          <span class="chev">바로가기</span>
         </button>
         <div class="channel-preview hidden">
           <!-- 관리자(admin)에서 페이스북 게시물 URL을 등록하면 Firestore(facebookPostUrl)에 저장되고,
                이 섹션을 펼칠 때 공식 Embedded Post 플러그인(post.php)으로 그 게시물을 임베드한다.
                등록된 게시물이 없으면 카드 없이 바로 페이지로 이동(하단 syncChannelChevrons() 참고). -->
           <div id="fbMount"></div>
-          <a class="view-all" href="https://www.facebook.com/people/Victory-Church-NZ/100075886399936/" target="_blank" rel="noopener noreferrer">
-            전체 보기
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-          </a>
         </div>
       </div>
 
       <!-- 6. 인스타그램 (누르면 미리보기 펼침) -->
       <div class="channel">
-        <button class="item instagram channel-head" id="btnInstagram" type="button" aria-expanded="false">
+        <button class="item instagram channel-head" id="btnInstagram" type="button" data-href="https://www.instagram.com/victorius_nz/" aria-expanded="false">
           <span class="ic">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="5"/>
@@ -737,9 +730,7 @@
             <span class="t1">인스타그램</span>
             <span class="t2">@victorius_nz</span>
           </span>
-          <span class="chev">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </span>
+          <span class="chev">바로가기</span>
         </button>
         <div class="channel-preview hidden">
           <!-- 인스타그램: 관리자(admin)에서 게시물 URL을 1개 등록하면 Firestore(instagramUrl)에
@@ -747,10 +738,6 @@
                등록된 게시물이 없으면 이 채널은 "펼치는 카드" 없이 버튼을 누르면 곧바로
                프로필로 이동하는 링크 버튼으로 동작한다(하단 syncChannelChevrons() 참고). -->
           <div id="igMount"></div>
-          <a class="view-all" href="https://www.instagram.com/victorius_nz/" target="_blank" rel="noopener noreferrer">
-            전체 보기
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-          </a>
         </div>
       </div>
 
@@ -1580,19 +1567,29 @@
         return true;
       }
 
-      // 콘텐츠 없는 채널은 "펼치는 카드" 대신 링크 버튼처럼 보이게(화살표 > , .link-only)
-      var CHEV_DOWN = 'M6 9l6 6 6-6';   // 펼치기(아래 ∨)
-      var CHEV_RIGHT = 'M9 6l6 6-6 6';  // 바로 이동(오른쪽 >)
-      function syncChannelChevrons() {
+      // 60대 사용자를 위해 화살표 대신 단어로 표시 (모두 바로가기 일치)
+      var WORD_OPEN  = '바로가기';
+      var WORD_CLOSE = '바로가기';
+      var WORD_LINK  = '바로가기';
+
+      // 헤더 상태에 맞춰 우측 단어 라벨을 갱신
+      function setHeadLabel(head) {
+        var label = head.querySelector('.chev');
+        if (label) label.textContent = '바로가기';
+      }
+
+      function syncPreviews() {
         heads.forEach(function (head) {
           var preview = head.nextElementSibling;
           if (!preview || !preview.classList.contains('channel-preview')) return;
-          var linkOnly = !hasPreviewContent(preview);
-          head.classList.toggle('link-only', linkOnly);
-          var path = head.querySelector('.chev svg path');
-          if (path) path.setAttribute('d', linkOnly ? CHEV_RIGHT : CHEV_DOWN);
-          // 펼쳐져 있던 채널이 콘텐츠가 사라져 링크 전용이 되면 닫는다
-          if (linkOnly && !preview.classList.contains('hidden')) closeHead(head);
+          var hasContent = hasPreviewContent(preview);
+          if (hasContent) {
+            preview.classList.remove('hidden');
+            loadFrames(preview);
+          } else {
+            preview.classList.add('hidden');
+          }
+          setHeadLabel(head);
         });
       }
 
@@ -1669,15 +1666,9 @@
 
       // Firestore에서 URL이 도착/변경되면: 링크전용/펼침 상태를 다시 맞추고, 열려 있으면 즉시 처리
       window.addEventListener('vc:instagram', function () {
-        syncChannelChevrons();
-        var mount = document.getElementById('igMount');
-        if (!mount) return;
-        var preview = mount.closest('.channel-preview');
-        var open = preview && !preview.classList.contains('hidden');
-        // 닫힌 상태에서는 내용만 미리 준비(다음에 열 때 처리됨)
-        igMountedUrl = null;
-        if (open) processInstagram();
-        else renderInstagramMount();
+        syncPreviews();
+        renderInstagramMount();
+        if (window.vcInstagramUrl) processInstagram();
       });
 
       // 화면 폭이 바뀌면(회전·창 크기 변경) 인스타 임베드를 다시 그려 가로 폭 재계산
@@ -1715,19 +1706,14 @@
           'allow="encrypted-media; clipboard-write" allowfullscreen></iframe>';
         fbMountedUrl = url;
       }
-      // post.php는 iframe만으로 동작(별도 SDK 불필요)
+      // post.php is iframe only
       function processFacebook() { renderFacebookMount(); }
 
       // Firestore에서 페이스북 게시물 URL이 도착/변경되면: 링크전용/펼침 상태를 맞추고, 열려 있으면 즉시 처리
       window.addEventListener('vc:facebook', function () {
-        syncChannelChevrons();
-        var mount = document.getElementById('fbMount');
-        if (!mount) return;
-        var preview = mount.closest('.channel-preview');
-        var open = preview && !preview.classList.contains('hidden');
-        fbMountedUrl = null;
-        if (open) processFacebook();
-        else renderFacebookMount();
+        syncPreviews();
+        renderFacebookMount();
+        if (window.vcFacebookUrl) processFacebook();
       });
 
       /* ── 유튜브 최신 영상 (관리자가 admin에서 등록한 1개 우선) ── */
@@ -1753,13 +1739,14 @@
       }
       // Firestore에서 유튜브 값이 도착/변경되면: 링크전용/펼침 상태를 맞추고, 열려 있으면 즉시 교체
       window.addEventListener('vc:youtube', function () {
-        syncChannelChevrons();
+        syncPreviews();
         var f = document.getElementById('ytPlayer');
-        if (!f || !f.getAttribute('src')) return; // 아직 안 열림 → 다음에 열 때 적용
-        var adminId = parseYtId(window.vcYouTubeRaw || '');
-        if (adminId) {
-          var url = 'https://www.youtube-nocookie.com/embed/' + adminId + '?rel=0';
-          if (f.getAttribute('src') !== url) f.setAttribute('src', url);
+        if (f) {
+          var adminId = parseYtId(window.vcYouTubeRaw || '');
+          if (adminId) {
+            var url = 'https://www.youtube-nocookie.com/embed/' + adminId + '?rel=0';
+            if (f.getAttribute('src') !== url) f.setAttribute('src', url);
+          }
         }
       });
 
@@ -1787,40 +1774,16 @@
           }).catch(function () { tryNext(i + 1); });
         })(0);
       }
-      function closeHead(h) {
-        h.classList.remove('open');
-        h.setAttribute('aria-expanded', 'false');
-        var p = h.nextElementSibling;
-        if (p && p.classList.contains('channel-preview')) p.classList.add('hidden');
-      }
 
       heads.forEach(function (head) {
         head.addEventListener('click', function () {
-          var preview = head.nextElementSibling;
-          if (!preview || !preview.classList.contains('channel-preview')) return;
-
-          // 콘텐츠 없는 채널(예: 관리자 미등록 인스타) → 카드 펼치지 않고 채널로 바로 이동
-          if (head.classList.contains('link-only')) {
-            var link = preview.querySelector('.view-all');
-            var href = link && link.getAttribute('href');
-            if (href) window.open(href, '_blank', 'noopener,noreferrer');
-            return;
-          }
-
-          var willOpen = preview.classList.contains('hidden');
-
-          // 단일 오픈: 다른 채널은 닫아 페이지를 짧게 유지
-          heads.forEach(function (h) { if (h !== head) closeHead(h); });
-
-          preview.classList.toggle('hidden', !willOpen);
-          head.classList.toggle('open', willOpen);
-          head.setAttribute('aria-expanded', String(willOpen));
-          if (willOpen) loadFrames(preview);
+          var href = head.getAttribute('data-href');
+          if (href) window.open(href, '_blank', 'noopener,noreferrer');
         });
       });
 
-      // 초기 상태 반영(인스타 게시물 미등록 시 링크 버튼으로 표시)
-      syncChannelChevrons();
+      // 초기 상태 및 프리뷰 동기화
+      syncPreviews();
     })();
   </script>
 
