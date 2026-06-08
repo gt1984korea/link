@@ -312,6 +312,7 @@
       white-space: pre-wrap;
       word-break: keep-all;
       margin: 0;
+      text-align: center;
     }
     .verse .ref {
       display: block;
@@ -319,7 +320,7 @@
       font-size: 22px;
       color: var(--text-2);
       font-weight: 700;
-      text-align: right;
+      text-align: center;
     }
     .verse.loading .text,
     .verse.loading .ref { opacity: 0.45; }
@@ -407,7 +408,13 @@
       color: var(--brand);
       white-space: nowrap;
     }
-    .channel-head.open { border-color: #c7d4ec; background: var(--brand-dim); }
+    .channel-head.open {
+      border-color: #c7d4ec;
+      background: var(--brand-dim);
+      border-bottom-left-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+      border-bottom-color: transparent !important;
+    }
     .channel-head.open .chev { color: var(--brand); }
 
     /* 미리보기 패널 */
@@ -417,6 +424,14 @@
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 14px;
+      transition: border-color .15s ease, border-radius .15s ease, margin-top .15s ease;
+    }
+    .channel-head.open + .channel-preview {
+      margin-top: 0 !important;
+      border-color: #c7d4ec !important;
+      border-top-left-radius: 0 !important;
+      border-top-right-radius: 0 !important;
+      border-top: 1px solid rgba(199, 212, 236, 0.6) !important;
     }
     .channel-preview.hidden { display: none; }
 
@@ -445,7 +460,19 @@
 
     /* 인스타 공식 임베드 — embed.js가 박는 고정 폭을 덮어써 카드 가로 폭에 맞춤
        (.instagram-media 는 처리 전 blockquote / 처리 후 iframe 양쪽에 모두 붙는 클래스) */
-    #igMount { width: 100%; }
+    #igMount {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      border-radius: 12px;
+    }
+    #igMount iframe.instagram-media {
+      margin-top: -60px !important;
+      margin-bottom: -100px !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
     #igMount .instagram-media {
       margin: 0 auto !important;
       width: 100% !important;
@@ -946,6 +973,27 @@
       return { active, past };
     }
 
+    let typeTimers = [];
+    function clearTypewriting() {
+      typeTimers.forEach(clearTimeout);
+      typeTimers = [];
+    }
+
+    function typeWriter(el, text, speed, callback) {
+      el.textContent = '';
+      let i = 0;
+      function type() {
+        if (i < text.length) {
+          el.textContent += text.charAt(i);
+          i++;
+          typeTimers.push(setTimeout(type, speed));
+        } else if (callback) {
+          callback();
+        }
+      }
+      type();
+    }
+
     function renderActive(active, sharedAudioUrl) {
       if (!active) {
         card.classList.add('hidden');
@@ -957,17 +1005,33 @@
       const voiceId = active.voiceId || DEFAULT_VOICE;
       const audioUrl = (sharedAudioUrl || '').trim() || null; // 공유 녹음(있으면 TTS 대신 재생)
 
-      elText.textContent = text;
-      elRef.textContent  = reference;
-      card.classList.remove('hidden');
-
       // 전역 상태 업데이트 및 이벤트 트리거 (TTS 스크립트가 구독)
+      window.currentFullVerseText = text;
+      window.currentFullVerseRef = reference;
       window.currentTtsVoiceId = voiceId;
       window.currentVerseAudioUrl = audioUrl;
       try {
         window.dispatchEvent(new CustomEvent('vc:voicechange', { detail: { voiceId } }));
         window.dispatchEvent(new CustomEvent('vc:audiochange', { detail: { audioUrl } }));
       } catch (e) {}
+
+      // 내용 변경 시 타이핑 애니메이션 실행 (어르신 가독성을 위해 100ms 속도로 차분하게 출력)
+      const isChanged = (window.lastRenderedText !== text || window.lastRenderedRef !== reference);
+      window.lastRenderedText = text;
+      window.lastRenderedRef = reference;
+      card.classList.remove('hidden');
+
+      if (isChanged) {
+        clearTypewriting();
+        // 말씀 본문을 먼저 타이핑한 후, 끝난 뒤 장/절 주소를 타이핑합니다.
+        typeWriter(elText, text, 95, function () {
+          typeWriter(elRef, reference, 95);
+        });
+      } else {
+        // 이미 그려진 내용과 같으면 타이핑 없이 그대로 노출
+        elText.textContent = text;
+        elRef.textContent = reference;
+      }
 
       try {
         localStorage.setItem('verseCache', JSON.stringify({ text, reference, voiceId, audioUrl }));
@@ -1056,6 +1120,10 @@
       if (cached && cached.text) {
         elText.textContent = cached.text;
         elRef.textContent  = cached.reference || '';
+        window.lastRenderedText = cached.text;
+        window.lastRenderedRef = cached.reference;
+        window.currentFullVerseText = cached.text;
+        window.currentFullVerseRef = cached.reference;
         if (cached.voiceId) window.lastCachedVoiceId = cached.voiceId;
         if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
         card.classList.remove('hidden');
@@ -1334,8 +1402,8 @@
       }
 
       function getFullText() {
-        const text = (document.getElementById('verseText').textContent || '').trim();
-        const ref  = (document.getElementById('verseRef').textContent  || '').trim();
+        const text = (window.currentFullVerseText || document.getElementById('verseText').textContent || '').trim();
+        const ref  = (window.currentFullVerseRef || document.getElementById('verseRef').textContent  || '').trim();
         return text + (ref ? '\n\n' + ref : '');
       }
 
