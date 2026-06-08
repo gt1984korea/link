@@ -1157,9 +1157,7 @@
           typeWriter(elRef, reference, 95);
         });
       } else {
-        // 이미 그려진 내용과 같으면 타이핑 없이 그대로 노출
-        elText.textContent = text;
-        elRef.textContent = reference;
+        // 이미 그려지고 있거나 완료된 동일 내용이므로 타이핑 애니메이션 흐름을 유지하기 위해 아무 작업도 하지 않습니다.
       }
 
       try {
@@ -1253,15 +1251,19 @@
     try {
       const cached = JSON.parse(localStorage.getItem('verseCache') || 'null');
       if (cached && cached.text) {
-        elText.textContent = cached.text;
-        elRef.textContent  = cached.reference || '';
         window.lastRenderedText = cached.text;
-        window.lastRenderedRef = cached.reference;
+        window.lastRenderedRef = cached.reference || '';
         window.currentFullVerseText = cached.text;
-        window.currentFullVerseRef = cached.reference;
+        window.currentFullVerseRef = cached.reference || '';
         if (cached.voiceId) window.lastCachedVoiceId = cached.voiceId;
         if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
         card.classList.remove('hidden');
+
+        // 첫 진입 시 캐시 데이터를 정적으로 박지 않고 즉시 타이핑 애니메이션을 구동합니다.
+        clearTypewriting();
+        typeWriter(elText, cached.text, 95, function () {
+          typeWriter(elRef, cached.reference || '', 95);
+        });
       }
     } catch (e) {}
 
