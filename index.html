@@ -441,6 +441,36 @@
       min-width: 0 !important;
       max-width: 100% !important;
     }
+    /* 임베드 처리 전 fallback(밑줄 링크 등)을 숨김 — 로딩 바만 보이도록 */
+    #igMount blockquote.instagram-media:not(.instagram-media-rendered) {
+      height: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      overflow: hidden !important;
+    }
+    /* 로딩 바 (불확정 진행 표시) */
+    .ig-loading {
+      position: relative;
+      width: 100%; height: 3px;
+      margin: 14px 0;
+      border-radius: 999px;
+      background: var(--brand-dim);
+      overflow: hidden;
+    }
+    .ig-loading::before {
+      content: "";
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 40%;
+      border-radius: 999px;
+      background: var(--brand);
+      animation: ig-indeterminate 1.1s ease-in-out infinite;
+    }
+    @keyframes ig-indeterminate {
+      0%   { transform: translateX(-110%); }
+      100% { transform: translateX(360%); }
+    }
 
     /* TTS 버튼 */
     .tts-row {
@@ -1583,12 +1613,37 @@
         }
         // 이미 같은 URL을 심어두었으면 다시 만들지 않음(깜빡임 방지)
         if (igMountedUrl === url && mount.querySelector('.instagram-media')) return;
+        // 로딩 바 + blockquote(처리 전엔 CSS로 숨김 → 밑줄 링크 안 보임)
         mount.innerHTML =
+          '<div class="ig-loading" role="progressbar" aria-label="인스타그램 게시물 불러오는 중"></div>' +
           '<blockquote class="instagram-media" data-instgrm-permalink="' + url + '" ' +
           'data-instgrm-version="14" style="margin:0 auto;width:100%;min-width:0;">' +
           '<a href="' + url + '" target="_blank" rel="noopener noreferrer">인스타그램에서 게시물 보기</a>' +
           '</blockquote>';
         igMountedUrl = url;
+        watchInstagramRendered(mount);
+      }
+
+      // 임베드 렌더(iframe 생성)가 끝나면 로딩 바 제거
+      var igRenderObserver = null;
+      var igRenderTimer = null;
+      function watchInstagramRendered(mount) {
+        function done() {
+          var bar = mount.querySelector('.ig-loading');
+          if (bar) bar.remove();
+          if (igRenderObserver) { igRenderObserver.disconnect(); igRenderObserver = null; }
+          clearTimeout(igRenderTimer);
+        }
+        function rendered() {
+          return mount.querySelector('iframe.instagram-media, .instagram-media-rendered');
+        }
+        if (igRenderObserver) { igRenderObserver.disconnect(); igRenderObserver = null; }
+        if (rendered()) { done(); return; } // 이미 렌더됨
+        igRenderObserver = new MutationObserver(function () { if (rendered()) done(); });
+        igRenderObserver.observe(mount, { childList: true, subtree: true });
+        // 안전장치: 12초 안에 안 끝나면 로딩 바만 정리(링크는 그대로 동작)
+        clearTimeout(igRenderTimer);
+        igRenderTimer = setTimeout(done, 12000);
       }
 
       // embed.js를 한 번만 로드한 뒤 임베드를 처리
