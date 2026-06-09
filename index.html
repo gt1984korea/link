@@ -325,6 +325,21 @@
     .verse.loading .ref { opacity: 0.45; }
     .verse.hidden { display: none; }
 
+    /* Typed.js 커서 커스텀 - 부드럽고 은은한 흐름용 */
+    .typed-cursor {
+      color: var(--brand);
+      font-weight: 300;
+      font-size: inherit; /* 본문/출처 크기에 맞게 상속 */
+      margin-left: 2px;
+      opacity: 0.65;
+      vertical-align: baseline;
+      display: inline-block;
+      animation: typedjsBlink 0.8s infinite;
+    }
+    @keyframes typedjsBlink {
+      50% { opacity: 0; }
+    }
+
     /* 지난 암송 구절 리스트 패널 (verse 카드 위쪽에 표시) */
     .past-panel {
       background: var(--surface);
@@ -1173,18 +1188,26 @@
         // 말씀 본문 타이핑 시작 (Typed.js)
         typedTextInstance = new Typed('#verseText', {
           strings: [htmlText],
-          typeSpeed: 45,
-          showCursor: false,
+          typeSpeed: 55,       // 속도를 조금 늦추어 가독성과 부드러움 확보
+          startDelay: 240,     // 0.24초 여유 대기 후 시작
+          humanize: true,      // 사람 글쓰기 템포 활성화 (자연스러운 멈춤)
+          showCursor: true,    // 얇은 커서 리드
+          cursorChar: '│',
           contentType: 'html',
           onComplete: (self) => {
-            // 본문 타이핑이 완료되면 출처 타이핑을 시작합니다.
-            if (reference) {
-              typedRefInstance = new Typed('#verseRef', {
-                strings: [reference],
-                typeSpeed: 50,
-                showCursor: false,
-              });
-            }
+            // 본문 타이핑이 완료되면 0.25초 쉬고 출처 타이핑을 시작합니다.
+            setTimeout(() => {
+              if (reference) {
+                typedRefInstance = new Typed('#verseRef', {
+                  strings: [reference],
+                  typeSpeed: 60,
+                  startDelay: 100,
+                  humanize: true,
+                  showCursor: true,
+                  cursorChar: '│',
+                });
+              }
+            }, 250);
           }
         });
       } else {
@@ -1306,17 +1329,25 @@
         const htmlText = cached.text.replace(/\n/g, '<br>');
         typedTextInstance = new Typed('#verseText', {
           strings: [htmlText],
-          typeSpeed: 45,
-          showCursor: false,
+          typeSpeed: 55,
+          startDelay: 240,
+          humanize: true,
+          showCursor: true,
+          cursorChar: '│',
           contentType: 'html',
           onComplete: (self) => {
-            if (cached.reference) {
-              typedRefInstance = new Typed('#verseRef', {
-                strings: [cached.reference],
-                typeSpeed: 50,
-                showCursor: false,
-              });
-            }
+            setTimeout(() => {
+              if (cached.reference) {
+                typedRefInstance = new Typed('#verseRef', {
+                  strings: [cached.reference],
+                  typeSpeed: 60,
+                  startDelay: 100,
+                  humanize: true,
+                  showCursor: true,
+                  cursorChar: '│',
+                });
+              }
+            }, 250);
           }
         });
       }
