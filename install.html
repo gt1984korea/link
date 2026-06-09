@@ -800,12 +800,16 @@
     // ----- 이미 설치된 상태 -----
     function showInstalled(opts) {
       root.classList.add('done');
-      // 상단 타이틀/부제도 자연스럽게 정리
       title.textContent = (opts && opts.justInstalled)
-        ? '설치 완료!' : '바로가기 설치';
+        ? '설치가 시작되었어요' : '바로가기 설치';
       subtitle.innerHTML = (opts && opts.justInstalled)
-        ? '<b>빅토리처치</b> 가 홈 화면에 추가되었어요.'
+        ? '1~2분 사이에 설치가 됩니다.'
         : '<b>빅토리처치</b> 가 이미 추가되어 있어요.';
+      if (opts && opts.justInstalled) {
+        document.getElementById('installedTitle').textContent = '설치 진행 중이에요';
+        document.getElementById('installedDesc').innerHTML =
+          '1~2분 사이에 <b>빅토리처치</b> 아이콘이 나타나요.';
+      }
     }
 
     // standalone(홈 아이콘으로 열림) → 확실히 설치된 상태

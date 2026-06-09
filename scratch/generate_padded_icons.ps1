@@ -28,8 +28,8 @@ function Resize-And-Pad {
     $destBmp = New-Object System.Drawing.Bitmap($targetSize, $targetSize)
     $g = [System.Drawing.Graphics]::FromImage($destBmp)
     
-    # Clear background to transparent
-    $g.Clear([System.Drawing.Color]::Transparent)
+    # White background — maskable icons must not be transparent (Android renders transparent as black)
+    $g.Clear([System.Drawing.Color]::White)
     
     # High-quality rendering settings
     $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
