@@ -1,6 +1,8 @@
 node_modules/
 _*.mjs
 _*.png
+*.bak.*
+TEMP*
 .DS_Store
 Thumbs.db
 docs/.bkit-memory.json
