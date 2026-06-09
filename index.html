@@ -24,14 +24,10 @@
   <meta name="apple-mobile-web-app-title" content="빅토리처치">
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <!-- Pretendard (원본 사이트와 동일) -->
-  <link rel="stylesheet" as="style" crossorigin
-    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
-
-  <!-- Google Fonts: Nanum Myeongjo (Classic Bible), Gowun Batang (Clean serif) & Gowun Dodum -->
+  <!-- Google Fonts: Gowun Dodum (성경 구절 전용, 한글 전체 커버) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -49,8 +45,7 @@
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { margin: 0; height: 100%; }
     body {
-      font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
-                   'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100%;
@@ -301,7 +296,7 @@
     .past-toggle.open svg { transform: rotate(180deg); }
     .past-toggle.hidden { display: none; }
     .verse .text {
-      font-family: 'Gowun Dodum', 'Nanum Myeongjo', 'Gowun Batang', sans-serif;
+      font-family: 'Gowun Dodum', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
       font-size: 28px;
       line-height: 1.85;
       color: var(--text);
@@ -399,7 +394,7 @@
       letter-spacing: 0;
     }
     .past-item .past-text {
-      font-family: 'Gowun Dodum', 'Nanum Myeongjo', 'Gowun Batang', sans-serif;
+      font-family: 'Gowun Dodum', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
       font-size: 18px;
       line-height: 1.75;
       color: var(--text);
@@ -694,7 +689,7 @@
       height: 20px;
     }
     .modal-body-text {
-      font-family: 'Gowun Dodum', 'Nanum Myeongjo', 'Gowun Batang', sans-serif;
+      font-family: 'Gowun Dodum', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
       font-size: 26px;
       line-height: 1.8;
       color: var(--text);
@@ -727,7 +722,7 @@
 
     <header class="header">
       <div class="logo">
-        <img src="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png" alt="Victory Church 로고">
+        <img src="logo.png" alt="Victory Church 로고" width="80" height="80">
       </div>
       <h1>뉴질랜드 빅토리처치</h1>
       <p class="pastor">담임목사 : 이 달 견 (Rev. James Lee)</p>
@@ -1160,6 +1155,8 @@
     function startTypewriting(text, reference) {
       clearTypewriting();
 
+      // 폰트 로드 완료 후 타이핑 시작 — 폰트 미로드 상태에서 타이핑 시 FOUT(폰트 교체 깜빡임) 방지
+      document.fonts.ready.then(() => {
       // HTML 개행 처리를 위해 \n을 <br>로 치환
       const htmlText = text.replace(/\n/g, '<br>');
 
@@ -1167,7 +1164,7 @@
       typedTextInstance = new Typed('#verseText', {
         strings: [htmlText],
         typeSpeed: 55,       // 속도를 조금 늦추어 가독성과 부드러움 확보
-        startDelay: 240,     // 0.24초 여유 대기 후 시작
+        startDelay: 80,      // 폰트 대기 후 시작하므로 여유 시간 단축
         humanize: true,      // 사람 글쓰기 템포 활성화 (자연스러운 멈춤)
         showCursor: true,    // 얇은 커서 리드
         cursorChar: '│',
@@ -1202,6 +1199,7 @@
           }, 250);
         }
       });
+      }); // document.fonts.ready
     }
 
     function renderActive(active, sharedAudioUrl) {
@@ -1393,12 +1391,12 @@
   </script>
 
   <!-- Typed.js 라이브러리 -->
-  <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/typed.js@2.1.0/dist/typed.umd.js"></script>
 
   <!-- A2HS 위젯 -->
   <script src="a2hs.js" defer
     data-site-name="빅토리처치"
-    data-icon="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png"
+    data-icon="logo.png"
     data-auto-banner="false"></script>
 
   <!-- TTS (ElevenLabs) -->

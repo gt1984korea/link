@@ -1,4 +1,37 @@
-/* 최소 서비스워커 — 안드로이드 '앱 설치' 조건 충족용 (캐싱 없음) */
-self.addEventListener("install", function () { self.skipWaiting(); });
-self.addEventListener("activate", function (e) { e.waitUntil(self.clients.claim()); });
-self.addEventListener("fetch", function () { /* 네트워크 그대로 사용 */ });
+/* 서비스워커 v2 — 정적 자산 캐싱 + 안드로이드 PWA 설치 요건 충족 */
+const CACHE = 'vc-v2';
+const PRECACHE = ['/', '/firebase-config.js', '/a2hs.js', '/icon-192.png?v=3', '/icon-512.png?v=3'];
+
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  // 외부 CDN(Firebase, Google Fonts 등)은 브라우저 기본 HTTP 캐시에 위임
+  if (url.origin !== self.location.origin) return;
+
+  // 동일 출처 GET: stale-while-revalidate (캐시 즉시 반환 + 백그라운드 갱신)
+  e.respondWith(
+    caches.open(CACHE).then(cache =>
+      cache.match(req).then(cached => {
+        const fresh = fetch(req).then(res => {
+          if (res.ok) cache.put(req, res.clone());
+          return res;
+        }).catch(() => cached);
+        return cached || fresh;
+      })
+    )
+  );
+});
