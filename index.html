@@ -333,7 +333,7 @@
       margin-left: 2px;
       opacity: 0.65;
       vertical-align: baseline;
-      display: inline-block;
+      display: inline;
       animation: typedjsBlink 0.8s infinite;
     }
     @keyframes typedjsBlink {
@@ -1138,8 +1138,13 @@
 
     let typedTextInstance = null;
     let typedRefInstance = null;
+    let typedTimeoutId = null;
 
     function clearTypewriting() {
+      if (typedTimeoutId) {
+        clearTimeout(typedTimeoutId);
+        typedTimeoutId = null;
+      }
       if (typedTextInstance) {
         typedTextInstance.destroy();
         typedTextInstance = null;
@@ -1150,6 +1155,53 @@
       }
       elText.textContent = '';
       elRef.textContent = '';
+    }
+
+    function startTypewriting(text, reference) {
+      clearTypewriting();
+
+      // HTML 개행 처리를 위해 \n을 <br>로 치환
+      const htmlText = text.replace(/\n/g, '<br>');
+
+      // 말씀 본문 타이핑 시작 (Typed.js)
+      typedTextInstance = new Typed('#verseText', {
+        strings: [htmlText],
+        typeSpeed: 55,       // 속도를 조금 늦추어 가독성과 부드러움 확보
+        startDelay: 240,     // 0.24초 여유 대기 후 시작
+        humanize: true,      // 사람 글쓰기 템포 활성화 (자연스러운 멈춤)
+        showCursor: true,    // 얇은 커서 리드
+        cursorChar: '│',
+        contentType: 'html',
+        onComplete: (self) => {
+          // 본문 타이핑이 완료되면 본문 커서는 숨김 처리합니다.
+          if (self.cursor) {
+            self.cursor.style.display = 'none';
+          }
+          // 본문 타이핑이 완료되면 0.25초 쉬고 출처 타이핑을 시작합니다.
+          typedTimeoutId = setTimeout(() => {
+            typedTimeoutId = null;
+            if (reference) {
+              typedRefInstance = new Typed('#verseRef', {
+                strings: [reference],
+                typeSpeed: 60,
+                startDelay: 100,
+                humanize: true,
+                showCursor: true,
+                cursorChar: '│',
+                onComplete: (refSelf) => {
+                  // 출처 타이핑이 완료되면 1초 뒤 커서를 숨깁니다.
+                  typedTimeoutId = setTimeout(() => {
+                    typedTimeoutId = null;
+                    if (refSelf.cursor) {
+                      refSelf.cursor.style.display = 'none';
+                    }
+                  }, 1000);
+                }
+              });
+            }
+          }, 250);
+        }
+      });
     }
 
     function renderActive(active, sharedAudioUrl) {
@@ -1180,38 +1232,7 @@
       card.classList.remove('hidden');
 
       if (isChanged) {
-        clearTypewriting();
-        
-        // HTML 개행 처리를 위해 \n을 <br>로 치환
-        const htmlText = text.replace(/\n/g, '<br>');
-        
-        // 말씀 본문 타이핑 시작 (Typed.js)
-        typedTextInstance = new Typed('#verseText', {
-          strings: [htmlText],
-          typeSpeed: 55,       // 속도를 조금 늦추어 가독성과 부드러움 확보
-          startDelay: 240,     // 0.24초 여유 대기 후 시작
-          humanize: true,      // 사람 글쓰기 템포 활성화 (자연스러운 멈춤)
-          showCursor: true,    // 얇은 커서 리드
-          cursorChar: '│',
-          contentType: 'html',
-          onComplete: (self) => {
-            // 본문 타이핑이 완료되면 0.25초 쉬고 출처 타이핑을 시작합니다.
-            setTimeout(() => {
-              if (reference) {
-                typedRefInstance = new Typed('#verseRef', {
-                  strings: [reference],
-                  typeSpeed: 60,
-                  startDelay: 100,
-                  humanize: true,
-                  showCursor: true,
-                  cursorChar: '│',
-                });
-              }
-            }, 250);
-          }
-        });
-      } else {
-        // 이미 동일한 구절이 그려져 있거나 그려지는 중이므로 타이핑 중단 방지를 위해 무시합니다.
+        startTypewriting(text, reference);
       }
 
       try {
@@ -1325,31 +1346,7 @@
         card.classList.remove('hidden');
 
         // 첫 진입 시 캐시 데이터를 정적으로 박지 않고 Typed.js로 타이핑을 구동합니다.
-        clearTypewriting();
-        const htmlText = cached.text.replace(/\n/g, '<br>');
-        typedTextInstance = new Typed('#verseText', {
-          strings: [htmlText],
-          typeSpeed: 55,
-          startDelay: 240,
-          humanize: true,
-          showCursor: true,
-          cursorChar: '│',
-          contentType: 'html',
-          onComplete: (self) => {
-            setTimeout(() => {
-              if (cached.reference) {
-                typedRefInstance = new Typed('#verseRef', {
-                  strings: [cached.reference],
-                  typeSpeed: 60,
-                  startDelay: 100,
-                  humanize: true,
-                  showCursor: true,
-                  cursorChar: '│',
-                });
-              }
-            }, 250);
-          }
-        });
+        startTypewriting(cached.text, cached.reference || '');
       }
     } catch (e) {}
 
