@@ -325,32 +325,6 @@
     .verse.loading .ref { opacity: 0.45; }
     .verse.hidden { display: none; }
 
-    /* 종이에 글씨를 쓰듯 잉크가 번져 선명해지는 애니메이션 효과 */
-    @keyframes inkWrite {
-      0% {
-        opacity: 0;
-        filter: blur(3px);
-        text-shadow: 0 0 6px rgba(54, 54, 54, 0.45);
-      }
-      50% {
-        opacity: 0.7;
-        filter: blur(1.5px);
-        text-shadow: 0 0 3px rgba(54, 54, 54, 0.2);
-      }
-      100% {
-        opacity: 1;
-        filter: blur(0);
-        text-shadow: none;
-      }
-    }
-
-    .writing-char {
-      display: inline;
-      opacity: 0;
-      animation: inkWrite 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-      white-space: pre-wrap;
-    }
-
     /* 지난 암송 구절 리스트 패널 (verse 카드 위쪽에 표시) */
     .past-panel {
       background: var(--surface);
@@ -1147,57 +1121,20 @@
       return { active, past };
     }
 
-    let typeTimers = [];
-    function clearTypewriting() {
-      typeTimers.forEach(clearTimeout);
-      typeTimers = [];
-    }
+    let typedTextInstance = null;
+    let typedRefInstance = null;
 
-    function typeWriter(el, text, speed, callback) {
-      el.textContent = ''; // 기존 내용 비우기
-      let i = 0;
-      
-      function type() {
-        if (i < text.length) {
-          const char = text.charAt(i);
-          
-          if (char === '\n') {
-            const br = document.createElement('br');
-            el.appendChild(br);
-          } else {
-            const span = document.createElement('span');
-            span.className = 'writing-char';
-            span.textContent = char;
-            el.appendChild(span);
-          }
-          
-          i++;
-          
-          // 자연스러운 종이 글쓰기 템포 (Human-like pacing)
-          // 기본 타이핑 간격을 68ms 내외로 설정하여 뚝뚝 끊김 없이 부드럽게 전개
-          const baseSpeed = Math.min(speed, 68);
-          let delay = baseSpeed;
-          
-          // 1. 랜덤 미세 딜레이 변동 (-10ms ~ +10ms)
-          const randomNoise = Math.floor(Math.random() * 20) - 10;
-          delay += randomNoise;
-          
-          // 2. 글자 종류에 따른 호흡 딜레이 최적화
-          const nextChar = text.charAt(i - 1);
-          if (nextChar === '\n') {
-            delay = 300; // 줄바꿈 후 숨고르기
-          } else if (nextChar === ' ') {
-            delay = baseSpeed + 35; // 단어 띄어쓰기 간격
-          } else if (/[.,?!~]/.test(nextChar)) {
-            delay = 220; // 쉼표/마침표 후 멈춤
-          }
-          
-          typeTimers.push(setTimeout(type, Math.max(15, delay)));
-        } else if (callback) {
-          callback();
-        }
+    function clearTypewriting() {
+      if (typedTextInstance) {
+        typedTextInstance.destroy();
+        typedTextInstance = null;
       }
-      type();
+      if (typedRefInstance) {
+        typedRefInstance.destroy();
+        typedRefInstance = null;
+      }
+      elText.textContent = '';
+      elRef.textContent = '';
     }
 
     function renderActive(active, sharedAudioUrl) {
@@ -1221,7 +1158,7 @@
         window.dispatchEvent(new CustomEvent('vc:audiochange', { detail: { audioUrl } }));
       } catch (e) {}
 
-      // 내용 변경 시 타이핑 애니메이션 실행 (어르신 가독성을 위해 100ms 속도로 차분하게 출력)
+      // 내용 변경 시 타이핑 애니메이션 실행
       const isChanged = (window.lastRenderedText !== text || window.lastRenderedRef !== reference);
       window.lastRenderedText = text;
       window.lastRenderedRef = reference;
@@ -1229,12 +1166,29 @@
 
       if (isChanged) {
         clearTypewriting();
-        // 말씀 본문을 먼저 타이핑한 후, 끝난 뒤 장/절 주소를 타이핑합니다.
-        typeWriter(elText, text, 95, function () {
-          typeWriter(elRef, reference, 95);
+        
+        // HTML 개행 처리를 위해 \n을 <br>로 치환
+        const htmlText = text.replace(/\n/g, '<br>');
+        
+        // 말씀 본문 타이핑 시작 (Typed.js)
+        typedTextInstance = new Typed('#verseText', {
+          strings: [htmlText],
+          typeSpeed: 45,
+          showCursor: false,
+          contentType: 'html',
+          onComplete: (self) => {
+            // 본문 타이핑이 완료되면 출처 타이핑을 시작합니다.
+            if (reference) {
+              typedRefInstance = new Typed('#verseRef', {
+                strings: [reference],
+                typeSpeed: 50,
+                showCursor: false,
+              });
+            }
+          }
         });
       } else {
-        // 이미 그려지고 있거나 완료된 동일 내용이므로 타이핑 애니메이션 흐름을 유지하기 위해 아무 작업도 하지 않습니다.
+        // 이미 동일한 구절이 그려져 있거나 그려지는 중이므로 타이핑 중단 방지를 위해 무시합니다.
       }
 
       try {
@@ -1347,10 +1301,23 @@
         if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
         card.classList.remove('hidden');
 
-        // 첫 진입 시 캐시 데이터를 정적으로 박지 않고 즉시 타이핑 애니메이션을 구동합니다.
+        // 첫 진입 시 캐시 데이터를 정적으로 박지 않고 Typed.js로 타이핑을 구동합니다.
         clearTypewriting();
-        typeWriter(elText, cached.text, 95, function () {
-          typeWriter(elRef, cached.reference || '', 95);
+        const htmlText = cached.text.replace(/\n/g, '<br>');
+        typedTextInstance = new Typed('#verseText', {
+          strings: [htmlText],
+          typeSpeed: 45,
+          showCursor: false,
+          contentType: 'html',
+          onComplete: (self) => {
+            if (cached.reference) {
+              typedRefInstance = new Typed('#verseRef', {
+                strings: [cached.reference],
+                typeSpeed: 50,
+                showCursor: false,
+              });
+            }
+          }
         });
       }
     } catch (e) {}
@@ -1396,6 +1363,9 @@
       if (!elText.textContent) card.classList.add('hidden');
     }
   </script>
+
+  <!-- Typed.js 라이브러리 -->
+  <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
 
   <!-- A2HS 위젯 -->
   <script src="a2hs.js" defer
