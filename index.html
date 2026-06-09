@@ -672,13 +672,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
       flex-shrink: 0;
     }
-    .contact-icon.phone  { background: rgba(52,199,89,.18);  }
-    .contact-icon.email  { background: rgba(50,173,230,.15);  }
-    .contact-icon.map1   { background: rgba(33,66,141,.20);  }
-    .contact-icon.map2   { background: rgba(90,130,200,.18); }
+    .contact-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+    .contact-icon.phone { background: rgba(52,199,89,.15); color: #2ea043; }
+    .contact-icon.email { background: rgba(50,173,230,.12); color: #0096e6; }
+    .contact-icon.map1  { background: rgba(33,66,141,.12); color: #21428d; }
+    .contact-icon.map2  { background: rgba(139,92,246,.12); color: #8b5cf6; }
     .contact-text {
       display: flex;
       flex-direction: column;
@@ -879,10 +882,10 @@
       <!-- 1. 바로가기 설치 -->
       <button class="item primary" id="btnInstall" type="button" data-a2hs>
         <span class="ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3v12"/>
-            <path d="M7 10l5 5 5-5"/>
-            <path d="M5 21h14"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
         </span>
         <span class="body">
@@ -929,8 +932,9 @@
       <div class="channel">
         <button class="item youtube channel-head" id="btnYoutube" type="button" data-href="https://www.youtube.com/@nzvictory/videos" aria-expanded="false">
           <span class="ic">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8C22 15.2 22 12 22 12s0-3.2-.4-4.8zM10 15V9l5.2 3L10 15z"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="15" x="2" y="4.5" rx="4"/>
+              <polygon points="10 9 15 12 10 15"/>
             </svg>
           </span>
           <span class="body">
@@ -961,8 +965,8 @@
       <div class="channel">
         <button class="item facebook channel-head" id="btnFacebook" type="button" data-href="https://www.facebook.com/people/Victory-Church-NZ/100075886399936/" aria-expanded="false">
           <span class="ic">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
             </svg>
           </span>
           <span class="body">
@@ -983,10 +987,10 @@
       <div class="channel">
         <button class="item instagram channel-head" id="btnInstagram" type="button" data-href="https://www.instagram.com/victorius_nz/" aria-expanded="false">
           <span class="ic">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="5"/>
-              <circle cx="12" cy="12" r="4"/>
-              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+              <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
             </svg>
           </span>
           <span class="body">
@@ -1010,7 +1014,11 @@
       <h3>교회 연락처</h3>
 
       <a class="contact-row" href="tel:02127211988">
-        <div class="contact-icon phone">📞</div>
+        <div class="contact-icon phone">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+        </div>
         <div class="contact-text">
           <span class="contact-label">전화</span>
           <span class="contact-value">021-271-1988</span>
@@ -1018,7 +1026,12 @@
       </a>
 
       <a class="contact-row" href="mailto:nzvictorychurch@hotmail.com">
-        <div class="contact-icon email">✉️</div>
+        <div class="contact-icon email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="16" x="2" y="4" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+        </div>
         <div class="contact-text">
           <span class="contact-label">이메일</span>
           <span class="contact-value">nzvictorychurch@hotmail.com</span>
@@ -1026,7 +1039,12 @@
       </a>
 
       <a class="contact-row" href="https://www.google.com/maps/dir/?api=1&destination=90+Akoranga+Dr,+Northcote,+Auckland,+New+Zealand" target="_blank" rel="noopener noreferrer">
-        <div class="contact-icon map1">⛪</div>
+        <div class="contact-icon map1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
         <div class="contact-text">
           <span class="contact-label">주일예배</span>
           <span class="contact-value">90 Akoranga Dr, Northcote<br>(AUT Building)</span>
@@ -1034,7 +1052,14 @@
       </a>
 
       <a class="contact-row" href="https://www.google.com/maps/dir/?api=1&destination=44+Constellation+Dr,+Rosedale,+Auckland,+New+Zealand" target="_blank" rel="noopener noreferrer">
-        <div class="contact-icon map2">🙏</div>
+        <div class="contact-icon map2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
         <div class="contact-text">
           <span class="contact-label">주중모임 (교육관)</span>
           <span class="contact-value">44 Constellation Dr, Rosedale</span>
