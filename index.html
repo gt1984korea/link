@@ -329,22 +329,25 @@
     @keyframes inkWrite {
       0% {
         opacity: 0;
-        filter: blur(4px);
+        filter: blur(3px);
+        text-shadow: 0 0 6px rgba(54, 54, 54, 0.45);
       }
-      60% {
-        opacity: 0.6;
+      50% {
+        opacity: 0.7;
         filter: blur(1.5px);
+        text-shadow: 0 0 3px rgba(54, 54, 54, 0.2);
       }
       100% {
         opacity: 1;
         filter: blur(0);
+        text-shadow: none;
       }
     }
 
     .writing-char {
       display: inline;
       opacity: 0;
-      animation: inkWrite 0.35s ease-out forwards;
+      animation: inkWrite 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
       white-space: pre-wrap;
     }
 
@@ -1171,23 +1174,25 @@
           i++;
           
           // 자연스러운 종이 글쓰기 템포 (Human-like pacing)
-          let delay = speed;
+          // 기본 타이핑 간격을 68ms 내외로 설정하여 뚝뚝 끊김 없이 부드럽게 전개
+          const baseSpeed = Math.min(speed, 68);
+          let delay = baseSpeed;
           
-          // 1. 랜덤 미세 딜레이 변동 (-15ms ~ +15ms)
-          const randomNoise = Math.floor(Math.random() * 30) - 15;
+          // 1. 랜덤 미세 딜레이 변동 (-10ms ~ +10ms)
+          const randomNoise = Math.floor(Math.random() * 20) - 10;
           delay += randomNoise;
           
-          // 2. 글자 종류에 따른 호흡 딜레이
+          // 2. 글자 종류에 따른 호흡 딜레이 최적화
           const nextChar = text.charAt(i - 1);
           if (nextChar === '\n') {
-            delay = 450; // 줄바꿈 후 숨고르기
+            delay = 300; // 줄바꿈 후 숨고르기
           } else if (nextChar === ' ') {
-            delay = 130; // 단어 띄어쓰기 간격
+            delay = baseSpeed + 35; // 단어 띄어쓰기 간격
           } else if (/[.,?!~]/.test(nextChar)) {
-            delay = 350; // 쉼표/마침표 후 멈춤
+            delay = 220; // 쉼표/마침표 후 멈춤
           }
           
-          typeTimers.push(setTimeout(type, Math.max(20, delay)));
+          typeTimers.push(setTimeout(type, Math.max(15, delay)));
         } else if (callback) {
           callback();
         }
