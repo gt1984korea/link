@@ -27,6 +27,10 @@ function setBtn(label, disabled) {
   span.textContent = label;
   btn.disabled = !!disabled;
 }
+// 버튼은 기본적으로 숨김 상태(.hidden)로 시작 → 켤 수 있는 상황에서만 노출,
+// 알림이 등록(허용)되면 다시 숨겨 화면을 깔끔하게 유지합니다.
+function showBtn() { if (btn) btn.classList.remove('hidden'); }
+function hideBtn() { if (btn) btn.classList.add('hidden'); }
 
 // iOS이면서 홈 화면 PWA로 실행된 상태가 아닌지 판별
 const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -45,12 +49,13 @@ async function init() {
   if (isiOS && !isStandalone) {
     setBtn('홈 화면 추가 후 가능', true);
     setHint('아이폰은 위 "바로가기 만들기"로 홈 화면에 추가한 뒤, 그 앱에서 열면 알림을 켤 수 있어요.');
+    showBtn();
     return;
   }
 
+  // 알림 미지원 기기 → 버튼 숨김(불필요한 버튼 노출 방지)
   if (!supported || !('Notification' in window)) {
-    setBtn('이 기기는 알림 미지원', true);
-    setHint('');
+    hideBtn();
     return;
   }
 
