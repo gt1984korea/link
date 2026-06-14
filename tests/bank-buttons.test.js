@@ -74,6 +74,8 @@ async function testMobile({ engine, deviceName, kind }) {
   page.on('pageerror', (err) => console.error('   ⚠️ pageerror:', err.message));
 
   await page.goto(URL, { waitUntil: 'load' });
+  await page.click('#btnGive');
+  await page.waitForSelector('#giveModal.show', { timeout: 3000 });
   await page.waitForSelector('.give-bank-btn', { timeout: 8000 });
 
   for (const label of Object.keys(BANKS)) {
@@ -102,6 +104,8 @@ async function testDesktop() {
   const page = await context.newPage();
   await installNavCapture(page); // 데스크톱은 이벤트가 발생하면 안 됨
   await page.goto(URL, { waitUntil: 'load' });
+  await page.click('#btnGive');
+  await page.waitForSelector('#giveModal.show', { timeout: 3000 });
   await page.waitForSelector('.give-bank-btn', { timeout: 8000 });
 
   for (const label of Object.keys(BANKS)) {
@@ -132,6 +136,8 @@ async function testCopy() {
   });
   const page = await context.newPage();
   await page.goto(URL, { waitUntil: 'load' });
+  await page.click('#btnGive');
+  await page.waitForSelector('#giveModal.show', { timeout: 3000 });
   await page.waitForSelector('#copyAcctBtn', { timeout: 8000 });
 
   const expected = (await page.locator('#giveAcct').textContent()).trim();

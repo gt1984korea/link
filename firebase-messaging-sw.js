@@ -1,65 +1,63 @@
-/* Firebase Cloud Messaging 백그라운드 서비스워커
- * 앱이 닫혀 있을 때(또는 백그라운드일 때) 새 암송 구절 푸시를 받아
- * 알림을 띄우고 홈 화면 아이콘에 빨간 배지(setAppBadge)를 표시합니다.
+/* 빅토리처치 웹 푸시용 서비스워커 (의존성 0 · 순수 표준 API)
  *
- * 주의: 이 파일은 FCM이 자동으로 '/firebase-messaging-sw.js' 경로에서 찾습니다.
- *        반드시 사이트 루트에 위치해야 하며, index.html과 같은 Firebase 버전(10.12.5)을 씁니다.
+ * 이전 버전은 gstatic에서 Firebase SDK를 importScripts로 불러와 실행했는데,
+ * 일부 안드로이드 브라우저에서 그 평가 단계가 깨져 등록이 실패했습니다
+ * ("messaging/failed-service-worker-registration: ServiceWorker script evaluation failed").
+ *
+ * FCM 토큰 발급(getToken)은 이 파일이 "유효한 서비스워커"이기만 하면 되고,
+ * 푸시 표시는 표준 push 이벤트로 직접 처리하면 되므로 Firebase SDK가 필요 없습니다.
+ * → importScripts 제거로 평가 실패 가능성을 원천 차단합니다.
  */
-importScripts('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging-compat.js');
 
-firebase.initializeApp({
-  apiKey: 'AIzaSyDcz1pXcFf8a5vwjQSO7Xz4jU7F6lL_ZEs',
-  authDomain: 'victorychurch-665a9.firebaseapp.com',
-  projectId: 'victorychurch-665a9',
-  storageBucket: 'victorychurch-665a9.firebasestorage.app',
-  messagingSenderId: '520614301251',
-  appId: '1:520614301251:web:1d5394f050346f9c17cef6'
-});
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
-const messaging = firebase.messaging();
-
-// 데이터 전용 메시지를 받아 직접 알림 + 아이콘 배지를 띄웁니다.
-// (iOS 웹 푸시는 푸시마다 사용자에게 보이는 알림이 반드시 있어야 하므로 여기서 알림을 표시합니다.)
-messaging.onBackgroundMessage((payload) => {
-  const data = payload.data || {};
-  const title = data.title || '빅토리처치';
-  const body = data.body || '새 암송 구절이 등록되었어요.';
-
-  // 홈 화면 아이콘 빨간 배지 (iOS 16.4+, Android 지원)
+// FCM이 보낸 푸시 수신 → 알림 표시 + 홈 화면 아이콘 배지(iOS 16.4+/Android)
+self.addEventListener('push', (event) => {
+  let payload = {};
   try {
-    if (self.navigator && self.navigator.setAppBadge) {
-      self.navigator.setAppBadge(1);
-    }
-  } catch (e) {}
+    payload = event.data ? event.data.json() : {};
+  } catch (e) {
+    try { payload = { data: { body: event.data && event.data.text() } }; } catch (_) {}
+  }
 
-  return self.registration.showNotification(title, {
-    body: body,
-    icon: '/icon-192.png?v=4',
-    badge: '/icon-192.png?v=4',
-    tag: 'memory-verse',           // 같은 태그는 알림을 덮어써서 중복 방지
-    renotify: true,
-    data: { url: data.url || '/' }
-  });
-});
-
-// 알림을 탭하면 앱을 열고(또는 포커스) 배지를 지웁니다.
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+  // 데이터 메시지(data) 우선, 없으면 notification, 그래도 없으면 최상위에서 읽기
+  const d = payload.data || payload.notification || payload || {};
+  const title = d.title || '빅토리처치';
+  const body = d.body || '새 암송 구절이 등록되었어요.';
+  const url = d.url || '/';
 
   try {
-    if (self.navigator && self.navigator.clearAppBadge) {
-      self.navigator.clearAppBadge();
-    }
+    if (self.navigator && self.navigator.setAppBadge) self.navigator.setAppBadge(1);
   } catch (e) {}
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
+    self.registration.showNotification(title, {
+      body: body,
+      icon: '/icon-192.png?v=4',
+      badge: '/icon-192.png?v=4',
+      tag: 'memory-verse',   // 같은 태그는 알림을 덮어써 중복 방지
+      renotify: true,
+      data: { url: url }
+    })
+  );
+});
+
+// 알림 탭 → 앱 열기/포커스 + 배지 제거
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+
+  try {
+    if (self.navigator && self.navigator.clearAppBadge) self.navigator.clearAppBadge();
+  } catch (e) {}
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
         if ('focus' in client) return client.focus();
       }
-      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+      if (self.clients.openWindow) return self.clients.openWindow(url);
     })
   );
 });

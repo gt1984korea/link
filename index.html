@@ -195,6 +195,7 @@
     .item.youtube .ic{ background: #fee2e2; color: #dc2626; }
     .item.facebook .ic { background: #e7f0ff; color: #1877f2; }
     .item.instagram .ic{ background: #fdeef5; color: #d6249f; }
+
     .item.live .ic   { background: #fef3c7; color: #d97706; position: relative; }
     .item.live .ic::after {
       content: ""; position: absolute; top: 8px; right: 8px;
@@ -701,6 +702,16 @@
       border-color: var(--brand);
       background: var(--brand-dim);
     }
+    button.contact-row {
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+    }
     .contact-icon {
       width: 46px;
       height: 46px;
@@ -718,6 +729,7 @@
     .contact-icon.email { background: rgba(50,173,230,.12); color: #0096e6; }
     .contact-icon.map1  { background: rgba(33,66,141,.12); color: #21428d; }
     .contact-icon.map2  { background: rgba(139,92,246,.12); color: #8b5cf6; }
+    .contact-icon.give  { background: rgba(46,125,50,.12); color: #2e7d32; }
     .contact-text {
       display: flex;
       flex-direction: column;
@@ -971,6 +983,15 @@
     }
     .modal-overlay.show .modal-content {
       transform: translateY(0);
+    }
+    .give-modal-content {
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 32px 20px 24px;
+      width: 92%;
+    }
+    .give-modal-content .give-section {
+      margin-top: 0;
     }
     .modal-close {
       position: absolute;
@@ -1237,6 +1258,7 @@
         <span class="chev">바로가기</span>
       </button>
 
+
       <!-- 3. 유튜브 (누르면 최신 영상 미리보기 펼침) -->
       <div class="channel">
         <button class="item youtube channel-head" id="btnYoutube" type="button" data-href="https://www.youtube.com/@nzvictory/videos" aria-expanded="false">
@@ -1374,77 +1396,18 @@
           <span class="contact-value">44 Constellation Dr, Rosedale</span>
         </div>
       </a>
-    </div>
 
-    <div class="give-section">
-      <h3>헌금하기</h3>
-
-      <div class="give-card">
-        <span class="give-bank-name">ANZ 교회 계좌</span>
-        <div class="give-acct" id="giveAcct">06-0193-0831416-00</div>
-        <div class="give-holder">예금주 : <span id="giveHolder">NZ Victory Church</span></div>
-        <button type="button" class="give-copy-btn" id="copyAcctBtn" aria-live="polite">
+      <button class="contact-row" id="btnGive" type="button">
+        <div class="contact-icon give">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
-          <span id="copyAcctLabel">계좌번호 복사하기</span>
-        </button>
-        <button type="button" class="give-copy-btn secondary" id="copyHolderBtn" aria-live="polite">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-          <span id="copyHolderLabel">예금주 복사하기</span>
-        </button>
-      </div>
-
-      <div class="give-banks">
-        <a class="give-bank-btn"
-           href="https://www.anz.co.nz/banking-with-anz/ways-to-bank/gomoney/"
-           data-pkg="nz.co.anz.android.mobilebanking"
-           data-ios-scheme="anzgomoney://"
-           data-ios="https://apps.apple.com/nz/app/anz-gomoney-new-zealand/id685125525"
-           data-android="https://play.google.com/store/apps/details?id=nz.co.anz.android.mobilebanking"
-           target="_blank" rel="noopener noreferrer">
-          <span class="bk">ANZ</span>
-          <span class="bk-sub">앱 열기</span>
-        </a>
-        <a class="give-bank-btn"
-           href="https://www.asb.co.nz/banking-with-asb/mobile-app.html"
-           data-pkg="nz.co.asb.asbmobile"
-           data-ios-scheme="asbmobile://"
-           data-ios="https://apps.apple.com/nz/app/asb-mobile-banking/id434348489"
-           data-android="https://play.google.com/store/apps/details?id=nz.co.asb.asbmobile"
-           target="_blank" rel="noopener noreferrer">
-          <span class="bk">ASB</span>
-          <span class="bk-sub">앱 열기</span>
-        </a>
-        <a class="give-bank-btn"
-           href="https://www.bnz.co.nz/personal-banking/everyday-banking/mobile-banking"
-           data-pkg="nz.co.bnz.droidbanking"
-           data-ios-scheme="bnzmobile://"
-           data-ios="https://apps.apple.com/nz/app/bnz-mobile/id443045792"
-           data-android="https://play.google.com/store/apps/details?id=nz.co.bnz.droidbanking"
-           target="_blank" rel="noopener noreferrer">
-          <span class="bk">BNZ</span>
-          <span class="bk-sub">앱 열기</span>
-        </a>
-      </div>
-
-      <div class="give-ref">
-        <div class="give-ref-title">온라인 헌금 시 Ref(참조) 표기 방법</div>
-        <ul>
-          <li>주일헌금 <span class="gk">/ Sunday 또는 표시안함</span></li>
-          <li>십일조 <span class="gk">/ Tithe, 11jo, 1/10 등</span></li>
-          <li>감사헌금 <span class="gk">/ Thanks, Gamsa</span></li>
-          <li>목적헌금 <span class="gk">/ Cambodia, Alpha, Youth group 등</span></li>
-          <li>선교헌금 <span class="gk">/ Mission</span></li>
-          <li>교육관헌금 <span class="gk">/ Edu, Building 등</span></li>
-        </ul>
-      </div>
-
-      <p class="give-note">계좌번호를 복사한 뒤, 사용하시는 은행 앱을 열어 붙여넣기 해 주세요.</p>
+        </div>
+        <div class="contact-text">
+          <span class="contact-label">헌금하기</span>
+          <span class="contact-value">온라인 헌금 안내 및 계좌 정보</span>
+        </div>
+      </button>
     </div>
 
     <div class="footer">
@@ -1458,6 +1421,89 @@
   </div>
 
   <div class="toast" id="toast">바로가기 설치 완료</div>
+
+  <!-- 헌금하기 모달 -->
+  <div class="modal-overlay" id="giveModal" role="dialog" aria-modal="true">
+    <div class="modal-content give-modal-content">
+      <button class="modal-close" id="giveModalCloseBtn" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      
+      <div class="give-section">
+        <h3>헌금하기</h3>
+
+        <div class="give-card">
+          <span class="give-bank-name">ANZ 교회 계좌</span>
+          <div class="give-acct" id="giveAcct">06-0193-0831416-00</div>
+          <div class="give-holder">예금주 : <span id="giveHolder">NZ Victory Church</span></div>
+          <button type="button" class="give-copy-btn" id="copyAcctBtn" aria-live="polite">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span id="copyAcctLabel">계좌번호 복사하기</span>
+          </button>
+          <button type="button" class="give-copy-btn secondary" id="copyHolderBtn" aria-live="polite">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span id="copyHolderLabel">예금주 복사하기</span>
+          </button>
+        </div>
+
+        <div class="give-banks">
+          <a class="give-bank-btn"
+             href="https://www.anz.co.nz/banking-with-anz/ways-to-bank/gomoney/"
+             data-pkg="nz.co.anz.android.mobilebanking"
+             data-ios-scheme="anzgomoney://"
+             data-ios="https://apps.apple.com/nz/app/anz-gomoney-new-zealand/id685125525"
+             data-android="https://play.google.com/store/apps/details?id=nz.co.anz.android.mobilebanking"
+             target="_blank" rel="noopener noreferrer">
+            <span class="bk">ANZ</span>
+            <span class="bk-sub">앱 열기</span>
+          </a>
+          <a class="give-bank-btn"
+             href="https://www.asb.co.nz/banking-with-asb/mobile-app.html"
+             data-pkg="nz.co.asb.asbmobile"
+             data-ios-scheme="asbmobile://"
+             data-ios="https://apps.apple.com/nz/app/asb-mobile-banking/id434348489"
+             data-android="https://play.google.com/store/apps/details?id=nz.co.asb.asbmobile"
+             target="_blank" rel="noopener noreferrer">
+            <span class="bk">ASB</span>
+            <span class="bk-sub">앱 열기</span>
+          </a>
+          <a class="give-bank-btn"
+             href="https://www.bnz.co.nz/personal-banking/everyday-banking/mobile-banking"
+             data-pkg="nz.co.bnz.droidbanking"
+             data-ios-scheme="bnzmobile://"
+             data-ios="https://apps.apple.com/nz/app/bnz-mobile/id443045792"
+             data-android="https://play.google.com/store/apps/details?id=nz.co.bnz.droidbanking"
+             target="_blank" rel="noopener noreferrer">
+            <span class="bk">BNZ</span>
+            <span class="bk-sub">앱 열기</span>
+          </a>
+        </div>
+
+        <div class="give-ref">
+          <div class="give-ref-title">온라인 헌금 시 Ref(참조) 표기 방법</div>
+          <ul>
+            <li>주일헌금 <span class="gk">/ Sunday 또는 표시안함</span></li>
+            <li>십일조 <span class="gk">/ Tithe, 11jo, 1/10 등</span></li>
+            <li>감사헌금 <span class="gk">/ Thanks, Gamsa</span></li>
+            <li>목적헌금 <span class="gk">/ Cambodia, Alpha, Youth group 등</span></li>
+            <li>선교헌금 <span class="gk">/ Mission</span></li>
+            <li>교육관헌금 <span class="gk">/ Edu, Building 등</span></li>
+          </ul>
+        </div>
+
+        <p class="give-note">계좌번호를 복사한 뒤, 사용하시는 은행 앱을 열어 붙여넣기 해 주세요.</p>
+      </div>
+    </div>
+  </div>
 
   <!-- 말씀 상세 보기 모달 -->
   <div class="modal-overlay" id="verseModal" role="dialog" aria-modal="true">
@@ -1704,6 +1750,35 @@
         closeVerseModal();
       }
     });
+
+    // 헌금하기 모달 제어
+    var giveModal = document.getElementById('giveModal');
+    var btnGive = document.getElementById('btnGive');
+    var giveModalCloseBtn = document.getElementById('giveModalCloseBtn');
+
+    function openGiveModal() {
+      giveModal.classList.add('show');
+      document.body.style.overflow = 'hidden'; // 스크롤 방지
+    }
+
+    function closeGiveModal() {
+      giveModal.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    if (btnGive) {
+      btnGive.addEventListener('click', openGiveModal);
+    }
+    if (giveModalCloseBtn) {
+      giveModalCloseBtn.addEventListener('click', closeGiveModal);
+    }
+    if (giveModal) {
+      giveModal.addEventListener('click', function (e) {
+        if (e.target === giveModal) {
+          closeGiveModal();
+        }
+      });
+    }
 
     // 설치 버튼 상태 관리
     var installBtn = document.getElementById('btnInstall');
