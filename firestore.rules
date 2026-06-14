@@ -26,6 +26,14 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // 구절 좋아요 카운터: /verseStats/{verseId} = { likes }
+    // 방문자가 increment(±1)로 좋아요 수를 증감. 기존 /site 정책과 동일한 개방형 규칙.
+    // ⚠️ 누구나 호출 가능(조작 가능) — 소규모/신뢰 환경 전제. 강화 시 App Check 사용.
+    match /verseStats/{verseId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // 웹 푸시 토큰 저장소: 클라이언트는 자기 토큰만 등록(create/update) 가능.
     // 목록 읽기/삭제는 차단 — 발송과 정리는 Cloud Function(Admin SDK)이 규칙을 우회해 처리합니다.
     match /pushTokens/{token} {
