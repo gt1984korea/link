@@ -2,7 +2,7 @@
   "name": "functions",
   "description": "빅토리처치 - 새 암송 구절 웹 푸시 알림",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "index.js",
   "dependencies": {
