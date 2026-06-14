@@ -5,7 +5,8 @@
   "description": "Playwright tests for Victory Church PWA",
   "scripts": {
     "install:browsers": "playwright install webkit chromium",
-    "test:ios": "node ios-screenshots.js"
+    "test:ios": "node ios-screenshots.js",
+    "test:banks": "node bank-buttons.test.js"
   },
   "devDependencies": {
     "playwright": "^1.49.0"

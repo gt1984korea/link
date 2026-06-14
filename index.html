@@ -185,6 +185,11 @@
 
     /* 아이콘 색상 — 일반 카드 */
     .item.home .ic   { background: #eef2ff; color: #4f46e5; }
+    /* 새 구절 알림 받기 버튼 */
+    .item.notify .ic   { background: #fee2e2; color: #e11d48; }
+    .item.notify .chev { color: #e11d48; }
+    .item.notify:disabled { opacity: .65; cursor: default; }
+    .item.notify .t2 { color: #6b7280; }
     .item.youtube .ic{ background: #fee2e2; color: #dc2626; }
     .item.facebook .ic { background: #e7f0ff; color: #1877f2; }
     .item.instagram .ic{ background: #fdeef5; color: #d6249f; }
@@ -256,6 +261,12 @@
       gap: 10px;
       margin-bottom: 14px;
     }
+    .verse .label-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
     .verse .label {
       display: inline-flex;
       align-items: center;
@@ -264,6 +275,29 @@
       font-weight: 700;
       color: var(--brand);
       letter-spacing: 0.03em;
+    }
+    /* 새로 등록된 구절 표시 배지 */
+    .verse .new-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      color: #fff;
+      background: #e53935;
+      padding: 3px 6px;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(229, 57, 53, 0.45);
+      animation: newBadgePulse 1.4s ease-in-out infinite;
+    }
+    @keyframes newBadgePulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.12); opacity: 0.82; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .verse .new-badge { animation: none; }
     }
     .verse .label::before {
       content: "";
@@ -704,6 +738,154 @@
       word-break: break-all;
     }
 
+    /* ── 헌금하기 ── */
+    .give-section {
+      margin-top: 28px;
+    }
+    .give-section h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+      margin: 0 0 12px 0;
+      text-align: center;
+    }
+    .give-card {
+      background: var(--card-bg);
+      border: 2px solid var(--brand-dim);
+      border-radius: 16px;
+      padding: 18px 16px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .give-bank-name {
+      display: inline-block;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--brand);
+      background: var(--brand-dim);
+      border-radius: 999px;
+      padding: 4px 12px;
+      letter-spacing: 0.02em;
+    }
+    .give-acct {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: 0.01em;
+      margin: 10px 0 4px 0;
+      word-break: keep-all;
+    }
+    .give-holder {
+      font-size: 15px;
+      color: var(--text);
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .give-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--brand);
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+      transition: background .15s ease, transform .1s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .give-copy-btn svg { width: 19px; height: 19px; }
+    .give-copy-btn:active { transform: scale(.97); }
+    .give-copy-btn.copied { background: #2ea043; }
+    .give-banks {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .give-bank-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 13px 6px;
+      background: var(--card-bg);
+      border: 2px solid var(--brand-dim);
+      border-radius: 14px;
+      text-decoration: none;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .give-bank-btn:active {
+      border-color: var(--brand);
+      background: var(--brand-dim);
+    }
+    .give-bank-btn .bk {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: 0.01em;
+    }
+    .give-bank-btn .bk-sub {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 700;
+    }
+    .give-ref {
+      background: var(--card-bg);
+      border: 2px solid var(--brand-dim);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .give-ref-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--brand);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    .give-ref ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .give-ref li {
+      font-size: 16px;
+      color: var(--navy);
+      font-weight: 700;
+      line-height: 1.5;
+      padding-left: 16px;
+      position: relative;
+    }
+    .give-ref li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 7px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+    .give-ref li .gk { color: var(--text); font-weight: 700; }
+    .give-note {
+      font-size: 13.5px;
+      color: var(--text-2);
+      font-weight: 600;
+      text-align: center;
+      margin-top: 12px;
+      line-height: 1.55;
+    }
+
     .footer {
       text-align: center;
       margin-top: 28px;
@@ -848,7 +1030,10 @@
     <!-- 0. 이번 주 암송 구절 -->
     <section class="verse hidden" id="verseCard" aria-live="polite">
       <div class="label-row">
-        <span class="label">이번 주 성경 구절</span>
+        <span class="label-left">
+          <span class="label">이번 주 성경 구절</span>
+          <span class="new-badge hidden" id="verseNewBadge" aria-label="새로 등록된 구절">NEW</span>
+        </span>
         <button class="past-toggle hidden" id="pastToggle" type="button" aria-expanded="false">
           <span id="pastToggleLabel">과거 성경</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -1067,6 +1252,67 @@
       </a>
     </div>
 
+    <div class="give-section">
+      <h3>헌금하기</h3>
+
+      <div class="give-card">
+        <span class="give-bank-name">ANZ 교회 계좌</span>
+        <div class="give-acct" id="giveAcct">06-0193-0831416-00</div>
+        <div class="give-holder">예금주 : NZ Victory Church</div>
+        <button type="button" class="give-copy-btn" id="copyAcctBtn" aria-live="polite">
+          <svg id="copyAcctIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          <span id="copyAcctLabel">계좌번호 복사하기</span>
+        </button>
+      </div>
+
+      <div class="give-banks">
+        <a class="give-bank-btn"
+           href="https://www.anz.co.nz/banking-with-anz/ways-to-bank/gomoney/"
+           data-pkg="nz.co.anz.android.mobilebanking"
+           data-ios="https://apps.apple.com/nz/app/anz-gomoney-new-zealand/id685125525"
+           data-android="https://play.google.com/store/apps/details?id=nz.co.anz.android.mobilebanking"
+           target="_blank" rel="noopener noreferrer">
+          <span class="bk">ANZ</span>
+          <span class="bk-sub">앱 열기</span>
+        </a>
+        <a class="give-bank-btn"
+           href="https://www.asb.co.nz/banking-with-asb/mobile-app.html"
+           data-pkg="nz.co.asb.asbmobile"
+           data-ios="https://apps.apple.com/nz/app/asb-mobile-banking/id434348489"
+           data-android="https://play.google.com/store/apps/details?id=nz.co.asb.asbmobile"
+           target="_blank" rel="noopener noreferrer">
+          <span class="bk">ASB</span>
+          <span class="bk-sub">앱 열기</span>
+        </a>
+        <a class="give-bank-btn"
+           href="https://www.bnz.co.nz/personal-banking/everyday-banking/mobile-banking"
+           data-pkg="nz.co.bnz.droidbanking"
+           data-ios="https://apps.apple.com/nz/app/bnz-mobile/id443045792"
+           data-android="https://play.google.com/store/apps/details?id=nz.co.bnz.droidbanking"
+           target="_blank" rel="noopener noreferrer">
+          <span class="bk">BNZ</span>
+          <span class="bk-sub">앱 열기</span>
+        </a>
+      </div>
+
+      <div class="give-ref">
+        <div class="give-ref-title">온라인 헌금 시 Ref(참조) 표기 방법</div>
+        <ul>
+          <li>주일헌금 <span class="gk">/ Sunday 또는 표시안함</span></li>
+          <li>십일조 <span class="gk">/ Tithe, 11jo, 1/10 등</span></li>
+          <li>감사헌금 <span class="gk">/ Thanks, Gamsa</span></li>
+          <li>목적헌금 <span class="gk">/ Cambodia, Alpha, Youth group 등</span></li>
+          <li>선교헌금 <span class="gk">/ Mission</span></li>
+          <li>교육관헌금 <span class="gk">/ Edu, Building 등</span></li>
+        </ul>
+      </div>
+
+      <p class="give-note">계좌번호를 복사한 뒤, 사용하시는 은행 앱을 열어 붙여넣기 해 주세요.</p>
+    </div>
+
     <div class="footer">
       Victory Church · New Zealand
       <br>
@@ -1116,6 +1362,92 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2400);
     }
+
+    // 헌금 계좌번호 복사
+    (function () {
+      var copyBtn = document.getElementById('copyAcctBtn');
+      var acctEl = document.getElementById('giveAcct');
+      if (!copyBtn || !acctEl) return;
+      var labelEl = document.getElementById('copyAcctLabel');
+      var copyTimer = null;
+
+      function fallbackCopy(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+
+      function markCopied() {
+        copyBtn.classList.add('copied');
+        if (labelEl) labelEl.textContent = '복사 완료!';
+        showToast('계좌번호가 복사되었습니다');
+        clearTimeout(copyTimer);
+        copyTimer = setTimeout(function () {
+          copyBtn.classList.remove('copied');
+          if (labelEl) labelEl.textContent = '계좌번호 복사하기';
+        }, 2200);
+      }
+
+      copyBtn.addEventListener('click', function () {
+        var text = (acctEl.textContent || '').trim();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(markCopied, function () {
+            if (fallbackCopy(text)) markCopied();
+            else showToast('복사에 실패했어요. 계좌번호를 길게 눌러 복사해 주세요');
+          });
+        } else {
+          if (fallbackCopy(text)) markCopied();
+          else showToast('복사에 실패했어요. 계좌번호를 길게 눌러 복사해 주세요');
+        }
+      });
+    })();
+
+    // 은행 앱 열기 (기기별 자동 분기)
+    // Android: intent:// 로 설치된 앱 실행(없으면 Play 스토어로 폴백).
+    // iOS:     App Store 링크(앱 있으면 "열기", 없으면 설치).
+    // 데스크톱/기타: href(은행 웹) 그대로 동작.
+    (function () {
+      var ua = navigator.userAgent || '';
+      var isAndroid = /Android/i.test(ua);
+      var isIOS = /iPad|iPhone|iPod/i.test(ua) ||
+                  (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // iPadOS 데스크톱 모드
+      if (!isAndroid && !isIOS) return; // 데스크톱 등은 기본 링크(은행 웹) 사용
+      var btns = document.querySelectorAll('.give-bank-btn[data-pkg]');
+      for (var i = 0; i < btns.length; i++) {
+        (function (btn) {
+          btn.addEventListener('click', function (e) {
+            var target = null;
+            if (isAndroid) {
+              var pkg = btn.getAttribute('data-pkg');
+              if (!pkg) return;
+              var androidStore = btn.getAttribute('data-android') || btn.getAttribute('href');
+              target = 'intent://#Intent;package=' + pkg +
+                ';S.browser_fallback_url=' + encodeURIComponent(androidStore) + ';end';
+            } else if (isIOS) {
+              target = btn.getAttribute('data-ios');
+            }
+            if (!target) return; // 대상 없으면 기본 링크(은행 웹) 동작
+            e.preventDefault();
+            // 취소 가능한 훅: 외부(애널리틱스/테스트)에서 preventDefault() 하면 실제 이동 생략
+            var navEvent;
+            try {
+              navEvent = new CustomEvent('bank:nav', { bubbles: true, cancelable: true, detail: { url: target } });
+            } catch (err) { navEvent = null; }
+            if (navEvent && !btn.dispatchEvent(navEvent)) return;
+            window.location.href = target;
+          });
+        })(btns[i]);
+      }
+    })();
 
     // 말씀 모달 제어
     var verseModal = document.getElementById('verseModal');
@@ -1257,6 +1589,7 @@
     const card = document.getElementById('verseCard');
     const elText = document.getElementById('verseText');
     const elRef  = document.getElementById('verseRef');
+    const newBadge = document.getElementById('verseNewBadge');
     const pastPanel  = document.getElementById('pastVerses');
     const pastListEl = document.getElementById('pastList');
     const pastToggle = document.getElementById('pastToggle');
@@ -1365,9 +1698,42 @@
       }); // document.fonts.ready
     }
 
+    // 활성 구절을 고유하게 식별하는 키 (id 우선, 없으면 시작일+본문 조합)
+    function verseKeyOf(v) {
+      if (!v) return '';
+      if (v.id) return String(v.id);
+      return (v.startDate || '') + '|' + (v.text || '').trim();
+    }
+
+    const SEEN_VERSE_KEY = 'lastSeenVerseKey';
+    let newBadgeTimer = null;
+
+    // 새 구절이면 NEW 배지 표시 후, 잠시 뒤 "봤음"으로 기록해 다음 방문 땐 사라지게 함
+    function updateNewBadge(active) {
+      if (!newBadge) return;
+      const key = verseKeyOf(active);
+      if (!key) { newBadge.classList.add('hidden'); return; }
+
+      let seen = '';
+      try { seen = localStorage.getItem(SEEN_VERSE_KEY) || ''; } catch (e) {}
+
+      if (key === seen) {
+        newBadge.classList.add('hidden');
+        return;
+      }
+
+      newBadge.classList.remove('hidden');
+      if (newBadgeTimer) clearTimeout(newBadgeTimer);
+      // 이번 방문에서 충분히 노출된 뒤 "봤음"으로 저장(이번 화면에선 계속 보이고 다음 방문 때 사라짐)
+      newBadgeTimer = setTimeout(() => {
+        try { localStorage.setItem(SEEN_VERSE_KEY, key); } catch (e) {}
+      }, 4000);
+    }
+
     function renderActive(active, sharedAudioUrl) {
       if (!active) {
         card.classList.add('hidden');
+        if (newBadge) newBadge.classList.add('hidden');
         try { localStorage.removeItem('verseCache'); } catch (e) {}
         return;
       }
@@ -1391,6 +1757,8 @@
       window.lastRenderedText = text;
       window.lastRenderedRef = reference;
       card.classList.remove('hidden');
+
+      updateNewBadge(active);
 
       if (isChanged) {
         startTypewriting(text, reference);
