@@ -1081,6 +1081,21 @@
         <span class="progress"></span>
       </button>
 
+      <!-- 1-a. 새 구절 알림 받기 (웹 푸시) -->
+      <button class="item notify" id="btnNotify" type="button">
+        <span class="ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </span>
+        <span class="body">
+          <span class="t1"><span class="notify-label">새 구절 알림 받기</span></span>
+          <span class="t2" id="notifyHint">새 암송 구절이 올라오면 알려드려요</span>
+        </span>
+        <span class="chev">알림</span>
+      </button>
+
       <!-- 2. 실시간 라이브 -->
       <button class="item live" id="btnLive" type="button">
         <span class="ic">
@@ -1577,6 +1592,15 @@
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function(){});
     }
+
+    // 앱을 열거나 다시 보면(=새 구절을 봤으면) 홈 화면 아이콘의 빨간 배지를 지웁니다.
+    function clearHomeBadge() {
+      try { if (navigator.clearAppBadge) navigator.clearAppBadge(); } catch (e) {}
+    }
+    clearHomeBadge();
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") clearHomeBadge();
+    });
   </script>
 
   <!-- 암송 구절: Firestore 실시간 구독 -->
@@ -1929,6 +1953,9 @@
     data-site-name="빅토리처치"
     data-icon="logo.png"
     data-auto-banner="false"></script>
+
+  <!-- 웹 푸시 알림 (새 구절 알림 받기 버튼 제어) -->
+  <script type="module" src="push.js"></script>
 
   <!-- TTS (ElevenLabs) -->
   <script>

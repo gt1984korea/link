@@ -1,0 +1,13 @@
+{
+  "name": "functions",
+  "description": "빅토리처치 - 새 암송 구절 웹 푸시 알림",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^5.1.1"
+  },
+  "private": true
+}

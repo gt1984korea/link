@@ -26,6 +26,14 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // 웹 푸시 토큰 저장소: 클라이언트는 자기 토큰만 등록(create/update) 가능.
+    // 목록 읽기/삭제는 차단 — 발송과 정리는 Cloud Function(Admin SDK)이 규칙을 우회해 처리합니다.
+    match /pushTokens/{token} {
+      allow get: if true;
+      allow create, update: if true;
+      allow list, delete: if false;
+    }
+
     // 그 외 모든 경로는 차단
     match /{document=**} {
       allow read, write: if false;
