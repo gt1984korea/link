@@ -2,6 +2,13 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  },
   "hosting": {
     "public": ".",
     "ignore": [
@@ -16,6 +23,7 @@
       "public/**",
       "docs/**",
       "tests/**",
+      "functions/**",
       "_*.png",
       "_if.mjs",
       "*.bak.*"
@@ -56,6 +64,12 @@
       },
       {
         "source": "sw.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "firebase-messaging-sw.js",
         "headers": [
           { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
         ]
