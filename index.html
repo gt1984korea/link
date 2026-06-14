@@ -1167,11 +1167,38 @@
       border-radius: 16px;
       overflow: hidden;
       box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+      position: relative;
     }
     .image-share-preview canvas {
       width: 100%;
       height: 100%;
       display: block;
+      cursor: grab;
+    }
+    .image-share-preview canvas:active {
+      cursor: grabbing;
+    }
+    .drag-hint {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+      z-index: 10;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .drag-hint.show {
+      opacity: 1;
     }
     .image-share-swatches {
       display: flex;
@@ -1869,6 +1896,7 @@
       </button>
       <div class="image-share-preview">
         <canvas id="shareCanvas" width="1080" height="1920" aria-label="구절 이미지 미리보기"></canvas>
+        <div class="drag-hint" id="dragHint">↔️ ↕️ 배경을 드래그하여 위치를 조절해 보세요.</div>
       </div>
       <div class="image-share-swatches" id="shareSwatches">
         <button class="swatch swatch-photo" data-style="photo" type="button" aria-label="내 사진 배경으로 사용">🖼️</button>
@@ -2689,17 +2717,32 @@
       const canvasRatio = W / H;
       const imgRatio = img.width / img.height;
       let sx, sy, sw, sh;
+      const offsetX = style.bgOffsetX || 0;
+      const offsetY = style.bgOffsetY || 0;
+
       if (imgRatio > canvasRatio) {
         sh = img.height;
         sw = sh * canvasRatio;
-        sx = (img.width - sw) / 2;
+        const maxShiftX = img.width - sw;
+        sx = maxShiftX / 2 + offsetX * maxShiftX;
         sy = 0;
       } else {
         sw = img.width;
         sh = sw / canvasRatio;
         sx = 0;
-        sy = (img.height - sh) / 2;
+        const maxShiftY = img.height - sh;
+        sy = maxShiftY / 2 + offsetY * maxShiftY;
       }
+
+      // 경계값 보정
+      if (sx < 0) sx = 0;
+      if (sy < 0) sy = 0;
+      if (imgRatio > canvasRatio) {
+        if (sx + sw > img.width) sx = img.width - sw;
+      } else {
+        if (sy + sh > img.height) sy = img.height - sh;
+      }
+
       shareCtx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
 
       // 밝은 수채화 꽃 배경은 어둡게 덮지 않고 밝기를 그대로 유지합니다
@@ -2727,10 +2770,14 @@
       // 2. 활성화된 배경 목록으로 SHARE_STYLES 업데이트
       const activeBgs = backgroundsList.filter(bg => bg.enabled !== false);
       activeBgs.forEach(bg => {
+        const existing = SHARE_STYLES[bg.id];
+        const offsetX = existing ? (existing.bgOffsetX || 0) : 0;
+        const offsetY = existing ? (existing.bgOffsetY || 0) : 0;
+        const cachedImg = existing ? existing.img : null;
         if (bg.type === 'gradient') {
           SHARE_STYLES[bg.id] = { type: 'gradient', stops: bg.stops, textColor: bg.textColor || '#ffffff' };
         } else {
-          SHARE_STYLES[bg.id] = { type: 'image', url: bg.url, img: null, textColor: bg.textColor || '#ffffff', darkOverlay: bg.darkOverlay };
+          SHARE_STYLES[bg.id] = { type: 'image', url: bg.url, img: cachedImg, textColor: bg.textColor || '#ffffff', darkOverlay: bg.darkOverlay, bgOffsetX: offsetX, bgOffsetY: offsetY };
         }
       });
 
@@ -2876,6 +2923,17 @@
     function setActiveShareStyle(styleName) {
       currentShareStyle = styleName;
       document.querySelectorAll('#shareSwatches .swatch').forEach((el) => el.classList.toggle('active', el.dataset.style === styleName));
+      
+      const style = SHARE_STYLES[styleName];
+      const dragHint = document.getElementById('dragHint');
+      if (style && dragHint) {
+        if (style.type === 'photo' || style.type === 'image') {
+          dragHint.classList.add('show');
+        } else {
+          dragHint.classList.remove('show');
+        }
+      }
+
       renderShareCanvas();
     }
 
@@ -2932,6 +2990,91 @@
         renderShareCanvas();
       });
     });
+
+    // 배경 이미지 드래그 위치 이동 기능
+    let isDraggingBg = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let startBgOffsetX = 0;
+    let startBgOffsetY = 0;
+
+    function getEventCoords(e) {
+      if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function onDragStart(e) {
+      const style = SHARE_STYLES[currentShareStyle];
+      if (!style || (style.type !== 'photo' && style.type !== 'image')) return;
+      
+      const img = style.type === 'photo' ? sharePhotoImg : style.img;
+      if (!img) return;
+
+      isDraggingBg = true;
+      const coords = getEventCoords(e);
+      dragStartX = coords.x;
+      dragStartY = coords.y;
+      startBgOffsetX = style.bgOffsetX || 0;
+      startBgOffsetY = style.bgOffsetY || 0;
+
+      if (e.type === 'mousedown') {
+        e.preventDefault(); // 드래그 시 텍스트 드래그/선택 방지
+      }
+    }
+
+    function onDragMove(e) {
+      if (!isDraggingBg) return;
+      const style = SHARE_STYLES[currentShareStyle];
+      if (!style) return;
+
+      const img = style.type === 'photo' ? sharePhotoImg : style.img;
+      if (!img) return;
+
+      const coords = getEventCoords(e);
+      const dx = coords.x - dragStartX;
+      const dy = coords.y - dragStartY;
+
+      const W = shareCanvas.width, H = shareCanvas.height;
+      const rect = shareCanvas.getBoundingClientRect();
+      const canvasRatio = W / H;
+      const imgRatio = img.width / img.height;
+
+      if (imgRatio > canvasRatio) {
+        // 가로가 넓은 이미지 -> 좌우 이동
+        const sw = img.height * canvasRatio;
+        const maxShiftX = img.width - sw;
+        if (maxShiftX > 0) {
+          const imageDx = dx * (sw / rect.width);
+          style.bgOffsetX = Math.max(-0.5, Math.min(0.5, startBgOffsetX - imageDx / maxShiftX));
+        }
+      } else {
+        // 세로가 긴 이미지 -> 위아래 이동
+        const sh = img.width / canvasRatio;
+        const maxShiftY = img.height - sh;
+        if (maxShiftY > 0) {
+          const imageDy = dy * (sh / rect.height);
+          style.bgOffsetY = Math.max(-0.5, Math.min(0.5, startBgOffsetY - imageDy / maxShiftY));
+        }
+      }
+
+      renderShareCanvas();
+    }
+
+    function onDragEnd() {
+      isDraggingBg = false;
+    }
+
+    shareCanvas.addEventListener('mousedown', onDragStart);
+    shareCanvas.addEventListener('mousemove', onDragMove);
+    window.addEventListener('mouseup', onDragEnd);
+
+    // 모바일 터치 대응 (수직 스크롤 방해 방지를 위해 passive: false)
+    shareCanvas.addEventListener('touchstart', onDragStart, { passive: false });
+    shareCanvas.addEventListener('touchmove', onDragMove, { passive: false });
+    window.addEventListener('touchend', onDragEnd);
+    window.addEventListener('touchcancel', onDragEnd);
 
     /* ───────── 이미지로 공유: 모달 열기/닫기 ───────── */
     const imageShareModal = document.getElementById('imageShareModal');
