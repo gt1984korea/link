@@ -362,8 +362,6 @@
     .verse.loading .ref { opacity: 0.45; }
     .verse.hidden { display: none; }
 
-    .typed-cursor { display: none; }
-
     /* 지난 암송 구절 리스트 패널 (verse 카드 위쪽에 표시) */
     .past-panel {
       background: var(--surface);
@@ -721,61 +719,7 @@
       .va-btn.pop .va-ic { animation: none; }
     }
 
-    /* 공유 액션 시트 (바텀시트: 텍스트로 공유 / 이미지로 공유) */
-    .sheet-overlay { align-items: flex-end; }
-    .sheet-overlay .sheet-content {
-      width: 100%;
-      max-width: 480px;
-      background: #fff;
-      border-radius: 28px;
-      margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-      padding: 10px 14px 18px;
-      box-shadow: 0 -8px 30px rgba(0, 0, 0, .15);
-      transform: translateY(100%);
-      transition: transform .25s ease;
-    }
-    .sheet-overlay.show .sheet-content {
-      transform: translateY(0);
-    }
-    .sheet-handle {
-      width: 36px;
-      height: 4px;
-      background: #d8dde6;
-      border-radius: 2px;
-      margin: 8px auto 12px;
-    }
-    .sheet-option {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      width: 100%;
-      padding: 16px 10px;
-      border-radius: 14px;
-      border: none;
-      background: none;
-      font-family: inherit;
-      text-align: left;
-      cursor: pointer;
-      transition: background .15s ease;
-    }
-    .sheet-option:hover, .sheet-option:active { background: var(--brand-dim); }
-    .sheet-ic {
-      flex-shrink: 0;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--brand-dim);
-      color: var(--brand);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .sheet-ic svg { width: 22px; height: 22px; }
-    .sheet-ic.sheet-ic-active { background: var(--brand); color: #fff; }
-    .sheet-body { display: flex; flex-direction: column; gap: 3px; }
-    .sheet-title { font-weight: 700; font-size: 17px; color: var(--text); }
-    .sheet-title.sheet-title-active { color: var(--brand); }
-    .sheet-desc { font-size: 14px; color: var(--text-2); }
+
 
     /* Footer */
     /* Contact Info */
@@ -1854,37 +1798,7 @@
     </div>
   </div>
 
-  <!-- 공유 액션 시트: 텍스트로 공유 / 이미지로 공유 -->
-  <div class="modal-overlay sheet-overlay" id="shareSheet" role="dialog" aria-modal="true" aria-label="공유 방법 선택">
-    <div class="sheet-content">
-      <div class="sheet-handle"></div>
-      <button class="sheet-option" id="shareTextOption" type="button">
-        <span class="sheet-ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-          </svg>
-        </span>
-        <span class="sheet-body">
-          <span class="sheet-title">텍스트로 공유</span>
-          <span class="sheet-desc">구절 내용 + 링크 공유</span>
-        </span>
-      </button>
-      <button class="sheet-option" id="shareImageOption" type="button">
-        <span class="sheet-ic sheet-ic-active">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <path d="M21 15l-5-5L5 21"/>
-          </svg>
-        </span>
-        <span class="sheet-body">
-          <span class="sheet-title sheet-title-active">이미지로 공유</span>
-          <span class="sheet-desc">배경 골라 카드 이미지 만들기</span>
-        </span>
-      </button>
-    </div>
-  </div>
+
 
   <!-- 이미지로 공유 모달 -->
   <div class="modal-overlay" id="imageShareModal" role="dialog" aria-modal="true" aria-label="이미지로 공유">
@@ -1931,23 +1845,13 @@
           <span class="control-label">텍스트 위치</span>
           <div class="position-toggle" id="textPositionToggle">
             <button class="pos-btn" data-pos="top" type="button" aria-label="텍스트 상단 정렬">상단</button>
-            <button class="pos-btn active" data-pos="middle" type="button" aria-label="텍스트 중앙 정렬">중간</button>
-            <button class="pos-btn" data-pos="bottom" type="button" aria-label="텍스트 하단 정렬">하단</button>
-          </div>
-        </div>
-      </div>
-      <div class="image-share-controls">
-        <div class="control-group control-group-border">
-          <span class="control-label">테두리 선</span>
-          <div class="position-toggle" id="borderToggle">
-            <button class="pos-btn active" data-border="off" type="button" aria-label="테두리 없음">없음</button>
-            <button class="pos-btn" data-border="on" type="button" aria-label="테두리 있음">있음</button>
+            <button class="pos-btn" data-pos="middle" type="button" aria-label="텍스트 중앙 정렬">중간</button>
+            <button class="pos-btn active" data-pos="bottom" type="button" aria-label="텍스트 하단 정렬">하단</button>
           </div>
         </div>
       </div>
       <div class="image-share-actions">
         <button class="img-share-btn primary" id="imgShareBtn" type="button">공유하기</button>
-        <button class="img-share-btn" id="imgSaveBtn" type="button">저장</button>
       </div>
     </div>
   </div>
@@ -2393,61 +2297,11 @@
       return { active, past };
     }
 
-    let typedTextInstance = null;
-    let typedRefInstance = null;
-    let typedTimeoutId = null;
-
-    function clearTypewriting() {
-      if (typedTimeoutId) {
-        clearTimeout(typedTimeoutId);
-        typedTimeoutId = null;
-      }
-      if (typedTextInstance) {
-        typedTextInstance.destroy();
-        typedTextInstance = null;
-      }
-      if (typedRefInstance) {
-        typedRefInstance.destroy();
-        typedRefInstance = null;
-      }
-      elText.textContent = '';
-      elRef.textContent = '';
-    }
-
-    function startTypewriting(text, reference) {
-      clearTypewriting();
-
-      // 폰트 로드 완료 후 타이핑 시작 — 폰트 미로드 상태에서 타이핑 시 FOUT(폰트 교체 깜빡임) 방지
-      document.fonts.ready.then(() => {
+    function displayVerse(text, reference) {
       // HTML 개행 처리를 위해 \n을 <br>로 치환
       const htmlText = text.replace(/\n/g, '<br>');
-
-      // 말씀 본문 타이핑 시작 (Typed.js)
-      typedTextInstance = new Typed('#verseText', {
-        strings: [htmlText],
-        typeSpeed: 55,       // 속도를 조금 늦추어 가독성과 부드러움 확보
-        startDelay: 80,      // 폰트 대기 후 시작하므로 여유 시간 단축
-        humanize: true,      // 사람 글쓰기 템포 활성화 (자연스러운 멈춤)
-        showCursor: false,
-        contentType: 'html',
-        onComplete: () => {
-          // 본문 타이핑이 완료되면 0.25초 쉬고 출처 타이핑을 시작합니다.
-          typedTimeoutId = setTimeout(() => {
-            typedTimeoutId = null;
-            if (reference) {
-              typedRefInstance = new Typed('#verseRef', {
-                strings: [reference],
-                typeSpeed: 60,
-                startDelay: 100,
-                humanize: true,
-                showCursor: false,
-                onComplete: () => {}
-              });
-            }
-          }, 250);
-        }
-      });
-      }); // document.fonts.ready
+      elText.innerHTML = htmlText;
+      elRef.textContent = reference || '';
     }
 
     // 활성 구절을 고유하게 식별하는 키 (id 우선, 없으면 시작일+본문 조합)
@@ -2514,7 +2368,7 @@
       setupLikes(computeVerseId(active));
 
       if (isChanged) {
-        startTypewriting(text, reference);
+        displayVerse(text, reference);
       }
 
       try {
@@ -2626,54 +2480,10 @@
     window.attachModalLike = (v) => modalLike.attach(computeVerseId(v));
     window.detachModalLike = () => modalLike.detach();
 
-    // 구절 + 링크를 텍스트로 공유 (기존 동작)
-    async function shareAsText() {
-      const text = (window.currentFullVerseText || '').trim();
-      const ref  = (window.currentFullVerseRef || '').trim();
-      const body = ref ? (text + '\n\n' + ref) : text;
-      const url  = location.href;
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: '빅토리처치', text: body, url });
-        } catch (e) { /* 사용자가 공유 취소 — 무시 */ }
-      } else {
-        // 공유 미지원(주로 데스크톱): 링크 복사 fallback
-        try {
-          await navigator.clipboard.writeText(body + '\n' + url);
-          if (window.showToast) window.showToast('구절과 링크를 복사했어요');
-        } catch (e) {
-          if (window.showToast) window.showToast('공유를 지원하지 않는 브라우저예요');
-        }
-      }
+    // 구절 공유 버튼 클릭 시 이미지 공유 모달을 바로 엶
+    if (shareBtn) {
+      shareBtn.addEventListener('click', openImageShareModal);
     }
-
-    // 공유 액션 시트: "텍스트로 공유" / "이미지로 공유" 선택
-    const shareSheet = document.getElementById('shareSheet');
-    const shareTextOption = document.getElementById('shareTextOption');
-    const shareImageOption = document.getElementById('shareImageOption');
-
-    function openShareSheet() {
-      shareSheet.classList.add('show');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeShareSheet() {
-      shareSheet.classList.remove('show');
-      document.body.style.overflow = '';
-    }
-    shareSheet.addEventListener('click', (e) => {
-      if (e.target === shareSheet) closeShareSheet();
-    });
-
-    if (shareBtn) shareBtn.addEventListener('click', openShareSheet);
-
-    shareTextOption.addEventListener('click', () => {
-      closeShareSheet();
-      shareAsText();
-    });
-    shareImageOption.addEventListener('click', () => {
-      closeShareSheet();
-      openImageShareModal();
-    });
 
     /* ───────── 이미지로 공유: 캔버스 렌더링 ───────── */
     const DEFAULT_BACKGROUNDS = [
@@ -2698,7 +2508,7 @@
     let currentShareStyle = 'brandBlue';
     let sharePhotoImg = null;
     let currentTextColor = null; // null이면 스타일별 기본 글자색 사용
-    let currentTextPosition = 'middle'; // 'top' | 'middle' | 'bottom'
+    let currentTextPosition = 'bottom'; // 'top' | 'middle' | 'bottom'
     let currentBorderState = 'off'; // 'on' | 'off'
 
     // 글자 크기 단계 (기본 100% = 인덱스 2)
@@ -2983,15 +2793,7 @@
       });
     });
 
-    // 테두리 선 (있음/없음) 토글
-    const borderToggleBtns = Array.from(document.querySelectorAll('#borderToggle .pos-btn'));
-    borderToggleBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        currentBorderState = btn.dataset.border;
-        borderToggleBtns.forEach((b) => b.classList.toggle('active', b === btn));
-        renderShareCanvas();
-      });
-    });
+
 
     // 배경 이미지 드래그 위치 이동 기능
     let isDraggingBg = false;
@@ -3121,26 +2923,12 @@
       img.src = objectUrl;
     });
 
-    // 공유하기 / 저장
+    // 공유하기
     const imgShareBtn = document.getElementById('imgShareBtn');
-    const imgSaveBtn = document.getElementById('imgSaveBtn');
 
     function canvasToPngBlob() {
       return new Promise((resolve) => shareCanvas.toBlob(resolve, 'image/png'));
     }
-
-    imgSaveBtn.addEventListener('click', async () => {
-      const blob = await canvasToPngBlob();
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'victory-verse.png';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
 
     imgShareBtn.addEventListener('click', async () => {
       const blob = await canvasToPngBlob();
@@ -3269,8 +3057,8 @@
         if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
         card.classList.remove('hidden');
 
-        // 첫 진입 시 캐시 데이터를 정적으로 박지 않고 Typed.js로 타이핑을 구동합니다.
-        startTypewriting(cached.text, cached.reference || '');
+        // 첫 진입 시 캐시 데이터를 화면에 바로 렌더링합니다.
+        displayVerse(cached.text, cached.reference || '');
       }
     } catch (e) {}
 
@@ -3322,8 +3110,6 @@
     }
   </script>
 
-  <!-- Typed.js 라이브러리 -->
-  <script src="https://cdn.jsdelivr.net/npm/typed.js@2.1.0/dist/typed.umd.js"></script>
 
   <!-- A2HS 위젯 -->
   <script src="a2hs.js" defer

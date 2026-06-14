@@ -76,13 +76,12 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   for a deeper, cathedral-reverb voice, and BGM (`bgm.mp3`) plays through a gain node with
   fade-in/out, starting at the 48s highlight. AudioContext must be resumed inside a user-gesture
   handler (browser autoplay policy) — note the click-to-resume fallbacks.
-- **"이미지로 공유" (구절 카드 이미지 생성)**: `#shareBtn` 클릭 시 바텀시트
-  (`#shareSheet`)에서 "텍스트로 공유"(기존 `navigator.share` 텍스트+링크)와
-  "이미지로 공유"(`#imageShareModal`)를 선택한다. 이미지 생성은 1080×1920
+- **"이미지로 공유" (구절 카드 이미지 생성)**: `#shareBtn` 클릭 시 이미지 공유 모달
+  (`#imageShareModal`)이 바로 열린다. 이미지 생성은 1080×1920
   `<canvas id="shareCanvas">`에 배경(그라디언트 4종 또는 사용자 업로드 사진 +
   하단 스크림)과 구절 텍스트를 그려서 만든다. 텍스트는 `verse.text`의 `\n`
   줄바꿈을 그대로 사용하고, 'Gowun Dodum' 폰트는 `document.fonts.ready` 이후에
-  그려야 폴백 폰트로 깨지지 않는다(기존 `startTypewriting`과 동일 패턴).
+  그려야 폴백 폰트로 깨지지 않는다.
   출력은 `canvas.toBlob('image/png')` → `navigator.canShare({ files })`가
   true면 "공유하기"(파일 공유), 아니면 "공유하기" 버튼을 숨기고 "저장"
   (다운로드)만 노출한다. 전부 클라이언트 로컬 처리이며 Firestore/Storage에는

@@ -23,6 +23,7 @@ async function run() {
   const context = await browser.newContext({ locale: 'ko-KR' });
   const page = await context.newPage();
   page.on('pageerror', (err) => console.error('   ⚠️ pageerror:', err.message));
+  page.on('console', (msg) => console.log('   💻 console:', msg.text()));
 
   await page.goto(URL, { waitUntil: 'load' });
 
@@ -34,7 +35,6 @@ async function run() {
     console.log('   ⚠️ 활성 구절 카드가 없음 — 정적 마크업 존재만 확인합니다.');
   }
 
-  check('공유 액션 시트 마크업 존재', await page.locator('#shareSheet').count() === 1);
   check('이미지 공유 모달 마크업 존재', await page.locator('#imageShareModal').count() === 1);
   check('캔버스 엘리먼트 존재', await page.locator('#shareCanvas').count() === 1);
 
@@ -48,34 +48,25 @@ async function run() {
     return;
   }
 
-  // 1) 공유 버튼 → 액션 시트
+  // 1) 공유 버튼 → 이미지 공유 모달 오픈
   await page.locator('#shareBtn').click();
-  await page.waitForSelector('#shareSheet.show', { timeout: 3000 });
-  check('공유 버튼 클릭 시 액션 시트 표시', true);
-  check('텍스트로 공유 옵션 존재', await page.locator('#shareTextOption').count() === 1);
-  check('이미지로 공유 옵션 존재', await page.locator('#shareImageOption').count() === 1);
-
-  // 2) 이미지로 공유 → 모달 오픈 + 캔버스 렌더
-  await page.locator('#shareImageOption').click();
   await page.waitForSelector('#imageShareModal.show', { timeout: 3000 });
+  check('공유 버튼 클릭 시 이미지 공유 모달 표시', true);
   await page.waitForTimeout(300); // document.fonts.ready 이후 렌더 대기
 
   const brandBlueData = await page.locator('#shareCanvas').evaluate((c) => c.toDataURL());
   check('브랜드 블루 배경으로 캔버스 렌더링', brandBlueData.length > 1000);
 
   // 3) 스와치 전환 시 캔버스가 다시 그려지는지
-  await page.locator('.swatch[data-style="pastelFloral"]').click();
+  const secondSwatch = page.locator('#shareSwatches .swatch:not(.swatch-photo)').nth(1);
+  await secondSwatch.click();
   await page.waitForTimeout(100);
-  const pastelData = await page.locator('#shareCanvas').evaluate((c) => c.toDataURL());
-  check('파스텔 플로럴 선택 시 캔버스 변경', pastelData !== brandBlueData);
-  check('파스텔 플로럴 스와치 active 표시', await page.locator('.swatch[data-style="pastelFloral"]').evaluate((el) => el.classList.contains('active')));
+  const secondSwatchData = await page.locator('#shareCanvas').evaluate((c) => c.toDataURL());
+  check('다른 스와치 선택 시 캔버스 변경', secondSwatchData !== brandBlueData);
+  check('다른 스와치 active 표시', await secondSwatch.evaluate((el) => el.classList.contains('active')));
 
-  // 4) 저장 버튼 → 다운로드 트리거
-  const [download] = await Promise.all([
-    page.waitForEvent('download', { timeout: 5000 }),
-    page.locator('#imgSaveBtn').click(),
-  ]);
-  check('저장 버튼 클릭 시 PNG 다운로드', download.suggestedFilename() === 'victory-verse.png');
+  // 4) 저장 버튼 제거 확인
+  check('저장 버튼 제거됨', await page.locator('#imgSaveBtn').count() === 0);
 
   // 5) 모달 닫기
   await page.locator('#imageShareCloseBtn').click();
