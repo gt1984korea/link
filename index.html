@@ -638,6 +638,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
       position: relative;
     }
     .tts-btn {
@@ -669,13 +671,7 @@
       50%       { box-shadow: 0 0 0 8px rgba(33,66,141,0); }
     }
 
-    /* 구절 좋아요 · 공유 액션 바 */
-    .verse-actions {
-      margin-top: 14px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-    }
+    /* 구절 좋아요 · 공유 버튼 (읽어주기와 같은 줄, .tts-row 안) */
     .va-btn {
       display: inline-flex;
       align-items: center;
@@ -697,11 +693,19 @@
     .va-btn .va-ic { transition: transform .15s ease; }
     .va-count { min-width: 12px; text-align: left; font-variant-numeric: tabular-nums; }
     .va-btn.liked {
-      color: #e0245e;
-      background: #fde7ee;
-      border-color: #f6b9cb;
+      color: #c66e87;
+      background: #fbeef2;
+      border-color: #ebcad5;
     }
-    .va-btn.liked .va-ic { fill: #e0245e; stroke: #e0245e; }
+    .va-btn.liked .va-ic { fill: #d07d95; stroke: #c66e87; }
+    /* 공유 버튼: 교회 CI 블루 톤 */
+    #shareBtn {
+      color: #4a679f;
+      background: #eef2fa;
+      border-color: #d3ddf0;
+    }
+    #shareBtn:hover { background: #e1e9f6; border-color: #b9c8e6; color: var(--brand); }
+    #shareBtn .va-ic { stroke: #4a679f; }
     .va-btn.pop .va-ic { animation: va-heart-pop .35s ease; }
     @keyframes va-heart-pop {
       0%   { transform: scale(1); }
@@ -1059,6 +1063,11 @@
       width: 20px;
       height: 20px;
     }
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
     .modal-body-text {
       font-family: 'Gowun Dodum', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
       font-size: 26px;
@@ -1220,7 +1229,6 @@
       <div class="label-row">
         <span class="label-left">
           <span class="label">이번 주 성경 구절</span>
-          <span class="new-badge hidden" id="verseNewBadge" aria-label="새로 등록된 구절">NEW</span>
         </span>
         <button class="past-toggle hidden" id="pastToggle" type="button" aria-expanded="false">
           <span id="pastToggleLabel">지난 암송구절</span>
@@ -1229,7 +1237,13 @@
       </div>
       <h1 class="text" id="verseText"></h1>
       <span class="ref" id="verseRef"></span>
-      <div class="tts-row">
+      <div class="tts-row" id="verseActions">
+        <button class="va-btn" id="likeBtn" type="button" aria-pressed="false" aria-label="좋아요">
+          <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          <span class="va-count" id="likeCount">0</span>
+        </button>
         <button class="tts-btn" id="ttsBtn" type="button">
           <svg id="ttsIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
@@ -1237,14 +1251,6 @@
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
           </svg>
           <span id="ttsBtnLabel">읽어주기</span>
-        </button>
-      </div>
-      <div class="verse-actions" id="verseActions">
-        <button class="va-btn" id="likeBtn" type="button" aria-pressed="false" aria-label="좋아요">
-          <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
-          </svg>
-          <span class="va-count" id="likeCount">0</span>
         </button>
         <button class="va-btn" id="shareBtn" type="button" aria-label="공유하기">
           <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1574,6 +1580,14 @@
       </button>
       <div class="modal-body-text" id="modalVerseText"></div>
       <div class="modal-body-ref" id="modalVerseRef"></div>
+      <div class="modal-actions">
+        <button class="va-btn" id="modalLikeBtn" type="button" aria-pressed="false" aria-label="좋아요">
+          <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          <span class="va-count" id="modalLikeCount">0</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1790,16 +1804,18 @@
     var modalVerseRef = document.getElementById('modalVerseRef');
     var modalCloseBtn = document.getElementById('modalCloseBtn');
 
-    function openVerseModal(text, ref) {
+    function openVerseModal(text, ref, verse) {
       modalVerseText.textContent = (text || '').trim();
       modalVerseRef.textContent = (ref || '').trim();
       verseModal.classList.add('show');
       document.body.style.overflow = 'hidden'; // 스크롤 방지
+      if (window.attachModalLike) window.attachModalLike(verse || { text, reference: ref });
     }
 
     function closeVerseModal() {
       verseModal.classList.remove('show');
       document.body.style.overflow = '';
+      if (window.detachModalLike) window.detachModalLike();
     }
 
     modalCloseBtn.addEventListener('click', closeVerseModal);
@@ -2146,20 +2162,14 @@
     }
 
     /* ───────── 좋아요 · 공유 ───────── */
-    const likeBtn    = document.getElementById('likeBtn');
-    const likeCountEl = document.getElementById('likeCount');
-    const shareBtn   = document.getElementById('shareBtn');
+    const shareBtn = document.getElementById('shareBtn');
 
-    let currentVerseId = null; // 현재 활성 구절의 좋아요 집계 id
-    let likesUnsub = null;     // verseStats 구독 해제 함수
-    let likeBusy = false;      // 중복 클릭 방지
-
-    // 활성 구절의 안정적 id 계산: 배열 항목은 id 사용, 레거시(id 없음)는 본문/출처로 해시
-    function computeVerseId(active) {
-      if (active && active.id != null && String(active.id).trim()) return String(active.id);
-      const basis = ((active && active.reference) || '') + '|' +
-                    ((active && active.startDate) || '') + '|' +
-                    ((active && active.text) || '');
+    // 구절의 안정적 id 계산: 배열 항목은 id 사용, 레거시(id 없음)는 본문/출처로 해시
+    function computeVerseId(v) {
+      if (v && v.id != null && String(v.id).trim()) return String(v.id);
+      const basis = ((v && v.reference) || '') + '|' +
+                    ((v && v.startDate) || '') + '|' +
+                    ((v && v.text) || '');
       let h = 0;
       for (let i = 0; i < basis.length; i++) { h = (h * 31 + basis.charCodeAt(i)) | 0; }
       return 'legacy_' + (h >>> 0).toString(36);
@@ -2173,59 +2183,87 @@
       try { return localStorage.getItem('vc_liked_' + verseId) === '1'; } catch (e) { return false; }
     }
 
-    function updateLikeBtnState() {
-      const liked = isLiked(currentVerseId);
-      likeBtn.classList.toggle('liked', liked);
-      likeBtn.setAttribute('aria-pressed', liked ? 'true' : 'false');
-    }
+    // 좋아요 버튼+카운트 한 쌍을 제어하는 재사용 컨트롤러 (활성 카드/지난 구절 모달 공용)
+    function createLikeControl(btnEl, countEl) {
+      let verseId = null;
+      let unsub = null;
+      let busy = false;
 
-    // 구절이 바뀌면 이전 구독을 끊고 새 verseStats 문서를 실시간 구독
-    function setupLikes(verseId) {
-      if (verseId === currentVerseId) return;
-      currentVerseId = verseId;
-      likeCountEl.textContent = '0';
-      updateLikeBtnState();
-      if (likesUnsub) { likesUnsub(); likesUnsub = null; }
-      if (!db || !verseId) return;
-      const statsRef = doc(db, 'verseStats', verseId);
-      likesUnsub = onSnapshot(statsRef, (snap) => {
-        const data = snap.exists() ? (snap.data() || {}) : {};
-        const n = typeof data.likes === 'number' ? data.likes : 0;
-        likeCountEl.textContent = fmtCount(n);
-      }, (err) => { console.warn('[likes] snapshot error', err); });
-    }
-
-    if (likeBtn) likeBtn.addEventListener('click', async () => {
-      if (!db || !currentVerseId || likeBusy) return;
-      likeBusy = true;
-      const verseId = currentVerseId;
-      const liked = isLiked(verseId);
-      const delta = liked ? -1 : 1;
-      // 낙관적 UI: 즉시 상태 반영 (카운트는 onSnapshot이 갱신)
-      try {
-        if (liked) localStorage.removeItem('vc_liked_' + verseId);
-        else       localStorage.setItem('vc_liked_' + verseId, '1');
-      } catch (e) {}
-      updateLikeBtnState();
-      if (!liked) {
-        likeBtn.classList.remove('pop');
-        void likeBtn.offsetWidth; // 리플로우 강제 → 애니메이션 재시작
-        likeBtn.classList.add('pop');
+      function reflect() {
+        const liked = isLiked(verseId);
+        btnEl.classList.toggle('liked', liked);
+        btnEl.setAttribute('aria-pressed', liked ? 'true' : 'false');
       }
-      try {
-        await setDoc(doc(db, 'verseStats', verseId), { likes: increment(delta) }, { merge: true });
-      } catch (e) {
-        console.warn('[likes] update failed', e);
-        // 실패 시 롤백
+
+      // 구절이 바뀌면 이전 구독을 끊고 새 verseStats 문서를 실시간 구독
+      function attach(id) {
+        if (id === verseId && unsub) return;
+        verseId = id;
+        countEl.textContent = '0';
+        reflect();
+        if (unsub) { unsub(); unsub = null; }
+        if (!db || !id) return;
+        unsub = onSnapshot(doc(db, 'verseStats', id), (snap) => {
+          const data = snap.exists() ? (snap.data() || {}) : {};
+          const n = typeof data.likes === 'number' ? data.likes : 0;
+          countEl.textContent = fmtCount(n);
+        }, (err) => { console.warn('[likes] snapshot error', err); });
+      }
+
+      function detach() {
+        if (unsub) { unsub(); unsub = null; }
+        verseId = null;
+      }
+
+      btnEl.addEventListener('click', async () => {
+        if (!db || !verseId || busy) return;
+        busy = true;
+        const id = verseId;
+        const liked = isLiked(id);
+        const delta = liked ? -1 : 1;
+        // 낙관적 UI: 즉시 상태 반영 (카운트는 onSnapshot이 갱신)
         try {
-          if (liked) localStorage.setItem('vc_liked_' + verseId, '1');
-          else       localStorage.removeItem('vc_liked_' + verseId);
-        } catch (e2) {}
-        updateLikeBtnState();
-      } finally {
-        likeBusy = false;
-      }
-    });
+          if (liked) localStorage.removeItem('vc_liked_' + id);
+          else       localStorage.setItem('vc_liked_' + id, '1');
+        } catch (e) {}
+        reflect();
+        if (!liked) {
+          btnEl.classList.remove('pop');
+          void btnEl.offsetWidth; // 리플로우 강제 → 애니메이션 재시작
+          btnEl.classList.add('pop');
+        }
+        try {
+          await setDoc(doc(db, 'verseStats', id), { likes: increment(delta) }, { merge: true });
+        } catch (e) {
+          console.warn('[likes] update failed', e);
+          // 실패 시 롤백
+          try {
+            if (liked) localStorage.setItem('vc_liked_' + id, '1');
+            else       localStorage.removeItem('vc_liked_' + id);
+          } catch (e2) {}
+          reflect();
+        } finally {
+          busy = false;
+        }
+      });
+
+      return { attach, detach };
+    }
+
+    // 활성 구절 카드용 좋아요 컨트롤
+    const cardLike = createLikeControl(
+      document.getElementById('likeBtn'),
+      document.getElementById('likeCount')
+    );
+    function setupLikes(verseId) { cardLike.attach(verseId); }
+
+    // 지난 구절 모달용 좋아요 컨트롤 — 모달 열 때 attach, 닫을 때 detach
+    const modalLike = createLikeControl(
+      document.getElementById('modalLikeBtn'),
+      document.getElementById('modalLikeCount')
+    );
+    window.attachModalLike = (v) => modalLike.attach(computeVerseId(v));
+    window.detachModalLike = () => modalLike.detach();
 
     if (shareBtn) shareBtn.addEventListener('click', async () => {
       const text = (window.currentFullVerseText || '').trim();
@@ -2268,7 +2306,7 @@
 
       // 클릭 시 팝업 모달 열기
       item.addEventListener('click', function () {
-        openVerseModal(v.text, v.reference);
+        openVerseModal(v.text, v.reference, v);
       });
 
       return item;
