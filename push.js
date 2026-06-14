@@ -65,7 +65,8 @@ async function init() {
     // 이미 허용된 경우 토큰을 갱신/보강
     registerToken().catch(() => {});
   } else if (Notification.permission === 'denied') {
-    setBtn('알림 차단됨', true);
+    // 차단 상태: 앱에선 재요청 불가 → 눌러서 기기 설정 안내 팝업을 열도록 유지
+    setBtn('알림 차단됨 · 켜는 법 보기', false);
     setHint('기기 설정에서 이 앱의 알림을 허용해 주세요.');
   } else {
     setBtn('새 구절 알림 받기', false);
@@ -81,7 +82,11 @@ async function init() {
 }
 
 async function onEnableClick() {
-  if (Notification.permission === 'denied') return;
+  // 차단된 경우: 권한 재요청이 막혀 있으므로 기기별 설정 안내 팝업을 띄움
+  if (Notification.permission === 'denied') {
+    openGuide();
+    return;
+  }
   setBtn('허용 요청 중…', true);
   try {
     const perm = await Notification.requestPermission();
@@ -117,6 +122,44 @@ async function registerToken() {
   }, { merge: true });
 
   return token;
+}
+
+/* ── 알림 차단 해제 안내 팝업 ───────────────────────────── */
+const guideEl = document.getElementById('notifyGuide');
+
+function detectPlatform() {
+  if (isiOS) return 'ios';
+  if (/android/i.test(navigator.userAgent)) return 'android';
+  return 'desktop';
+}
+
+function openGuide() {
+  if (!guideEl) {
+    // 팝업 마크업이 없으면 최소한 안내만
+    alert('기기 설정 → 이 앱(또는 브라우저) → 알림에서 "허용"으로 바꿔 주세요.');
+    return;
+  }
+  const plat = detectPlatform();
+  guideEl.querySelectorAll('.guide-steps').forEach((el) => {
+    el.hidden = el.getAttribute('data-platform') !== plat;
+  });
+  guideEl.classList.add('show');
+}
+
+function closeGuide() {
+  if (guideEl) guideEl.classList.remove('show');
+}
+
+if (guideEl) {
+  const closeBtn = document.getElementById('guideCloseBtn');
+  const refreshBtn = document.getElementById('guideRefreshBtn');
+  if (closeBtn) closeBtn.addEventListener('click', closeGuide);
+  if (refreshBtn) refreshBtn.addEventListener('click', () => location.reload());
+  // 배경 클릭 / ESC로 닫기
+  guideEl.addEventListener('click', (e) => { if (e.target === guideEl) closeGuide(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && guideEl.classList.contains('show')) closeGuide();
+  });
 }
 
 init();
