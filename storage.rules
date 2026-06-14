@@ -14,6 +14,12 @@ service firebase.storage {
       allow write: if true;
     }
 
+    // 카드 배경 이미지 파일: 누구나 읽기 가능, 업로드/삭제 허용
+    match /backgrounds/{fileName} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // 그 외 모든 경로는 차단
     match /{allPaths=**} {
       allow read, write: if false;

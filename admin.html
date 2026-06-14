@@ -235,6 +235,106 @@
     .btn-danger { background: #fff; color: var(--danger); border-color: #f3c7c7; }
     .btn-danger:hover { background: #fff5f5; }
 
+    /* 배경 관리 목록 아이템 */
+    .bg-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fafbfc;
+    }
+    .bg-preview-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+    }
+    .bg-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .bg-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bg-type {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: 2px;
+    }
+    .bg-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .2s;
+      border-radius: 20px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider {
+      background-color: var(--brand);
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+    .btn-bg-delete {
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--danger);
+      background: #fff;
+      border: 1px solid #f3c7c7;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .btn-bg-delete:hover {
+      background: #fff5f5;
+    }
+    .btn-bg-delete:disabled {
+      color: var(--text-3);
+      border-color: var(--line);
+      cursor: not-allowed;
+      background: none;
+    }
+
     /* PC 레이아웃: 좌측 등록 폼 / 우측 등록된 구절 목록, 정확히 절반씩 2단 구성 */
     @media (min-width: 1024px) {
       .wrap { max-width: 1240px; }
@@ -487,6 +587,29 @@
       </div>
     </section>
 
+    <!-- 카드 배경 이미지 관리 -->
+    <section class="card hidden" id="bgCard">
+      <h2>카드 배경 이미지 관리</h2>
+      <p class="hint" style="margin-top:0">
+        사용자가 구절 카드를 공유할 때 선택할 수 있는 배경 목록입니다.
+        기본 제공 그라디언트와 이미지는 활성/비활성 토글만 가능하며, 직접 등록한 커스텀 이미지는 삭제도 가능합니다.
+      </p>
+
+      <label for="bgFileInput">새 배경 이미지 업로드 (추천: 세로형 1080x1920)</label>
+      <div style="display:flex; gap:10px; align-items:center; margin-top:4px;">
+        <input type="file" id="bgFileInput" accept="image/*" style="font-size:14px; flex:1;">
+        <button class="btn btn-primary" id="btnUploadBg" type="button" style="flex:0 0 auto; padding:10px 16px; font-size:14px;" disabled>업로드</button>
+      </div>
+      <div class="status" id="bgStatus"></div>
+
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+        <label style="margin-top:0">배경 목록 및 설정</label>
+        <div id="bgListContainer" style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+          <!-- 동적으로 배경 아이템들 렌더링 -->
+        </div>
+      </div>
+    </section>
+
     </div>
 
     <div class="col-list">
@@ -549,6 +672,27 @@
     const pvText = $('pvText'), pvRef = $('pvRef');
     const saveStatus = $('saveStatus'), updatedMeta = $('updatedMeta');
     const DEFAULT_VOICE = 'nPczCjzI2devNBz1zQrb';
+
+    // 카드 배경 관련 DOM 엘리먼트
+    const bgCard = $('bgCard');
+    const bgFileInput = $('bgFileInput');
+    const btnUploadBg = $('btnUploadBg');
+    const bgStatus = $('bgStatus');
+    const bgListContainer = $('bgListContainer');
+
+    // 시스템 기본 제공 배경 설정
+    const DEFAULT_BACKGROUNDS = [
+      { id: "brandBlue", name: "브랜드 블루", type: "gradient", stops: ["#21428d", "#3a5fb8", "#6f8fd6"], textColor: "#ffffff", enabled: true },
+      { id: "pastelFloral", name: "파스텔 플로럴", type: "gradient", stops: ["#f6d9e3", "#fbeede", "#f3e6d8"], textColor: "#7a4a55", enabled: true },
+      { id: "darkModern", name: "다크 모던", type: "gradient", stops: ["#2b2b3a", "#4a4a63"], textColor: "#ffffff", enabled: true },
+      { id: "warmBeige", name: "웜 베이지", type: "gradient", stops: ["#fdf6ec", "#f1e3c8"], textColor: "#8a6d3b", enabled: true },
+      { id: "churchCross", name: "십자가", type: "image", url: "./church_cross.png", textColor: "#ffffff", enabled: true, isDefault: true },
+      { id: "churchBible", name: "성경책", type: "image", url: "./church_bible.png", textColor: "#ffffff", enabled: true, isDefault: true },
+      { id: "stainedGlass", name: "스테인드글라스", type: "image", url: "./stained_glass.png", textColor: "#ffffff", enabled: true, isDefault: true },
+      { id: "forestPath", name: "숲속의 빛", type: "image", url: "./forest_path.png", textColor: "#ffffff", enabled: true, isDefault: true },
+      { id: "floralLavender", name: "라벤더 플로럴", type: "image", url: "./floral_lavender.png", textColor: "#4c3b6e", darkOverlay: false, enabled: true, isDefault: true },
+      { id: "floralPink", name: "핑크 플로럴", type: "image", url: "./floral_pink.png", textColor: "#524043", darkOverlay: false, enabled: true, isDefault: true }
+    ];
 
     // 등록된 구절 목록(메모리) 및 현재 편집 중인 구절 id
     let versesData = [];
@@ -747,6 +891,25 @@
         renderFb(d);
         renderYt(d);
         renderList();
+
+        // 배경 데이터 가져오기 및 초기 마이그레이션
+        if (Array.isArray(d.backgrounds)) {
+          backgroundsData = d.backgrounds.slice();
+          let needsUpdate = false;
+          DEFAULT_BACKGROUNDS.forEach(defBg => {
+            if (!backgroundsData.some(bg => bg.id === defBg.id)) {
+              backgroundsData.push(JSON.parse(JSON.stringify(defBg)));
+              needsUpdate = true;
+            }
+          });
+          if (needsUpdate) {
+            await setDoc(ref, { backgrounds: backgroundsData, updatedAt: serverTimestamp() }, { merge: true });
+          }
+        } else {
+          backgroundsData = JSON.parse(JSON.stringify(DEFAULT_BACKGROUNDS));
+          await setDoc(ref, { backgrounds: backgroundsData, updatedAt: serverTimestamp() }, { merge: true });
+        }
+        renderBackgrounds();
 
         // 마이그레이션: verses 배열이 없고 레거시 단일 구절만 있으면
         // 편집기에 미리 채워서 관리자가 기간 확인 후 저장하도록 유도
@@ -1193,6 +1356,162 @@
     }
     if ($('btnPushRefresh')) $('btnPushRefresh').addEventListener('click', loadPushCount);
 
+    /* ── 카드 배경 이미지 관리 ── */
+    const BG_STORAGE_PATH = 'backgrounds';
+    let backgroundsData = [];
+
+    function renderBackgrounds() {
+      bgListContainer.innerHTML = '';
+      backgroundsData.forEach((bg) => {
+        const item = document.createElement('div');
+        item.className = 'bg-item';
+
+        // 썸네일 미리보기
+        const thumb = document.createElement('div');
+        thumb.className = 'bg-preview-thumb';
+        if (bg.type === 'gradient') {
+          const stops = bg.stops.join(', ');
+          thumb.style.background = `linear-gradient(135deg, ${stops})`;
+        } else {
+          thumb.style.backgroundImage = `url(${bg.url})`;
+        }
+        item.appendChild(thumb);
+
+        // 설명 정보
+        const info = document.createElement('div');
+        info.className = 'bg-info';
+        const name = document.createElement('div');
+        name.className = 'bg-name';
+        name.textContent = bg.name;
+        const type = document.createElement('div');
+        type.className = 'bg-type';
+        type.textContent = bg.type === 'gradient' ? '그라디언트' : (bg.isDefault ? '기본 이미지' : '커스텀 이미지');
+        info.appendChild(name);
+        info.appendChild(type);
+        item.appendChild(info);
+
+        // 제어 스위치 및 버튼
+        const controls = document.createElement('div');
+        controls.className = 'bg-controls';
+
+        // 활성화 토글 스위치
+        const label = document.createElement('label');
+        label.className = 'toggle-switch';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = bg.enabled !== false;
+        checkbox.addEventListener('change', async () => {
+          bg.enabled = checkbox.checked;
+          bgStatus.textContent = '설정 변경 중…';
+          bgStatus.className = 'status';
+          try {
+            await setDoc(ref, { backgrounds: backgroundsData, updatedAt: serverTimestamp() }, { merge: true });
+            bgStatus.textContent = '활성화 상태가 저장되었습니다.';
+            bgStatus.className = 'status ok';
+          } catch (e) {
+            bgStatus.textContent = '저장 실패: ' + (e.message || e);
+            bgStatus.className = 'status err';
+            checkbox.checked = !checkbox.checked; // 롤백
+          }
+        });
+        const slider = document.createElement('span');
+        slider.className = 'toggle-slider';
+        label.appendChild(checkbox);
+        label.appendChild(slider);
+        controls.appendChild(label);
+
+        // 삭제 버튼 (커스텀 이미지만 가능)
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'btn-bg-delete';
+        delBtn.textContent = '삭제';
+        if (bg.isDefault || bg.type === 'gradient') {
+          delBtn.disabled = true;
+          delBtn.style.opacity = '0.5';
+        } else {
+          delBtn.addEventListener('click', async () => {
+            if (!confirm(`배경 이미지 "${bg.name}"을 삭제할까요?`)) return;
+            bgStatus.textContent = '삭제 중…';
+            bgStatus.className = 'status';
+            try {
+              // 1. Storage 파일 삭제
+              if (bg.path) {
+                try {
+                  await deleteObject(storageRef(storage, bg.path));
+                } catch (err) {
+                  if (err.code !== 'storage/object-not-found') throw err;
+                }
+              }
+              // 2. Firestore 데이터 업데이트
+              backgroundsData = backgroundsData.filter(x => x.id !== bg.id);
+              await setDoc(ref, { backgrounds: backgroundsData, updatedAt: serverTimestamp() }, { merge: true });
+              bgStatus.textContent = '배경이 삭제되었습니다.';
+              bgStatus.className = 'status ok';
+              renderBackgrounds();
+            } catch (e) {
+              bgStatus.textContent = '삭제 실패: ' + (e.message || e);
+              bgStatus.className = 'status err';
+            }
+          });
+        }
+        controls.appendChild(delBtn);
+
+        item.appendChild(controls);
+        bgListContainer.appendChild(item);
+      });
+    }
+
+    // 파일 선택 시 업로드 버튼 상태 관리
+    bgFileInput.addEventListener('change', () => {
+      btnUploadBg.disabled = !bgFileInput.files || bgFileInput.files.length === 0;
+    });
+
+    // 배경 이미지 업로드
+    async function uploadBackground() {
+      const file = bgFileInput.files && bgFileInput.files[0];
+      if (!file) return;
+      if (file.size > 20 * 1024 * 1024) {
+        bgStatus.textContent = '파일이 너무 큽니다(20MB 초과).';
+        bgStatus.className = 'status err';
+        return;
+      }
+      btnUploadBg.disabled = true;
+      bgStatus.textContent = '업로드 중…';
+      bgStatus.className = 'status';
+      try {
+        const uniqueId = genId();
+        const fileExt = file.name.split('.').pop();
+        const storagePath = `${BG_STORAGE_PATH}/${uniqueId}.${fileExt}`;
+        const sref = storageRef(storage, storagePath);
+
+        await uploadBytes(sref, file, { contentType: file.type || 'image/png' });
+        const url = await getDownloadURL(sref);
+
+        backgroundsData.push({
+          id: uniqueId,
+          name: file.name,
+          type: 'image',
+          url: url,
+          path: storagePath,
+          textColor: '#ffffff',
+          enabled: true,
+          createdAt: Date.now()
+        });
+
+        await setDoc(ref, { backgrounds: backgroundsData, updatedAt: serverTimestamp() }, { merge: true });
+        bgStatus.textContent = '새 배경 이미지가 등록되었습니다.';
+        bgStatus.className = 'status ok';
+        bgFileInput.value = '';
+        btnUploadBg.disabled = true;
+        renderBackgrounds();
+      } catch (e) {
+        bgStatus.textContent = '업로드 실패: ' + (e.message || e);
+        bgStatus.className = 'status err';
+        btnUploadBg.disabled = false;
+      }
+    }
+    btnUploadBg.addEventListener('click', uploadBackground);
+
     function enterAdmin() {
       gate.classList.add('hidden');
       editor.classList.remove('hidden');
@@ -1203,6 +1522,7 @@
       $('ytCard').classList.remove('hidden');
       $('pushCard').classList.remove('hidden');
       previewCard.classList.remove('hidden');
+      bgCard.classList.remove('hidden');
       loadPushCount();
       try { initDb(); } catch (e) {
         saveStatus.textContent = 'Firebase 초기화 실패: ' + (e.message || e);
@@ -1220,6 +1540,10 @@
         renderYt(d);
         versesData = Array.isArray(d.verses) ? d.verses.slice() : [];
         renderList();
+        if (Array.isArray(d.backgrounds)) {
+          backgroundsData = d.backgrounds.slice();
+          renderBackgrounds();
+        }
       });
       reload();
     }

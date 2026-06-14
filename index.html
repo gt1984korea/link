@@ -145,6 +145,7 @@
       color: var(--text);
       letter-spacing: -0.02em;
       line-height: 1.35;
+      word-break: keep-all;
     }
     .item .t2 {
       display: block;
@@ -153,6 +154,7 @@
       font-weight: 500;
       margin-top: 3px;
       line-height: 1.4;
+      word-break: keep-all;
     }
 
     .item .chev {
@@ -280,6 +282,7 @@
       font-weight: 700;
       color: var(--brand);
       letter-spacing: 0.03em;
+      word-break: keep-all;
     }
     /* 새로 등록된 구절 표시 배지 */
     .verse .new-badge {
@@ -724,8 +727,9 @@
       width: 100%;
       max-width: 480px;
       background: #fff;
-      border-radius: 20px 20px 0 0;
-      padding: 10px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+      border-radius: 28px;
+      margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      padding: 10px 14px 18px;
       box-shadow: 0 -8px 30px rgba(0, 0, 0, .15);
       transform: translateY(100%);
       transition: transform .25s ease;
@@ -743,10 +747,10 @@
     .sheet-option {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       width: 100%;
-      padding: 14px 8px;
-      border-radius: 12px;
+      padding: 16px 10px;
+      border-radius: 14px;
       border: none;
       background: none;
       font-family: inherit;
@@ -757,20 +761,21 @@
     .sheet-option:hover, .sheet-option:active { background: var(--brand-dim); }
     .sheet-ic {
       flex-shrink: 0;
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: var(--brand-dim);
+      color: var(--brand);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 17px;
     }
-    .sheet-ic.sheet-ic-active { background: var(--brand); }
-    .sheet-body { display: flex; flex-direction: column; gap: 2px; }
-    .sheet-title { font-weight: 700; font-size: 14px; color: var(--text); }
+    .sheet-ic svg { width: 22px; height: 22px; }
+    .sheet-ic.sheet-ic-active { background: var(--brand); color: #fff; }
+    .sheet-body { display: flex; flex-direction: column; gap: 3px; }
+    .sheet-title { font-weight: 700; font-size: 17px; color: var(--text); }
     .sheet-title.sheet-title-active { color: var(--brand); }
-    .sheet-desc { font-size: 12px; color: var(--text-2); }
+    .sheet-desc { font-size: 14px; color: var(--text-2); }
 
     /* Footer */
     /* Contact Info */
@@ -1200,6 +1205,100 @@
       font-size: 18px;
     }
     .swatch.swatch-photo.active { border-style: solid; }
+    .image-share-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 12px;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .control-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+    .size-stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stepper-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1.5px solid var(--line);
+      background: #f3f4f6;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text);
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s ease;
+    }
+    .stepper-btn:active { background: #ebedf0; }
+    .stepper-btn:disabled { opacity: .35; cursor: default; }
+    .size-value {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      min-width: 34px;
+      text-align: center;
+    }
+    .control-group-size,
+    .control-group-color,
+    .control-group-position {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .text-color-swatches {
+      display: flex;
+      gap: 8px;
+    }
+    .color-swatch {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1.5px solid var(--line);
+      padding: 0;
+      cursor: pointer;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    .color-swatch:active { transform: scale(.92); }
+    .color-swatch.active {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px var(--brand-dim);
+    }
+    .position-toggle {
+      display: flex;
+      gap: 6px;
+    }
+    .pos-btn {
+      padding: 5px 12px;
+      border-radius: 50px;
+      border: 1.5px solid var(--line);
+      background: #f3f4f6;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, color .15s ease;
+    }
+    .pos-btn:active { background: #ebedf0; }
+    .pos-btn.active {
+      background: var(--brand-dim);
+      border-color: var(--brand);
+      color: var(--brand);
+    }
     .image-share-actions {
       display: flex;
       gap: 10px;
@@ -1732,14 +1831,25 @@
     <div class="sheet-content">
       <div class="sheet-handle"></div>
       <button class="sheet-option" id="shareTextOption" type="button">
-        <span class="sheet-ic">🔗</span>
+        <span class="sheet-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </span>
         <span class="sheet-body">
           <span class="sheet-title">텍스트로 공유</span>
           <span class="sheet-desc">구절 내용 + 링크 공유</span>
         </span>
       </button>
       <button class="sheet-option" id="shareImageOption" type="button">
-        <span class="sheet-ic sheet-ic-active">🖼️</span>
+        <span class="sheet-ic sheet-ic-active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+        </span>
         <span class="sheet-body">
           <span class="sheet-title sheet-title-active">이미지로 공유</span>
           <span class="sheet-desc">배경 골라 카드 이미지 만들기</span>
@@ -1761,13 +1871,42 @@
         <canvas id="shareCanvas" width="1080" height="1920" aria-label="구절 이미지 미리보기"></canvas>
       </div>
       <div class="image-share-swatches" id="shareSwatches">
-        <button class="swatch" data-style="brandBlue" type="button" aria-label="브랜드 블루"></button>
-        <button class="swatch" data-style="pastelFloral" type="button" aria-label="파스텔 플로럴"></button>
-        <button class="swatch" data-style="darkModern" type="button" aria-label="다크 모던"></button>
-        <button class="swatch" data-style="warmBeige" type="button" aria-label="웜 베이지"></button>
-        <button class="swatch swatch-photo" data-style="photo" type="button" aria-label="내 사진 배경으로 사용">📷</button>
+        <button class="swatch swatch-photo" data-style="photo" type="button" aria-label="내 사진 배경으로 사용">🖼️</button>
       </div>
       <input type="file" id="sharePhotoInput" accept="image/*" class="hidden">
+      <div class="image-share-controls">
+        <div class="control-group control-group-size">
+          <span class="control-label">글자 크기</span>
+          <div class="size-stepper">
+            <button class="stepper-btn" id="textSizeDecBtn" type="button" aria-label="글자 크기 줄이기">−</button>
+            <span class="size-value" id="textSizeValue">100%</span>
+            <button class="stepper-btn" id="textSizeIncBtn" type="button" aria-label="글자 크기 늘리기">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="image-share-controls">
+        <div class="control-group control-group-color">
+          <span class="control-label">글자색</span>
+          <div class="text-color-swatches" id="textColorSwatches">
+            <button class="color-swatch active" data-color="" type="button" aria-label="기본 색상" style="background: linear-gradient(135deg, #ffffff 50%, #1a1a1a 50%);"></button>
+            <button class="color-swatch" data-color="#ffffff" type="button" aria-label="흰색" style="background:#ffffff;"></button>
+            <button class="color-swatch" data-color="#000000" type="button" aria-label="검정" style="background:#000000;"></button>
+            <button class="color-swatch" data-color="#f4c95d" type="button" aria-label="골드" style="background:#f4c95d;"></button>
+            <button class="color-swatch" data-color="#21428d" type="button" aria-label="네이비" style="background:#21428d;"></button>
+            <button class="color-swatch" data-color="#c0556f" type="button" aria-label="로즈" style="background:#c0556f;"></button>
+          </div>
+        </div>
+      </div>
+      <div class="image-share-controls">
+        <div class="control-group control-group-position">
+          <span class="control-label">텍스트 위치</span>
+          <div class="position-toggle" id="textPositionToggle">
+            <button class="pos-btn" data-pos="top" type="button" aria-label="텍스트 상단 정렬">상단</button>
+            <button class="pos-btn active" data-pos="middle" type="button" aria-label="텍스트 중앙 정렬">중간</button>
+            <button class="pos-btn" data-pos="bottom" type="button" aria-label="텍스트 하단 정렬">하단</button>
+          </div>
+        </div>
+      </div>
       <div class="image-share-actions">
         <button class="img-share-btn primary" id="imgShareBtn" type="button">공유하기</button>
         <button class="img-share-btn" id="imgSaveBtn" type="button">저장</button>
@@ -2457,7 +2596,7 @@
       const url  = location.href;
       if (navigator.share) {
         try {
-          await navigator.share({ title: '빅토리처치 이번 주 성경 구절', text: body, url });
+          await navigator.share({ title: '빅토리처치', text: body, url });
         } catch (e) { /* 사용자가 공유 취소 — 무시 */ }
       } else {
         // 공유 미지원(주로 데스크톱): 링크 복사 fallback
@@ -2499,19 +2638,33 @@
     });
 
     /* ───────── 이미지로 공유: 캔버스 렌더링 ───────── */
+    const DEFAULT_BACKGROUNDS = [
+      { id: "brandBlue", name: "브랜드 블루", type: "gradient", stops: ["#21428d", "#3a5fb8", "#6f8fd6"], textColor: "#ffffff", enabled: true },
+      { id: "pastelFloral", name: "파스텔 플로럴", type: "gradient", stops: ["#f6d9e3", "#fbeede", "#f3e6d8"], textColor: "#7a4a55", enabled: true },
+      { id: "darkModern", name: "다크 모던", type: "gradient", stops: ["#2b2b3a", "#4a4a63"], textColor: "#ffffff", enabled: true },
+      { id: "warmBeige", name: "웜 베이지", type: "gradient", stops: ["#fdf6ec", "#f1e3c8"], textColor: "#8a6d3b", enabled: true },
+      { id: "churchCross", name: "십자가", type: "image", url: "./church_cross.png", textColor: "#ffffff", enabled: true },
+      { id: "churchBible", name: "성경책", type: "image", url: "./church_bible.png", textColor: "#ffffff", enabled: true },
+      { id: "stainedGlass", name: "스테인드글라스", type: "image", url: "./stained_glass.png", textColor: "#ffffff", enabled: true },
+      { id: "forestPath", name: "숲속의 빛", type: "image", url: "./forest_path.png", textColor: "#ffffff", enabled: true },
+      { id: "floralLavender", name: "라벤더 플로럴", type: "image", url: "./floral_lavender.png", textColor: "#4c3b6e", darkOverlay: false, enabled: true },
+      { id: "floralPink", name: "핑크 플로럴", type: "image", url: "./floral_pink.png", textColor: "#524043", darkOverlay: false, enabled: true }
+    ];
+
     const SHARE_STYLES = {
-      brandBlue:    { type: 'gradient', stops: ['#21428d', '#3a5fb8', '#6f8fd6'], textColor: '#ffffff' },
-      pastelFloral: { type: 'gradient', stops: ['#f6d9e3', '#fbeede', '#f3e6d8'], textColor: '#7a4a55' },
-      darkModern:   { type: 'gradient', stops: ['#2b2b3a', '#4a4a63'],            textColor: '#ffffff' },
-      warmBeige:    { type: 'gradient', stops: ['#fdf6ec', '#f1e3c8'],            textColor: '#8a6d3b' },
-      photo:        { type: 'photo',                                              textColor: '#ffffff' },
+      photo: { type: 'photo', textColor: '#ffffff' }
     };
 
     const shareCanvas = document.getElementById('shareCanvas');
     const shareCtx = shareCanvas.getContext('2d');
-    const shareSwatches = Array.from(document.querySelectorAll('#shareSwatches .swatch'));
     let currentShareStyle = 'brandBlue';
     let sharePhotoImg = null;
+    let currentTextColor = null; // null이면 스타일별 기본 글자색 사용
+    let currentTextPosition = 'middle'; // 'top' | 'middle' | 'bottom'
+
+    // 글자 크기 단계 (기본 100% = 인덱스 2)
+    const TEXT_SIZE_STEPS = [0.8, 0.9, 1.0, 1.1, 1.2];
+    let textSizeIndex = 2;
 
     function drawGradientBackground(stops) {
       const W = shareCanvas.width, H = shareCanvas.height;
@@ -2522,7 +2675,7 @@
       shareCtx.fillRect(0, 0, W, H);
     }
 
-    function drawPhotoBackground(img) {
+    function drawPhotoBackground(img, style = {}) {
       const W = shareCanvas.width, H = shareCanvas.height;
       const canvasRatio = W / H;
       const imgRatio = img.width / img.height;
@@ -2540,18 +2693,78 @@
       }
       shareCtx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
 
-      // 하단 50%에 어두운 스크림 (텍스트 가독성)
-      const scrim = shareCtx.createLinearGradient(0, H, 0, H * 0.5);
-      scrim.addColorStop(0, 'rgba(20,20,30,0.7)');
-      scrim.addColorStop(1, 'rgba(20,20,30,0.05)');
-      shareCtx.fillStyle = scrim;
-      shareCtx.fillRect(0, H * 0.5, W, H * 0.5);
+      // 밝은 수채화 꽃 배경은 어둡게 덮지 않고 밝기를 그대로 유지합니다
+      if (style.darkOverlay !== false) {
+        // 가독성을 위해 전체 이미지에 35% 불투명도의 어두운 레이어 오버레이
+        shareCtx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        shareCtx.fillRect(0, 0, W, H);
+
+        // 하단 50%에 어두운 그라디언트 스크림 (가사나 구절 텍스트 대비 향상)
+        const scrim = shareCtx.createLinearGradient(0, H, 0, H * 0.5);
+        scrim.addColorStop(0, 'rgba(20,20,30,0.7)');
+        scrim.addColorStop(1, 'rgba(20,20,30,0.05)');
+        shareCtx.fillStyle = scrim;
+        shareCtx.fillRect(0, H * 0.5, W, H * 0.5);
+      }
     }
 
-    // 본문 줄들이 maxWidth/maxHeight 안에 들어가도록 폰트 크기를 64px→36px 사이에서 축소
-    function fitBodyFontSize(lines, maxWidth, maxHeight) {
-      let size = 64;
-      const minSize = 36;
+    // 어드민 데이터 기반으로 배경 리스트 및 스와치 동적 생성
+    function updateBackgroundStyles(backgroundsList) {
+      // 1. SHARE_STYLES 초기화 (photo는 고정)
+      for (const k in SHARE_STYLES) {
+        if (k !== 'photo') delete SHARE_STYLES[k];
+      }
+
+      // 2. 활성화된 배경 목록으로 SHARE_STYLES 업데이트
+      const activeBgs = backgroundsList.filter(bg => bg.enabled !== false);
+      activeBgs.forEach(bg => {
+        if (bg.type === 'gradient') {
+          SHARE_STYLES[bg.id] = { type: 'gradient', stops: bg.stops, textColor: bg.textColor || '#ffffff' };
+        } else {
+          SHARE_STYLES[bg.id] = { type: 'image', url: bg.url, img: null, textColor: bg.textColor || '#ffffff', darkOverlay: bg.darkOverlay };
+        }
+      });
+
+      // 3. UI 스와치 재생성
+      const container = document.getElementById('shareSwatches');
+      if (!container) return;
+
+      const oldSwatches = container.querySelectorAll('.swatch:not(.swatch-photo)');
+      oldSwatches.forEach(el => el.remove());
+
+      activeBgs.forEach(bg => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'swatch';
+        btn.dataset.style = bg.id;
+        btn.setAttribute('aria-label', bg.name);
+
+        if (bg.type === 'gradient') {
+          btn.style.background = `linear-gradient(160deg, ${bg.stops.join(', ')})`;
+        } else {
+          btn.style.backgroundImage = `url(${bg.url})`;
+          btn.style.backgroundSize = 'cover';
+          btn.style.backgroundPosition = 'center';
+        }
+
+        btn.addEventListener('click', () => setActiveShareStyle(bg.id));
+        container.appendChild(btn);
+      });
+
+      // 현재 선택된 스타일이 비활성화되었거나 목록에 없으면 첫 번째 활성 스타일로 변경
+      if (currentShareStyle !== 'photo' && !SHARE_STYLES[currentShareStyle]) {
+        const fallbackStyle = activeBgs.length > 0 ? activeBgs[0].id : 'photo';
+        currentShareStyle = fallbackStyle;
+      }
+    }
+
+    // 초기 렌더링 시 기본값 설정
+    updateBackgroundStyles(DEFAULT_BACKGROUNDS);
+
+    // 본문 줄들이 maxWidth/maxHeight 안에 들어가도록 폰트 크기를 64px→36px 사이(크기 단계 반영)에서 축소
+    function fitBodyFontSize(lines, maxWidth, maxHeight, scale = 1) {
+      let size = 64 * scale;
+      const minSize = 36 * scale;
       shareCtx.font = `700 ${size}px 'Gowun Dodum', 'Malgun Gothic', sans-serif`;
       while (size > minSize) {
         const tooWide = lines.some((line) => shareCtx.measureText(line).width > maxWidth);
@@ -2568,7 +2781,30 @@
       const W = shareCanvas.width, H = shareCanvas.height;
 
       if (style.type === 'photo') {
-        drawPhotoBackground(sharePhotoImg);
+        if (sharePhotoImg) {
+          drawPhotoBackground(sharePhotoImg);
+        } else {
+          drawGradientBackground(['#2b2b3a', '#4a4a63']);
+        }
+      } else if (style.type === 'image') {
+        if (style.img) {
+          drawPhotoBackground(style.img);
+        } else {
+          drawGradientBackground(['#4a4a63', '#2b2b3a']);
+          const currentStyleAtLoad = currentShareStyle;
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            style.img = img;
+            if (currentShareStyle === currentStyleAtLoad) {
+              renderShareCanvas();
+            }
+          };
+          img.onerror = () => {
+            console.warn('[canvas] image load failed', style.url);
+          };
+          img.src = style.url;
+        }
       } else {
         drawGradientBackground(style.stops);
       }
@@ -2577,21 +2813,29 @@
       const ref = (window.currentFullVerseRef || '').trim();
       const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
 
+      const scale = TEXT_SIZE_STEPS[textSizeIndex];
       const paddingX = 80;
       const paddingY = 80;
       const maxWidth = W - paddingX * 2;
-      const refSize = 44;
+      const refSize = Math.round(44 * scale);
       const watermarkReserve = 120;
       const maxHeight = H - paddingY * 2 - (ref ? refSize + 20 : 0) - watermarkReserve;
-      const bodySize = fitBodyFontSize(lines, maxWidth, maxHeight);
+      const bodySize = fitBodyFontSize(lines, maxWidth, maxHeight, scale);
       const lineHeight = bodySize * 1.6;
 
       const totalTextHeight = lines.length * lineHeight;
-      const startY = (H - totalTextHeight) / 2 - (ref ? refSize : 0);
+      let startY;
+      if (currentTextPosition === 'top') {
+        startY = paddingY;
+      } else if (currentTextPosition === 'bottom') {
+        startY = H - paddingY - watermarkReserve - totalTextHeight - (ref ? refSize * 1.5 : 0);
+      } else {
+        startY = (H - totalTextHeight) / 2 - (ref ? refSize : 0);
+      }
 
       shareCtx.textAlign = 'center';
       shareCtx.textBaseline = 'middle';
-      shareCtx.fillStyle = style.textColor;
+      shareCtx.fillStyle = currentTextColor || style.textColor;
 
       shareCtx.font = `700 ${bodySize}px 'Gowun Dodum', 'Malgun Gothic', sans-serif`;
       lines.forEach((line, i) => {
@@ -2612,9 +2856,53 @@
 
     function setActiveShareStyle(styleName) {
       currentShareStyle = styleName;
-      shareSwatches.forEach((el) => el.classList.toggle('active', el.dataset.style === styleName));
+      document.querySelectorAll('#shareSwatches .swatch').forEach((el) => el.classList.toggle('active', el.dataset.style === styleName));
       renderShareCanvas();
     }
+
+    /* ───────── 이미지로 공유: 글자 크기 / 글자색 컨트롤 ───────── */
+    const textSizeDecBtn = document.getElementById('textSizeDecBtn');
+    const textSizeIncBtn = document.getElementById('textSizeIncBtn');
+    const textSizeValue = document.getElementById('textSizeValue');
+
+    function updateTextSizeUI() {
+      textSizeValue.textContent = `${Math.round(TEXT_SIZE_STEPS[textSizeIndex] * 100)}%`;
+      textSizeDecBtn.disabled = textSizeIndex === 0;
+      textSizeIncBtn.disabled = textSizeIndex === TEXT_SIZE_STEPS.length - 1;
+    }
+    updateTextSizeUI();
+
+    textSizeDecBtn.addEventListener('click', () => {
+      if (textSizeIndex === 0) return;
+      textSizeIndex--;
+      updateTextSizeUI();
+      renderShareCanvas();
+    });
+    textSizeIncBtn.addEventListener('click', () => {
+      if (textSizeIndex === TEXT_SIZE_STEPS.length - 1) return;
+      textSizeIndex++;
+      updateTextSizeUI();
+      renderShareCanvas();
+    });
+    // 글자색 스와치
+    const textColorSwatches = Array.from(document.querySelectorAll('#textColorSwatches .color-swatch'));
+    textColorSwatches.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentTextColor = btn.dataset.color || null;
+        textColorSwatches.forEach((b) => b.classList.toggle('active', b === btn));
+        renderShareCanvas();
+      });
+    });
+
+    // 텍스트 위치 (상단/중간/하단) 토글
+    const textPositionBtns = Array.from(document.querySelectorAll('#textPositionToggle .pos-btn'));
+    textPositionBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentTextPosition = btn.dataset.pos;
+        textPositionBtns.forEach((b) => b.classList.toggle('active', b === btn));
+        renderShareCanvas();
+      });
+    });
 
     /* ───────── 이미지로 공유: 모달 열기/닫기 ───────── */
     const imageShareModal = document.getElementById('imageShareModal');
@@ -2624,7 +2912,7 @@
       imageShareModal.classList.add('show');
       document.body.style.overflow = 'hidden';
       // 폰트 로드 완료 후 렌더 — 폴백 폰트로 그려지는 것 방지
-      document.fonts.ready.then(() => setActiveShareStyle('brandBlue'));
+      document.fonts.ready.then(() => setActiveShareStyle(currentShareStyle));
     }
     function closeImageShareModal() {
       imageShareModal.classList.remove('show');
@@ -2633,12 +2921,6 @@
     imageShareCloseBtn.addEventListener('click', closeImageShareModal);
     imageShareModal.addEventListener('click', (e) => {
       if (e.target === imageShareModal) closeImageShareModal();
-    });
-
-    // 그라디언트 스와치 클릭 (내 사진 스와치는 Task 5에서 처리)
-    shareSwatches.forEach((el) => {
-      if (el.dataset.style === 'photo') return;
-      el.addEventListener('click', () => setActiveShareStyle(el.dataset.style));
     });
 
     // "내 사진" 스와치 — 클릭 시 파일 선택 다이얼로그 오픈
@@ -2694,7 +2976,7 @@
       const ref = (window.currentFullVerseRef || '').trim();
       const body = ref ? (text + '\n\n' + ref) : text;
       try {
-        await navigator.share({ files: [file], title: '빅토리처치 이번 주 성경 구절', text: body });
+        await navigator.share({ files: [file], title: '빅토리처치', text: body });
       } catch (e) { /* 사용자가 공유 취소 — 무시 */ }
     });
 
@@ -2834,6 +3116,11 @@
         const { active, past } = classify(d);
         renderActive(active, d.audioUrl);
         renderPast(past);
+
+        // 카드 배경 동적 설정 로드 및 적용
+        const bgs = Array.isArray(d.backgrounds) ? d.backgrounds : DEFAULT_BACKGROUNDS;
+        updateBackgroundStyles(bgs);
+
         // 인스타그램: 관리자가 등록한 게시물 URL을 채널 섹션에 전달
         window.vcInstagramUrl = (d.instagramUrl || '').trim() || null;
         window.dispatchEvent(new CustomEvent('vc:instagram', {
