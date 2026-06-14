@@ -504,6 +504,20 @@
       </p>
     </section>
 
+    <!-- 알림 구독 현황 -->
+    <section class="card hidden" id="pushCard">
+      <h2>알림 구독 현황</h2>
+      <p class="meta" id="pushCountText" style="text-align:left; font-size:18px; font-weight:700; color:var(--text); margin:0;">불러오는 중…</p>
+      <p class="hint" id="pushCountBreak" style="margin-top:6px"></p>
+      <div class="row">
+        <button class="btn btn-ghost" id="btnPushRefresh" type="button">새로고침</button>
+      </div>
+      <div class="status" id="pushStatus"></div>
+      <p class="hint" style="margin-top:10px">
+        "새 구절 알림 받기"를 허용한 기기 수입니다. 로그인이 없어 누구인지는 알 수 없고 기기 수만 집계됩니다.
+      </p>
+    </section>
+
     </div>
 
     </div>
@@ -1150,6 +1164,28 @@
       }, 1200);
     });
 
+    // 알림 구독 기기 수 불러오기 (집계 함수 호출)
+    async function loadPushCount() {
+      const el = $('pushCountText');
+      const br = $('pushCountBreak');
+      const st = $('pushStatus');
+      if (!el) return;
+      el.textContent = '불러오는 중…';
+      if (br) br.textContent = '';
+      if (st) { st.textContent = ''; st.className = 'status'; }
+      try {
+        const r = await fetch('/api/push-count', { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        el.textContent = `알림 구독 기기: ${d.count}대`;
+        if (br) br.textContent = `아이폰 ${d.ios || 0} · 기타(안드로이드·PC) ${(d.android || 0) + (d.other || 0)}`;
+      } catch (e) {
+        el.textContent = '—';
+        if (st) { st.textContent = '구독 수를 불러오지 못했어요: ' + (e.message || e); st.className = 'status err'; }
+      }
+    }
+    if ($('btnPushRefresh')) $('btnPushRefresh').addEventListener('click', loadPushCount);
+
     function enterAdmin() {
       gate.classList.add('hidden');
       editor.classList.remove('hidden');
@@ -1158,7 +1194,9 @@
       $('instaCard').classList.remove('hidden');
       $('fbCard').classList.remove('hidden');
       $('ytCard').classList.remove('hidden');
+      $('pushCard').classList.remove('hidden');
       previewCard.classList.remove('hidden');
+      loadPushCount();
       try { initDb(); } catch (e) {
         saveStatus.textContent = 'Firebase 초기화 실패: ' + (e.message || e);
         saveStatus.className = 'status err';

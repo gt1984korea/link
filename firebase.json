@@ -30,6 +30,12 @@
     ],
     "cleanUrls": true,
     "trailingSlash": false,
+    "rewrites": [
+      {
+        "source": "/api/push-count",
+        "function": { "functionId": "pushTokenCount", "region": "us-central1" }
+      }
+    ],
     "headers": [
       {
         "source": "**/*.@(png|jpg|jpeg|gif|svg|webp|ico)",

@@ -2,7 +2,7 @@
  * 헌금 섹션 — 은행 앱 열기 버튼 기기별 분기 검증 + 계좌 복사 검증
  * --------------------------------------------------------------
  * Android(Chromium+Android UA): intent://<pkg>;...browser_fallback_url=<Play 스토어>
- * iOS(WebKit iPhone):           App Store(apps.apple.com) 링크
+ * iOS(WebKit iPhone):           앱 URL 스킴(scheme://) 먼저 시도 → 미설치 시 App Store 폴백
  * Desktop(Chromium):            기본 <a href>(은행 웹) — JS 가로채기 없음 → popup
  *
  * 실행:
@@ -19,18 +19,21 @@ const URL = `${BASE_URL}/index.html`;
 const BANKS = {
   ANZ: {
     pkg: 'nz.co.anz.android.mobilebanking',
+    iosScheme: 'anzgomoney://',
     ios: 'https://apps.apple.com/nz/app/anz-gomoney-new-zealand/id685125525',
     androidStore: 'https://play.google.com/store/apps/details?id=nz.co.anz.android.mobilebanking',
     web: 'anz.co.nz',
   },
   ASB: {
     pkg: 'nz.co.asb.asbmobile',
+    iosScheme: 'asbmobile://',
     ios: 'https://apps.apple.com/nz/app/asb-mobile-banking/id434348489',
     androidStore: 'https://play.google.com/store/apps/details?id=nz.co.asb.asbmobile',
     web: 'asb.co.nz',
   },
   BNZ: {
     pkg: 'nz.co.bnz.droidbanking',
+    iosScheme: 'bnzmobile://',
     ios: 'https://apps.apple.com/nz/app/bnz-mobile/id443045792',
     androidStore: 'https://play.google.com/store/apps/details?id=nz.co.bnz.droidbanking',
     web: 'bnz.co.nz',
@@ -83,8 +86,8 @@ async function testMobile({ engine, deviceName, kind }) {
       check(`${label} → intent:// 스킴`, !!url && url.startsWith('intent://'), url);
       check(`${label} → 패키지 ${exp.pkg}`, !!url && url.includes('package=' + exp.pkg), url);
       check(`${label} → Play 스토어 폴백`, !!url && url.includes(encodeURIComponent(exp.androidStore)), url);
-    } else { // iOS
-      check(`${label} → App Store 링크`, url === exp.ios, url);
+    } else { // iOS — 앱 스킴을 먼저 시도(미설치 시 App Store 폴백)
+      check(`${label} → 앱 스킴 ${exp.iosScheme}`, url === exp.iosScheme, url);
     }
   }
 

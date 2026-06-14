@@ -1403,6 +1403,7 @@
         <a class="give-bank-btn"
            href="https://www.anz.co.nz/banking-with-anz/ways-to-bank/gomoney/"
            data-pkg="nz.co.anz.android.mobilebanking"
+           data-ios-scheme="anzgomoney://"
            data-ios="https://apps.apple.com/nz/app/anz-gomoney-new-zealand/id685125525"
            data-android="https://play.google.com/store/apps/details?id=nz.co.anz.android.mobilebanking"
            target="_blank" rel="noopener noreferrer">
@@ -1412,6 +1413,7 @@
         <a class="give-bank-btn"
            href="https://www.asb.co.nz/banking-with-asb/mobile-app.html"
            data-pkg="nz.co.asb.asbmobile"
+           data-ios-scheme="asbmobile://"
            data-ios="https://apps.apple.com/nz/app/asb-mobile-banking/id434348489"
            data-android="https://play.google.com/store/apps/details?id=nz.co.asb.asbmobile"
            target="_blank" rel="noopener noreferrer">
@@ -1421,6 +1423,7 @@
         <a class="give-bank-btn"
            href="https://www.bnz.co.nz/personal-banking/everyday-banking/mobile-banking"
            data-pkg="nz.co.bnz.droidbanking"
+           data-ios-scheme="bnzmobile://"
            data-ios="https://apps.apple.com/nz/app/bnz-mobile/id443045792"
            data-android="https://play.google.com/store/apps/details?id=nz.co.bnz.droidbanking"
            target="_blank" rel="noopener noreferrer">
@@ -1606,7 +1609,8 @@
 
     // 은행 앱 열기 (기기별 자동 분기)
     // Android: intent:// 로 설치된 앱 실행(없으면 Play 스토어로 폴백).
-    // iOS:     App Store 링크(앱 있으면 "열기", 없으면 설치).
+    // iOS:     앱 URL 스킴 먼저 시도 → 안 열리면 App Store 로 폴백
+    //          (네이티브의 canOpenURL → open(앱) else 스토어 패턴의 웹 버전).
     // 데스크톱/기타: href(은행 웹) 그대로 동작.
     (function () {
       var ua = navigator.userAgent || '';
@@ -1614,29 +1618,63 @@
       var isIOS = /iPad|iPhone|iPod/i.test(ua) ||
                   (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // iPadOS 데스크톱 모드
       if (!isAndroid && !isIOS) return; // 데스크톱 등은 기본 링크(은행 웹) 사용
+
+      // 취소 가능한 훅: 외부(애널리틱스/테스트)에서 preventDefault() 하면 실제 이동 생략.
+      // 반환값 true = 진행, false = 취소됨.
+      function fireNav(btn, url) {
+        var ev;
+        try {
+          ev = new CustomEvent('bank:nav', { bubbles: true, cancelable: true, detail: { url: url } });
+        } catch (err) { ev = null; }
+        return !ev || btn.dispatchEvent(ev);
+      }
+
       var btns = document.querySelectorAll('.give-bank-btn[data-pkg]');
       for (var i = 0; i < btns.length; i++) {
         (function (btn) {
           btn.addEventListener('click', function (e) {
-            var target = null;
             if (isAndroid) {
               var pkg = btn.getAttribute('data-pkg');
-              if (!pkg) return;
+              if (!pkg) return; // 대상 없으면 기본 링크(은행 웹) 동작
               var androidStore = btn.getAttribute('data-android') || btn.getAttribute('href');
-              target = 'intent://#Intent;package=' + pkg +
+              var intentUrl = 'intent://#Intent;package=' + pkg +
                 ';S.browser_fallback_url=' + encodeURIComponent(androidStore) + ';end';
-            } else if (isIOS) {
-              target = btn.getAttribute('data-ios');
+              e.preventDefault();
+              if (!fireNav(btn, intentUrl)) return;
+              window.location.href = intentUrl;
+              return;
             }
-            if (!target) return; // 대상 없으면 기본 링크(은행 웹) 동작
+
+            // iOS
+            var scheme = btn.getAttribute('data-ios-scheme');
+            var store = btn.getAttribute('data-ios');
+            if (!scheme) { // 스킴 없으면 기존처럼 App Store 링크로
+              if (!store) return;
+              e.preventDefault();
+              if (!fireNav(btn, store)) return;
+              window.location.href = store;
+              return;
+            }
+
             e.preventDefault();
-            // 취소 가능한 훅: 외부(애널리틱스/테스트)에서 preventDefault() 하면 실제 이동 생략
-            var navEvent;
-            try {
-              navEvent = new CustomEvent('bank:nav', { bubbles: true, cancelable: true, detail: { url: target } });
-            } catch (err) { navEvent = null; }
-            if (navEvent && !btn.dispatchEvent(navEvent)) return;
-            window.location.href = target;
+            // canOpenURL 의 웹 버전: 앱 스킴을 먼저 시도하고, 일정 시간 안에
+            // 페이지가 백그라운드로 전환되지 않으면(=앱 미설치) App Store 로 폴백.
+            if (!fireNav(btn, scheme)) return; // 훅이 취소하면 이동/폴백 모두 생략
+            var t0 = Date.now();
+            var timer = setTimeout(function () {
+              cleanup();
+              if (document.hidden) return;          // 앱이 떠서 백그라운드면 폴백 안 함
+              if (Date.now() - t0 > 2500) return;   // 앱 전환 후 늦게 깨어난 경우 무시
+              if (store) window.location.href = store;
+            }, 1500);
+            function onHide() { if (document.hidden) { clearTimeout(timer); cleanup(); } }
+            function cleanup() {
+              document.removeEventListener('visibilitychange', onHide);
+              window.removeEventListener('pagehide', cleanup);
+            }
+            document.addEventListener('visibilitychange', onHide);
+            window.addEventListener('pagehide', cleanup);
+            window.location.href = scheme;
           });
         })(btns[i]);
       }
@@ -2135,7 +2173,7 @@
     data-auto-banner="false"></script>
 
   <!-- 웹 푸시 알림 (새 구절 알림 받기 버튼 제어) -->
-  <script type="module" src="push.js"></script>
+  <script type="module" src="push.js?v=2"></script>
 
   <!-- TTS (ElevenLabs) -->
   <script>

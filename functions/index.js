@@ -6,6 +6,7 @@
  *       알림을 띄우고 홈 아이콘 배지를 켭니다. 만료된 토큰은 자동 정리합니다.
  */
 const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -81,4 +82,29 @@ exports.notifyNewVerse = onDocumentUpdated('site/memoryVerse', async (event) => 
   );
 
   logger.info(`푸시 발송 완료. 대상=${tokens.length}, 무효정리=${invalidTokens.length}`);
+});
+
+/* 알림 구독 기기 수 집계 (admin 화면에서 호출)
+ * pushTokens는 보안 규칙상 클라이언트가 목록 조회 불가 → Admin SDK로 집계해 숫자만 반환.
+ * 호스팅 rewrite를 통해 /api/push-count 로 같은 출처에서 호출됩니다.
+ */
+exports.pushTokenCount = onRequest({ cors: true, region: 'us-central1' }, async (req, res) => {
+  try {
+    const db = getFirestore();
+    const snap = await db.collection('pushTokens').get();
+    let ios = 0;
+    let android = 0;
+    let other = 0;
+    snap.forEach((d) => {
+      const p = (d.get('platform') || 'other');
+      if (p === 'ios') ios += 1;
+      else if (p === 'android') android += 1;
+      else other += 1;
+    });
+    res.set('Cache-Control', 'no-store');
+    res.json({ count: snap.size, ios, android, other });
+  } catch (e) {
+    logger.error('pushTokenCount 실패', e);
+    res.status(500).json({ error: 'failed' });
+  }
 });
