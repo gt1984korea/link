@@ -803,6 +803,12 @@
     .give-copy-btn svg { width: 19px; height: 19px; }
     .give-copy-btn:active { transform: scale(.97); }
     .give-copy-btn.copied { background: #2ea043; }
+    .give-copy-btn + .give-copy-btn { margin-top: 8px; }
+    .give-copy-btn.secondary {
+      color: var(--brand);
+      background: var(--brand-dim);
+    }
+    .give-copy-btn.secondary.copied { color: #fff; background: #2ea043; }
     .give-banks {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -1273,13 +1279,20 @@
       <div class="give-card">
         <span class="give-bank-name">ANZ 교회 계좌</span>
         <div class="give-acct" id="giveAcct">06-0193-0831416-00</div>
-        <div class="give-holder">예금주 : NZ Victory Church</div>
+        <div class="give-holder">예금주 : <span id="giveHolder">NZ Victory Church</span></div>
         <button type="button" class="give-copy-btn" id="copyAcctBtn" aria-live="polite">
-          <svg id="copyAcctIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>
           <span id="copyAcctLabel">계좌번호 복사하기</span>
+        </button>
+        <button type="button" class="give-copy-btn secondary" id="copyHolderBtn" aria-live="polite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          <span id="copyHolderLabel">예금주 복사하기</span>
         </button>
       </div>
 
@@ -1378,14 +1391,8 @@
       toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2400);
     }
 
-    // 헌금 계좌번호 복사
+    // 헌금 계좌번호 / 예금주 복사
     (function () {
-      var copyBtn = document.getElementById('copyAcctBtn');
-      var acctEl = document.getElementById('giveAcct');
-      if (!copyBtn || !acctEl) return;
-      var labelEl = document.getElementById('copyAcctLabel');
-      var copyTimer = null;
-
       function fallbackCopy(text) {
         var ta = document.createElement('textarea');
         ta.value = text;
@@ -1401,29 +1408,42 @@
         return ok;
       }
 
-      function markCopied() {
-        copyBtn.classList.add('copied');
-        if (labelEl) labelEl.textContent = '복사 완료!';
-        showToast('계좌번호가 복사되었습니다');
-        clearTimeout(copyTimer);
-        copyTimer = setTimeout(function () {
-          copyBtn.classList.remove('copied');
-          if (labelEl) labelEl.textContent = '계좌번호 복사하기';
-        }, 2200);
+      function setupCopy(btnId, srcId, labelId, defaultLabel, successMsg, failMsg) {
+        var copyBtn = document.getElementById(btnId);
+        var srcEl = document.getElementById(srcId);
+        if (!copyBtn || !srcEl) return;
+        var labelEl = document.getElementById(labelId);
+        var copyTimer = null;
+
+        function markCopied() {
+          copyBtn.classList.add('copied');
+          if (labelEl) labelEl.textContent = '복사 완료!';
+          showToast(successMsg);
+          clearTimeout(copyTimer);
+          copyTimer = setTimeout(function () {
+            copyBtn.classList.remove('copied');
+            if (labelEl) labelEl.textContent = defaultLabel;
+          }, 2200);
+        }
+
+        copyBtn.addEventListener('click', function () {
+          var text = (srcEl.textContent || '').trim();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(markCopied, function () {
+              if (fallbackCopy(text)) markCopied();
+              else showToast(failMsg);
+            });
+          } else {
+            if (fallbackCopy(text)) markCopied();
+            else showToast(failMsg);
+          }
+        });
       }
 
-      copyBtn.addEventListener('click', function () {
-        var text = (acctEl.textContent || '').trim();
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(markCopied, function () {
-            if (fallbackCopy(text)) markCopied();
-            else showToast('복사에 실패했어요. 계좌번호를 길게 눌러 복사해 주세요');
-          });
-        } else {
-          if (fallbackCopy(text)) markCopied();
-          else showToast('복사에 실패했어요. 계좌번호를 길게 눌러 복사해 주세요');
-        }
-      });
+      setupCopy('copyAcctBtn', 'giveAcct', 'copyAcctLabel', '계좌번호 복사하기',
+        '계좌번호가 복사되었습니다', '복사에 실패했어요. 계좌번호를 길게 눌러 복사해 주세요');
+      setupCopy('copyHolderBtn', 'giveHolder', 'copyHolderLabel', '예금주 복사하기',
+        '예금주가 복사되었습니다', '복사에 실패했어요. 예금주를 길게 눌러 복사해 주세요');
     })();
 
     // 은행 앱 열기 (기기별 자동 분기)
