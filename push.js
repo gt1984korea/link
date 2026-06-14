@@ -65,17 +65,23 @@ async function init() {
 
   // 현재 권한 상태에 따라 버튼 표시
   if (Notification.permission === 'granted') {
-    setBtn('알림 켜짐 ✓', false);
-    setHint('새 암송 구절이 등록되면 알려드릴게요.');
-    // 이미 허용된 경우 토큰을 갱신/보강
-    registerToken().catch(() => {});
+    // 이미 등록(허용)됨 → 버튼 숨김. 토큰만 조용히 보강하되, 실패 시에만 재시도 버튼 노출.
+    registerToken()
+      .then(() => hideBtn())
+      .catch(() => {
+        setBtn('다시 시도', false);
+        setHint('알림 등록에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        showBtn();
+      });
   } else if (Notification.permission === 'denied') {
     // 차단 상태: 앱에선 재요청 불가 → 눌러서 기기 설정 안내 팝업을 열도록 유지
     setBtn('알림 차단됨 · 켜는 법 보기', false);
     setHint('기기 설정에서 이 앱의 알림을 허용해 주세요.');
+    showBtn();
   } else {
     setBtn('새 구절 알림 받기', false);
-    setHint('');
+    setHint('새 암송 구절이 올라오면 알려드려요');
+    showBtn();
   }
 
   btn.addEventListener('click', onEnableClick);
@@ -101,8 +107,8 @@ async function onEnableClick() {
       return;
     }
     await registerToken();
-    setBtn('알림 켜짐 ✓', false);
-    setHint('새 암송 구절이 등록되면 알려드릴게요.');
+    // 등록 성공 → 버튼을 화면에서 숨김
+    hideBtn();
   } catch (e) {
     console.warn('[push] enable failed', e);
     setBtn('다시 시도', false);
