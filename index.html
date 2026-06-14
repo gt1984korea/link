@@ -185,7 +185,9 @@
 
     /* 아이콘 색상 — 일반 카드 */
     .item.home .ic   { background: #eef2ff; color: #4f46e5; }
-    /* 새 구절 알림 받기 버튼 */
+    /* 새 구절 알림 받기 버튼 (성경 구절 카드 위에 단독 배치) */
+    .item.notify { margin-bottom: 14px; }
+    .item.notify.hidden { display: none; }
     .item.notify .ic   { background: #fee2e2; color: #e11d48; }
     .item.notify .chev { color: #e11d48; }
     .item.notify:disabled { opacity: .65; cursor: default; }
@@ -1134,6 +1136,21 @@
       <p class="pastor">담임목사 : 이 달 견 (Rev. James Lee)</p>
     </header>
 
+    <!-- 0-z. 새 구절 알림 받기 (웹 푸시) — 성경 구절 카드 위, 등록되면 자동 숨김 -->
+    <button class="item notify hidden" id="btnNotify" type="button">
+      <span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </span>
+      <span class="body">
+        <span class="t1"><span class="notify-label">새 구절 알림 받기</span></span>
+        <span class="t2" id="notifyHint">새 암송 구절이 올라오면 알려드려요</span>
+      </span>
+      <span class="chev">알림</span>
+    </button>
+
     <!-- 0. 이번 주 암송 구절 -->
     <section class="verse hidden" id="verseCard" aria-live="polite">
       <div class="label-row">
@@ -1186,21 +1203,6 @@
         </span>
         <span class="chev">바로가기</span>
         <span class="progress"></span>
-      </button>
-
-      <!-- 1-a. 새 구절 알림 받기 (웹 푸시) -->
-      <button class="item notify" id="btnNotify" type="button">
-        <span class="ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </span>
-        <span class="body">
-          <span class="t1"><span class="notify-label">새 구절 알림 받기</span></span>
-          <span class="t2" id="notifyHint">새 암송 구절이 올라오면 알려드려요</span>
-        </span>
-        <span class="chev">알림</span>
       </button>
 
       <!-- 2. 실시간 라이브 -->

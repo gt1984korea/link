@@ -101,7 +101,9 @@ async function onEnableClick() {
   } catch (e) {
     console.warn('[push] enable failed', e);
     setBtn('다시 시도', false);
-    setHint('알림 등록에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    // 폰에서는 콘솔을 볼 수 없으므로 실제 실패 원인을 화면에 함께 표시합니다.
+    const reason = (e && (e.code || e.message)) ? `${e.code || ''} ${e.message || ''}`.trim() : '알 수 없는 오류';
+    setHint('알림 등록 실패: ' + reason);
   }
 }
 
