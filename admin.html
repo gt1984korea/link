@@ -244,7 +244,16 @@
         gap: 20px;
         align-items: start;
       }
-      .col-form, .col-list {
+      .col-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-width: 0;
+      }
+      .col-list {
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 40px);
         display: flex;
         flex-direction: column;
         gap: 14px;
@@ -252,12 +261,10 @@
       }
       .col-form .card, .col-list .card { margin-bottom: 0; }
       #listCard {
-        position: sticky;
-        top: 20px;
-        max-height: calc(100vh - 40px);
+        flex: 1;
+        min-height: 0;
         display: flex;
         flex-direction: column;
-        margin-bottom: 0;
       }
       #listCard .vlist {
         overflow-y: auto;
@@ -495,15 +502,6 @@
       <p class="hint" style="margin-top:14px">저장하면 모든 사용자 화면에 실시간 반영됩니다.</p>
     </section>
 
-    <!-- 등록된 구절 목록 -->
-    <section class="card hidden" id="listCard">
-      <h2>등록된 암송 구절</h2>
-      <div class="vlist" id="vlist"></div>
-      <p class="hint" id="listHint" style="margin-top:14px">
-        편집하려면 항목의 <b>편집</b>을 누르세요. 오늘 날짜가 포함된 구절이 메인 화면에 표시됩니다.
-      </p>
-    </section>
-
     <!-- 알림 구독 현황 -->
     <section class="card hidden" id="pushCard">
       <h2>알림 구독 현황</h2>
@@ -515,6 +513,15 @@
       <div class="status" id="pushStatus"></div>
       <p class="hint" style="margin-top:10px">
         "새 구절 알림 받기"를 허용한 기기 수입니다. 로그인이 없어 누구인지는 알 수 없고 기기 수만 집계됩니다.
+      </p>
+    </section>
+
+    <!-- 등록된 구절 목록 -->
+    <section class="card hidden" id="listCard">
+      <h2>등록된 암송 구절</h2>
+      <div class="vlist" id="vlist"></div>
+      <p class="hint" id="listHint" style="margin-top:14px">
+        편집하려면 항목의 <b>편집</b>을 누르세요. 오늘 날짜가 포함된 구절이 메인 화면에 표시됩니다.
       </p>
     </section>
 
