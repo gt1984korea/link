@@ -15,7 +15,7 @@ import { firebaseConfig } from './firebase-config.js';
 /* ⚠️ 설정 필요: Firebase Console > 프로젝트 설정 > 클라우드 메시징 >
  *   "웹 푸시 인증서(Web Push certificates)"에서 생성한 공개 키(공개 VAPID 키)를 붙여넣으세요.
  *   이 값은 공개되어도 안전합니다. */
-const VAPID_PUBLIC_KEY = 'PASTE_YOUR_WEB_PUSH_VAPID_PUBLIC_KEY_HERE';
+const VAPID_PUBLIC_KEY = 'BPRqNPfK0el8WlcpV9IR3s2ou6qNa4abKH_15WXmDJ036HQn_kBYk_IH2lTJZj6NUqrEq_c9z60ckzO8AusIF3c';
 
 const btn  = document.getElementById('btnNotify');
 const hint = document.getElementById('notifyHint');
