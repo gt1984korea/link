@@ -1608,6 +1608,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getFirestore, doc, onSnapshot }
       from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
     import { firebaseConfig, VERSE_DOC_PATH } from "./firebase-config.js";
 
     const card = document.getElementById('verseCard');
@@ -1905,6 +1906,7 @@
 
     try {
       const app = initializeApp(firebaseConfig);
+      try { getAnalytics(app); } catch (e) { console.warn('[analytics] init failed', e); }
       const db  = getFirestore(app);
       const ref = doc(db, VERSE_DOC_PATH.collection, VERSE_DOC_PATH.id);
 
