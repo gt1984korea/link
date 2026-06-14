@@ -6,7 +6,8 @@
   "scripts": {
     "install:browsers": "playwright install webkit chromium",
     "test:ios": "node ios-screenshots.js",
-    "test:banks": "node bank-buttons.test.js"
+    "test:banks": "node bank-buttons.test.js",
+    "test:image-share": "node image-share.test.js"
   },
   "devDependencies": {
     "playwright": "^1.49.0"

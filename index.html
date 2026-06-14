@@ -185,6 +185,8 @@
 
     /* 아이콘 색상 — 일반 카드 */
     .item.home .ic   { background: #eef2ff; color: #4f46e5; }
+    /* 범용 유틸리티: 숨기기 */
+    .hidden { display: none; }
     /* 새 구절 알림 받기 버튼 (성경 구절 카드 위에 단독 배치) */
     .item.notify { margin-bottom: 14px; }
     .item.notify.hidden { display: none; }
@@ -716,6 +718,60 @@
       .va-btn.pop .va-ic { animation: none; }
     }
 
+    /* 공유 액션 시트 (바텀시트: 텍스트로 공유 / 이미지로 공유) */
+    .sheet-overlay { align-items: flex-end; }
+    .sheet-overlay .sheet-content {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 10px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+      box-shadow: 0 -8px 30px rgba(0, 0, 0, .15);
+      transform: translateY(100%);
+      transition: transform .25s ease;
+    }
+    .sheet-overlay.show .sheet-content {
+      transform: translateY(0);
+    }
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: #d8dde6;
+      border-radius: 2px;
+      margin: 8px auto 12px;
+    }
+    .sheet-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 14px 8px;
+      border-radius: 12px;
+      border: none;
+      background: none;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background .15s ease;
+    }
+    .sheet-option:hover, .sheet-option:active { background: var(--brand-dim); }
+    .sheet-ic {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--brand-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+    }
+    .sheet-ic.sheet-ic-active { background: var(--brand); }
+    .sheet-body { display: flex; flex-direction: column; gap: 2px; }
+    .sheet-title { font-weight: 700; font-size: 14px; color: var(--text); }
+    .sheet-title.sheet-title-active { color: var(--brand); }
+    .sheet-desc { font-size: 12px; color: var(--text-2); }
+
     /* Footer */
     /* Contact Info */
     .contact-section {
@@ -1087,6 +1143,86 @@
       font-weight: 700;
       text-align: center;
       margin: 0;
+    }
+
+    /* 이미지로 공유 모달 */
+    .image-share-content {
+      width: 92%;
+      max-width: 360px;
+      padding: 20px 16px 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .image-share-preview {
+      width: 100%;
+      max-width: 240px;
+      aspect-ratio: 9 / 16;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+    }
+    .image-share-preview canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .image-share-swatches {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .swatch {
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      border: 2px solid transparent;
+      padding: 0;
+      cursor: pointer;
+      transition: border-color .15s ease, transform .1s ease;
+    }
+    .swatch:active { transform: scale(.95); }
+    .swatch.active { border-color: var(--brand); }
+    .swatch[data-style="brandBlue"]    { background: linear-gradient(160deg, #21428d 0%, #3a5fb8 55%, #6f8fd6 100%); }
+    .swatch[data-style="pastelFloral"] { background: linear-gradient(165deg, #f6d9e3 0%, #fbeede 55%, #f3e6d8 100%); }
+    .swatch[data-style="darkModern"]   { background: linear-gradient(160deg, #2b2b3a 0%, #4a4a63 100%); }
+    .swatch[data-style="warmBeige"]    { background: linear-gradient(160deg, #fdf6ec 0%, #f1e3c8 100%); }
+    .swatch.swatch-photo {
+      background: #eef1f7;
+      border: 1.5px dashed #9aa6c4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .swatch.swatch-photo.active { border-style: solid; }
+    .image-share-actions {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+    .img-share-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 50px;
+      border: 1.5px solid var(--line);
+      background: #f3f4f6;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .img-share-btn:hover { background: #ebedf0; }
+    .img-share-btn.primary {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
     }
 
     /* 알림 차단 해제 안내 팝업 */
@@ -1587,6 +1723,54 @@
           </svg>
           <span class="va-count" id="modalLikeCount">0</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공유 액션 시트: 텍스트로 공유 / 이미지로 공유 -->
+  <div class="modal-overlay sheet-overlay" id="shareSheet" role="dialog" aria-modal="true" aria-label="공유 방법 선택">
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <button class="sheet-option" id="shareTextOption" type="button">
+        <span class="sheet-ic">🔗</span>
+        <span class="sheet-body">
+          <span class="sheet-title">텍스트로 공유</span>
+          <span class="sheet-desc">구절 내용 + 링크 공유</span>
+        </span>
+      </button>
+      <button class="sheet-option" id="shareImageOption" type="button">
+        <span class="sheet-ic sheet-ic-active">🖼️</span>
+        <span class="sheet-body">
+          <span class="sheet-title sheet-title-active">이미지로 공유</span>
+          <span class="sheet-desc">배경 골라 카드 이미지 만들기</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 이미지로 공유 모달 -->
+  <div class="modal-overlay" id="imageShareModal" role="dialog" aria-modal="true" aria-label="이미지로 공유">
+    <div class="modal-content image-share-content">
+      <button class="modal-close" id="imageShareCloseBtn" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div class="image-share-preview">
+        <canvas id="shareCanvas" width="1080" height="1920" aria-label="구절 이미지 미리보기"></canvas>
+      </div>
+      <div class="image-share-swatches" id="shareSwatches">
+        <button class="swatch" data-style="brandBlue" type="button" aria-label="브랜드 블루"></button>
+        <button class="swatch" data-style="pastelFloral" type="button" aria-label="파스텔 플로럴"></button>
+        <button class="swatch" data-style="darkModern" type="button" aria-label="다크 모던"></button>
+        <button class="swatch" data-style="warmBeige" type="button" aria-label="웜 베이지"></button>
+        <button class="swatch swatch-photo" data-style="photo" type="button" aria-label="내 사진 배경으로 사용">📷</button>
+      </div>
+      <input type="file" id="sharePhotoInput" accept="image/*" class="hidden">
+      <div class="image-share-actions">
+        <button class="img-share-btn primary" id="imgShareBtn" type="button">공유하기</button>
+        <button class="img-share-btn" id="imgSaveBtn" type="button">저장</button>
       </div>
     </div>
   </div>
@@ -2265,7 +2449,8 @@
     window.attachModalLike = (v) => modalLike.attach(computeVerseId(v));
     window.detachModalLike = () => modalLike.detach();
 
-    if (shareBtn) shareBtn.addEventListener('click', async () => {
+    // 구절 + 링크를 텍스트로 공유 (기존 동작)
+    async function shareAsText() {
       const text = (window.currentFullVerseText || '').trim();
       const ref  = (window.currentFullVerseRef || '').trim();
       const body = ref ? (text + '\n\n' + ref) : text;
@@ -2283,7 +2468,245 @@
           if (window.showToast) window.showToast('공유를 지원하지 않는 브라우저예요');
         }
       }
+    }
+
+    // 공유 액션 시트: "텍스트로 공유" / "이미지로 공유" 선택
+    const shareSheet = document.getElementById('shareSheet');
+    const shareTextOption = document.getElementById('shareTextOption');
+    const shareImageOption = document.getElementById('shareImageOption');
+
+    function openShareSheet() {
+      shareSheet.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeShareSheet() {
+      shareSheet.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    shareSheet.addEventListener('click', (e) => {
+      if (e.target === shareSheet) closeShareSheet();
     });
+
+    if (shareBtn) shareBtn.addEventListener('click', openShareSheet);
+
+    shareTextOption.addEventListener('click', () => {
+      closeShareSheet();
+      shareAsText();
+    });
+    shareImageOption.addEventListener('click', () => {
+      closeShareSheet();
+      openImageShareModal();
+    });
+
+    /* ───────── 이미지로 공유: 캔버스 렌더링 ───────── */
+    const SHARE_STYLES = {
+      brandBlue:    { type: 'gradient', stops: ['#21428d', '#3a5fb8', '#6f8fd6'], textColor: '#ffffff' },
+      pastelFloral: { type: 'gradient', stops: ['#f6d9e3', '#fbeede', '#f3e6d8'], textColor: '#7a4a55' },
+      darkModern:   { type: 'gradient', stops: ['#2b2b3a', '#4a4a63'],            textColor: '#ffffff' },
+      warmBeige:    { type: 'gradient', stops: ['#fdf6ec', '#f1e3c8'],            textColor: '#8a6d3b' },
+      photo:        { type: 'photo',                                              textColor: '#ffffff' },
+    };
+
+    const shareCanvas = document.getElementById('shareCanvas');
+    const shareCtx = shareCanvas.getContext('2d');
+    const shareSwatches = Array.from(document.querySelectorAll('#shareSwatches .swatch'));
+    let currentShareStyle = 'brandBlue';
+    let sharePhotoImg = null;
+
+    function drawGradientBackground(stops) {
+      const W = shareCanvas.width, H = shareCanvas.height;
+      const grad = shareCtx.createLinearGradient(0, 0, W, H);
+      const step = stops.length > 1 ? 1 / (stops.length - 1) : 0;
+      stops.forEach((color, i) => grad.addColorStop(i * step, color));
+      shareCtx.fillStyle = grad;
+      shareCtx.fillRect(0, 0, W, H);
+    }
+
+    function drawPhotoBackground(img) {
+      const W = shareCanvas.width, H = shareCanvas.height;
+      const canvasRatio = W / H;
+      const imgRatio = img.width / img.height;
+      let sx, sy, sw, sh;
+      if (imgRatio > canvasRatio) {
+        sh = img.height;
+        sw = sh * canvasRatio;
+        sx = (img.width - sw) / 2;
+        sy = 0;
+      } else {
+        sw = img.width;
+        sh = sw / canvasRatio;
+        sx = 0;
+        sy = (img.height - sh) / 2;
+      }
+      shareCtx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+
+      // 하단 50%에 어두운 스크림 (텍스트 가독성)
+      const scrim = shareCtx.createLinearGradient(0, H, 0, H * 0.5);
+      scrim.addColorStop(0, 'rgba(20,20,30,0.7)');
+      scrim.addColorStop(1, 'rgba(20,20,30,0.05)');
+      shareCtx.fillStyle = scrim;
+      shareCtx.fillRect(0, H * 0.5, W, H * 0.5);
+    }
+
+    // 본문 줄들이 maxWidth/maxHeight 안에 들어가도록 폰트 크기를 64px→36px 사이에서 축소
+    function fitBodyFontSize(lines, maxWidth, maxHeight) {
+      let size = 64;
+      const minSize = 36;
+      shareCtx.font = `700 ${size}px 'Gowun Dodum', 'Malgun Gothic', sans-serif`;
+      while (size > minSize) {
+        const tooWide = lines.some((line) => shareCtx.measureText(line).width > maxWidth);
+        const tooTall = lines.length * (size * 1.6) > maxHeight;
+        if (!tooWide && !tooTall) break;
+        size -= 2;
+        shareCtx.font = `700 ${size}px 'Gowun Dodum', 'Malgun Gothic', sans-serif`;
+      }
+      return size;
+    }
+
+    function renderShareCanvas() {
+      const style = SHARE_STYLES[currentShareStyle];
+      const W = shareCanvas.width, H = shareCanvas.height;
+
+      if (style.type === 'photo') {
+        drawPhotoBackground(sharePhotoImg);
+      } else {
+        drawGradientBackground(style.stops);
+      }
+
+      const text = (window.currentFullVerseText || '').trim();
+      const ref = (window.currentFullVerseRef || '').trim();
+      const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+
+      const paddingX = 80;
+      const paddingY = 80;
+      const maxWidth = W - paddingX * 2;
+      const refSize = 44;
+      const watermarkReserve = 120;
+      const maxHeight = H - paddingY * 2 - (ref ? refSize + 20 : 0) - watermarkReserve;
+      const bodySize = fitBodyFontSize(lines, maxWidth, maxHeight);
+      const lineHeight = bodySize * 1.6;
+
+      const totalTextHeight = lines.length * lineHeight;
+      const startY = (H - totalTextHeight) / 2 - (ref ? refSize : 0);
+
+      shareCtx.textAlign = 'center';
+      shareCtx.textBaseline = 'middle';
+      shareCtx.fillStyle = style.textColor;
+
+      shareCtx.font = `700 ${bodySize}px 'Gowun Dodum', 'Malgun Gothic', sans-serif`;
+      lines.forEach((line, i) => {
+        shareCtx.fillText(line, W / 2, startY + lineHeight * (i + 0.5));
+      });
+
+      if (ref) {
+        shareCtx.font = `700 ${refSize}px 'Gowun Dodum', 'Malgun Gothic', sans-serif`;
+        shareCtx.fillText(ref, W / 2, startY + totalTextHeight + refSize);
+      }
+
+      // 워터마크
+      shareCtx.globalAlpha = 0.5;
+      shareCtx.font = `400 28px 'Gowun Dodum', 'Malgun Gothic', sans-serif`;
+      shareCtx.fillText('뉴질랜드 빅토리처치', W / 2, H - 80);
+      shareCtx.globalAlpha = 1;
+    }
+
+    function setActiveShareStyle(styleName) {
+      currentShareStyle = styleName;
+      shareSwatches.forEach((el) => el.classList.toggle('active', el.dataset.style === styleName));
+      renderShareCanvas();
+    }
+
+    /* ───────── 이미지로 공유: 모달 열기/닫기 ───────── */
+    const imageShareModal = document.getElementById('imageShareModal');
+    const imageShareCloseBtn = document.getElementById('imageShareCloseBtn');
+
+    function openImageShareModal() {
+      imageShareModal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      // 폰트 로드 완료 후 렌더 — 폴백 폰트로 그려지는 것 방지
+      document.fonts.ready.then(() => setActiveShareStyle('brandBlue'));
+    }
+    function closeImageShareModal() {
+      imageShareModal.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    imageShareCloseBtn.addEventListener('click', closeImageShareModal);
+    imageShareModal.addEventListener('click', (e) => {
+      if (e.target === imageShareModal) closeImageShareModal();
+    });
+
+    // 그라디언트 스와치 클릭 (내 사진 스와치는 Task 5에서 처리)
+    shareSwatches.forEach((el) => {
+      if (el.dataset.style === 'photo') return;
+      el.addEventListener('click', () => setActiveShareStyle(el.dataset.style));
+    });
+
+    // "내 사진" 스와치 — 클릭 시 파일 선택 다이얼로그 오픈
+    const sharePhotoInput = document.getElementById('sharePhotoInput');
+    const sharePhotoSwatch = document.querySelector('.swatch.swatch-photo');
+
+    sharePhotoSwatch.addEventListener('click', () => sharePhotoInput.click());
+
+    sharePhotoInput.addEventListener('change', () => {
+      const file = sharePhotoInput.files && sharePhotoInput.files[0];
+      sharePhotoInput.value = '';
+      if (!file) return;
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        sharePhotoImg = img;
+        URL.revokeObjectURL(objectUrl);
+        setActiveShareStyle('photo');
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        if (window.showToast) window.showToast('이미지를 불러올 수 없어요');
+      };
+      img.src = objectUrl;
+    });
+
+    // 공유하기 / 저장
+    const imgShareBtn = document.getElementById('imgShareBtn');
+    const imgSaveBtn = document.getElementById('imgSaveBtn');
+
+    function canvasToPngBlob() {
+      return new Promise((resolve) => shareCanvas.toBlob(resolve, 'image/png'));
+    }
+
+    imgSaveBtn.addEventListener('click', async () => {
+      const blob = await canvasToPngBlob();
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'victory-verse.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    imgShareBtn.addEventListener('click', async () => {
+      const blob = await canvasToPngBlob();
+      if (!blob) return;
+      const file = new File([blob], 'victory-verse.png', { type: 'image/png' });
+      const text = (window.currentFullVerseText || '').trim();
+      const ref = (window.currentFullVerseRef || '').trim();
+      const body = ref ? (text + '\n\n' + ref) : text;
+      try {
+        await navigator.share({ files: [file], title: '빅토리처치 이번 주 성경 구절', text: body });
+      } catch (e) { /* 사용자가 공유 취소 — 무시 */ }
+    });
+
+    // 이미지 파일 공유를 지원하지 않는 환경(주로 데스크톱)에서는 "공유하기" 숨김
+    (function () {
+      let supportsFileShare = false;
+      try {
+        const probe = new File([new Uint8Array([1])], 'probe.png', { type: 'image/png' });
+        supportsFileShare = !!(navigator.canShare && navigator.canShare({ files: [probe] }));
+      } catch (e) { supportsFileShare = false; }
+      if (!supportsFileShare) imgShareBtn.classList.add('hidden');
+    })();
 
     const PAST_PAGE_SIZE = 5; // 한 번에 보여줄 지난 구절 개수 (나머지는 "더 보기"로 펼침)
 

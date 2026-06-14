@@ -1,0 +1,62 @@
+<h2>이미지로 공유 — 배경은 어떤 방식으로?</h2>
+<p class="subtitle">셋 다 "성경 구절 텍스트를 예쁘게 올린 정사각/세로 이미지"를 만든 뒤
+공유 시트로 보내는 건 동일합니다. 차이는 <b>배경을 어디서 가져오는가</b>입니다.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="brand" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:20px; display:flex; align-items:center; justify-content:center; background:#eef1f7;">
+      <div style="width:180px; height:225px; border-radius:14px; background:linear-gradient(160deg,#21428d 0%,#3a5fb8 55%,#6f8fd6 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:18px; box-shadow:0 8px 24px rgba(33,66,141,.35); font-family:'Gowun Dodum','Malgun Gothic',sans-serif;">
+        <div style="font-size:11px; opacity:.85; letter-spacing:.05em; margin-bottom:10px;">이번주 암송구절</div>
+        <div style="font-size:14px; line-height:1.7;">너의 행사를<br>여호와께 맡기라<br>그리하면<br>네가 경영하는 것이<br>이루어지리라</div>
+        <div style="font-size:11px; opacity:.8; margin-top:12px;">잠언 16장 3절</div>
+        <div style="font-size:9px; opacity:.6; margin-top:10px;">뉴질랜드 빅토리처치</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 브랜드 단일 템플릿</h3>
+      <p>교회 CI 블루 그라디언트 한 가지로 고정. 선택지 없이 탭하면 바로 이미지 생성.
+      구현이 가장 간단하고 브랜드 일관성이 높음. 새 이미지 자산 불필요.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="gallery" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px; display:flex; align-items:center; justify-content:center; background:#eef1f7;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; width:190px;">
+        <div style="height:80px; border-radius:10px; background:linear-gradient(160deg,#21428d,#6f8fd6); display:flex; align-items:center; justify-content:center; color:#fff; font-size:9px; font-family:'Gowun Dodum',sans-serif; text-align:center; padding:6px;">브랜드 블루</div>
+        <div style="height:80px; border-radius:10px; background:linear-gradient(160deg,#f6d9e3,#fbeede); display:flex; align-items:center; justify-content:center; color:#7a4a55; font-size:9px; font-family:'Gowun Dodum',sans-serif; text-align:center; padding:6px;">파스텔 플로럴</div>
+        <div style="height:80px; border-radius:10px; background:linear-gradient(160deg,#2b2b3a,#4a4a63); display:flex; align-items:center; justify-content:center; color:#fff; font-size:9px; font-family:'Gowun Dodum',sans-serif; text-align:center; padding:6px;">다크 모던</div>
+        <div style="height:80px; border-radius:10px; background:linear-gradient(160deg,#fdf6ec,#f1e3c8); display:flex; align-items:center; justify-content:center; color:#8a6d3b; font-size:9px; font-family:'Gowun Dodum',sans-serif; text-align:center; padding:6px;">웜 베이지</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 스타일 갤러리 (여러 톤)</h3>
+      <p>그라디언트/색상 톤 3~4종을 미리 보고 탭으로 선택. 모두 CSS/Canvas로 그려서
+      이미지 자산 추가 불필요. 선택의 즐거움은 있지만 한 단계 더 추가됨.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="photo" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:20px; display:flex; align-items:center; justify-content:center; background:#eef1f7;">
+      <div style="width:180px; height:225px; border-radius:14px; overflow:hidden; position:relative; box-shadow:0 8px 24px rgba(0,0,0,.25);">
+        <div style="position:absolute; inset:0; background:linear-gradient(160deg,#8a98ad,#cfd8e6); "></div>
+        <div style="position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.55) 0%, rgba(0,0,0,.1) 55%, transparent 100%);"></div>
+        <div style="position:absolute; left:0; right:0; bottom:16px; color:#fff; text-align:center; padding:0 14px; font-family:'Gowun Dodum',sans-serif;">
+          <div style="font-size:13px; line-height:1.6;">너의 행사를 여호와께<br>맡기라 그리하면...</div>
+          <div style="font-size:10px; opacity:.85; margin-top:8px;">잠언 16장 3절</div>
+        </div>
+        <div style="position:absolute; top:10px; left:10px; right:10px; font-size:18px; color:rgba(255,255,255,.5); text-align:center;">📷 사진 선택...</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 내 사진 배경</h3>
+      <p>사용자가 휴대폰 갤러리에서 사진을 골라 그 위에 구절을 오버레이.
+      개인화는 좋지만 가독성 위해 어둡게 처리(스크림) 필요, 자유도가 높아 결과물 품질이 사진에 의존.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:18px;">💡 A+B를 합쳐 "여러 브랜드 톤 중 선택"으로 가는 것도 가능하고,
+B 또는 A에 "내 사진으로 직접" 옵션을 추가로 더하는 조합도 가능합니다. 우선 방향을 골라주세요
+(여러 개를 같이 보고 싶으면 그대로 말씀해주셔도 됩니다).</p>

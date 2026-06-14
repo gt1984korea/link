@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Rules
+
+- **절대 사용자 허락 없이 `git commit` 하지 말 것.** 커밋은 사용자가 명시적으로 요청할 때만 수행한다. (push도 동일)
+
 ## Overview
 
 A single-page PWA "link hub" for **Victory Church (뉴질랜드 빅토리처치)**. It shows the weekly
@@ -72,6 +76,17 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   for a deeper, cathedral-reverb voice, and BGM (`bgm.mp3`) plays through a gain node with
   fade-in/out, starting at the 48s highlight. AudioContext must be resumed inside a user-gesture
   handler (browser autoplay policy) — note the click-to-resume fallbacks.
+- **"이미지로 공유" (구절 카드 이미지 생성)**: `#shareBtn` 클릭 시 바텀시트
+  (`#shareSheet`)에서 "텍스트로 공유"(기존 `navigator.share` 텍스트+링크)와
+  "이미지로 공유"(`#imageShareModal`)를 선택한다. 이미지 생성은 1080×1920
+  `<canvas id="shareCanvas">`에 배경(그라디언트 4종 또는 사용자 업로드 사진 +
+  하단 스크림)과 구절 텍스트를 그려서 만든다. 텍스트는 `verse.text`의 `\n`
+  줄바꿈을 그대로 사용하고, 'Gowun Dodum' 폰트는 `document.fonts.ready` 이후에
+  그려야 폴백 폰트로 깨지지 않는다(기존 `startTypewriting`과 동일 패턴).
+  출력은 `canvas.toBlob('image/png')` → `navigator.canShare({ files })`가
+  true면 "공유하기"(파일 공유), 아니면 "공유하기" 버튼을 숨기고 "저장"
+  (다운로드)만 노출한다. 전부 클라이언트 로컬 처리이며 Firestore/Storage에는
+  아무것도 쓰지 않는다.
 
 ## Files to keep in sync
 

@@ -1,0 +1,39 @@
+<h2>"공유" 버튼을 탭하면 — 선택 시트</h2>
+<p class="subtitle">기존 공유 버튼을 누르면 작은 시트가 떠서 "텍스트로 공유"(기존 동작) 또는
+"이미지로 공유"(신규)를 고릅니다. 화면 아래에서 올라오는 바텀시트 형태입니다.</p>
+
+<div class="mockup" style="max-width:280px; margin:0 auto;">
+  <div class="mockup-header">공유 버튼 탭 시</div>
+  <div class="mockup-body" style="padding:0;">
+    <div style="background:#fff; border-radius:16px 16px 0 0; box-shadow:0 -4px 20px rgba(0,0,0,.12); padding:18px 16px 22px;">
+      <div style="width:36px; height:4px; background:#d8dde6; border-radius:2px; margin:0 auto 16px;"></div>
+      <div style="display:flex; align-items:center; gap:12px; padding:14px 8px; border-radius:10px;" class="" >
+        <div style="width:36px; height:36px; border-radius:50%; background:var(--brand-dim,#e8edf7); display:flex; align-items:center; justify-content:center; font-size:16px;">🔗</div>
+        <div>
+          <div style="font-weight:600; font-size:14px;">텍스트로 공유</div>
+          <div style="font-size:12px; color:#8a93a6;">구절 내용 + 링크 공유</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:14px 8px; border-radius:10px; background:var(--brand-dim,#e8edf7);">
+        <div style="width:36px; height:36px; border-radius:50%; background:var(--brand,#21428d); display:flex; align-items:center; justify-content:center; font-size:16px;">🖼️</div>
+        <div>
+          <div style="font-weight:600; font-size:14px; color:var(--brand,#21428d);">이미지로 공유</div>
+          <div style="font-size:12px; color:#5a6a96;">배경 골라 카드 이미지 만들기</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:18px;">이 선택 시트 디자인이 괜찮은지, 문구("텍스트로 공유" / "이미지로 공유")가 자연스러운지 봐주세요.</p>
+
+<div class="options">
+  <div class="option" data-choice="sheet-ok" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content"><h3>좋아요</h3><p>이 디자인/문구로 진행</p></div>
+  </div>
+  <div class="option" data-choice="sheet-change" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content"><h3>수정 필요</h3><p>의견을 적어주세요</p></div>
+  </div>
+</div>
