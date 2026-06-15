@@ -24,10 +24,18 @@
   <meta name="apple-mobile-web-app-title" content="빅토리처치">
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <!-- Google Fonts: Gowun Dodum (성경 구절 전용, 한글 전체 커버) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=optional" rel="stylesheet">
+  <link rel="preload" href="https://fonts.gstatic.com/s/gowundodum/v12/3Jn5SD_00GqwlBnWc1TUJF0F.ttf" as="font" type="font/ttf" crossorigin>
+
+  <!-- Performance Optimization: Module Preloads & Logo Preload -->
+  <link rel="preload" as="image" href="logo.png" type="image/png">
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js">
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js">
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js">
+  <link rel="modulepreload" href="./firebase-config.js">
+  <link rel="modulepreload" href="./push.js?v=2">
+  <script>console.log('⚡ Victory Church Web Optimizer v3 Loaded');</script>
+
 
   <style>
     :root {
@@ -474,9 +482,25 @@
     .past-card-actions {
       display: flex;
       justify-content: flex-end;
+      gap: 8px;
       margin-top: 10px;
       border-top: 1px solid var(--line);
       padding-top: 8px;
+    }
+
+    .past-card-share-btn {
+      color: #4a679f !important;
+      background: #eef2fa !important;
+      border-color: #d3ddf0 !important;
+    }
+    .past-card-share-btn:hover {
+      background: #e1e9f6 !important;
+      border-color: #b9c8e6 !important;
+      color: var(--brand) !important;
+    }
+    .past-card-share-btn .va-ic {
+      stroke: #4a679f !important;
+      stroke-width: 2.5 !important;
     }
 
     .past-more-btn {
@@ -752,7 +776,7 @@
       border-color: #d3ddf0;
     }
     #shareBtn:hover { background: #e1e9f6; border-color: #b9c8e6; color: var(--brand); }
-    #shareBtn .va-ic { stroke: #4a679f; }
+    #shareBtn .va-ic { stroke: #4a679f; stroke-width: 2.5; }
     .va-btn.pop .va-ic { animation: va-heart-pop .35s ease; }
     @keyframes va-heart-pop {
       0%   { transform: scale(1); }
@@ -1474,6 +1498,33 @@
       </span>
       <span class="chev">알림</span>
     </button>
+    <script>
+      (function() {
+        try {
+          var isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+          var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+          var btn = document.getElementById('btnNotify');
+          if (btn) {
+            if (isiOS && !isStandalone) {
+              var span = btn.querySelector('.notify-label') || btn;
+              span.textContent = '홈 화면 추가 후 가능';
+              var hint = document.getElementById('notifyHint');
+              if (hint) hint.textContent = '아이폰은 위 "바로가기 만들기"로 홈 화면에 추가한 뒤, 그 앱에서 열면 알림을 켤 수 있어요.';
+              btn.disabled = true;
+              btn.classList.remove('hidden');
+            } else if ('Notification' in window && Notification.permission !== 'granted') {
+              if (Notification.permission === 'denied') {
+                var span = btn.querySelector('.notify-label') || btn;
+                span.textContent = '알림 차단됨 · 켜는 법 보기';
+                var hint = document.getElementById('notifyHint');
+                if (hint) hint.textContent = '기기 설정에서 이 앱의 알림을 허용해 주세요.';
+              }
+              btn.classList.remove('hidden');
+            }
+          }
+        } catch(e) {}
+      })();
+    </script>
 
     <!-- 0. 이번 주 암송 구절 -->
     <section class="verse hidden" id="verseCard" aria-live="polite">
@@ -1504,7 +1555,7 @@
           <span id="ttsBtnLabel">읽어주기</span>
         </button>
         <button class="va-btn" id="shareBtn" type="button" aria-label="공유하기">
-          <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
           </svg>
@@ -1512,13 +1563,36 @@
         </button>
       </div>
     </section>
+    <script>
+      (function() {
+        try {
+          var cached = JSON.parse(localStorage.getItem('verseCache') || 'null');
+          if (cached && cached.text) {
+            var card = document.getElementById('verseCard');
+            var elText = document.getElementById('verseText');
+            var elRef  = document.getElementById('verseRef');
+            if (card && elText && elRef) {
+              elText.innerHTML = cached.text.replace(/\n/g, '<br>');
+              elRef.textContent = cached.reference || '';
+              card.classList.remove('hidden');
+              window.lastRenderedText = cached.text;
+              window.lastRenderedRef = cached.reference || '';
+              window.currentFullVerseText = cached.text;
+              window.currentFullVerseRef = cached.reference || '';
+              if (cached.voiceId) window.lastCachedVoiceId = cached.voiceId;
+              if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
+            }
+          }
+        } catch(e) {}
+      })();
+    </script>
 
 
 
     <nav class="menu">
 
       <!-- 1. 바로가기 설치 -->
-      <button class="item primary" id="btnInstall" type="button" data-a2hs>
+      <button class="item primary hidden" id="btnInstall" type="button" data-a2hs>
         <span class="ic">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
@@ -1533,6 +1607,18 @@
         <span class="chev">바로가기</span>
         <span class="progress"></span>
       </button>
+      <script>
+        (function() {
+          try {
+            var isInstalled = localStorage.getItem('a2hs_installed') === '1';
+            var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            if (!isInstalled && !isStandalone) {
+              var btn = document.getElementById('btnInstall');
+              if (btn) btn.classList.remove('hidden');
+            }
+          } catch(e) {}
+        })();
+      </script>
 
       <!-- 2. 실시간 라이브 -->
       <button class="item live" id="btnLive" type="button">
@@ -2277,6 +2363,14 @@
     // 서비스워커
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function(){});
+
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
     }
 
     // 앱을 열거나 다시 보면(=새 구절을 봤으면) 홈 화면 아이콘의 빨간 배지를 지웁니다.
@@ -3044,10 +3138,6 @@
       const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
       if (diffDays === 0) return '오늘';
       if (diffDays === 1) return '어제';
-      if (diffDays < 7 && diffDays > 0) {
-        const daysShort = ['일', '월', '화', '수', '목', '금', '토'];
-        return daysShort[targetDate.getDay()];
-      }
       const mm = String(targetDate.getMonth() + 1);
       const dd = String(targetDate.getDate());
       return `${mm}월 ${dd}일`;
@@ -3088,7 +3178,7 @@
       });
       card.appendChild(body);
 
-      // 3. Actions (Only Like button & count)
+      // 3. Actions (Like & Share buttons)
       const actions = document.createElement('div');
       actions.className = 'past-card-actions';
 
@@ -3117,6 +3207,25 @@
       });
 
       actions.appendChild(likeBtn);
+
+      // Share button (opens the same image card editor as main share button)
+      const shareBtn = document.createElement('button');
+      shareBtn.type = 'button';
+      shareBtn.className = 'va-btn past-card-share-btn';
+      shareBtn.setAttribute('aria-label', '공유하기');
+      shareBtn.innerHTML = `
+        <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+        <span class="va-label">공유</span>
+      `;
+      shareBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openImageShareModal(v.text, v.reference);
+      });
+
+      actions.appendChild(shareBtn);
       card.appendChild(actions);
 
       return card;

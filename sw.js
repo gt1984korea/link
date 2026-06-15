@@ -1,7 +1,7 @@
-/* 서비스워커 v3 — 정적 자산 캐싱 + 안드로이드 PWA 설치 요건 충족
+/* 서비스워커 v5 — 정적 자산 캐싱 + 안드로이드 PWA 설치 요건 충족
  * HTML 내비게이션은 network-first(최신 우선), 그 외 동일 출처는 stale-while-revalidate */
-const CACHE = 'vc-v3';
-const PRECACHE = ['/', '/firebase-config.js', '/a2hs.js', '/icon-192.png?v=3', '/icon-512.png?v=3'];
+const CACHE = 'vc-v8';
+const PRECACHE = ['/', '/firebase-config.js', '/a2hs.js', '/icon-192.png?v=7', '/icon-512.png?v=7'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
