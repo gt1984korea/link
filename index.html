@@ -1991,6 +1991,15 @@
           </div>
         </div>
       </div>
+      <div class="image-share-controls">
+        <div class="control-group control-group-border">
+          <span class="control-label">테두리</span>
+          <div class="position-toggle" id="borderToggle">
+            <button class="pos-btn active" data-border="on" type="button" aria-label="테두리 표시">표시</button>
+            <button class="pos-btn" data-border="off" type="button" aria-label="테두리 숨김">숨김</button>
+          </div>
+        </div>
+      </div>
       <div class="image-share-actions">
         <button class="img-share-btn primary" id="imgShareBtn" type="button">공유하기</button>
       </div>
@@ -2659,7 +2668,7 @@
     let sharePhotoImg = null;
     let currentTextColor = null; // null이면 스타일별 기본 글자색 사용
     let currentTextPosition = 'bottom'; // 'top' | 'middle' | 'bottom'
-    let currentBorderState = 'off'; // 'on' | 'off'
+    let currentBorderState = 'on'; // 'on' | 'off'
 
     // 글자 크기 단계 (기본 100% = 인덱스 2)
     const TEXT_SIZE_STEPS = [0.8, 0.9, 1.0, 1.1, 1.2];
@@ -2828,11 +2837,11 @@
       }
 
       // 테두리 선 그리기
+      const borderPadding = 80;
       if (currentBorderState === 'on') {
         shareCtx.lineWidth = 4;
         shareCtx.strokeStyle = currentTextColor || style.textColor;
         shareCtx.globalAlpha = 0.5;
-        const borderPadding = 80;
         shareCtx.strokeRect(borderPadding, borderPadding, W - borderPadding * 2, H - borderPadding * 2);
         shareCtx.globalAlpha = 1.0;
       }
@@ -2876,9 +2885,10 @@
       }
 
       // 워터마크
+      const watermarkY = currentBorderState === 'on' ? H - borderPadding - 40 : H - 80;
       shareCtx.globalAlpha = 0.5;
       shareCtx.font = `400 28px 'Gowun Dodum', 'Malgun Gothic', sans-serif`;
-      shareCtx.fillText('뉴질랜드 빅토리처치', W / 2, H - 80);
+      shareCtx.fillText('뉴질랜드 빅토리처치', W / 2, watermarkY);
       shareCtx.globalAlpha = 1;
     }
 
@@ -2939,6 +2949,16 @@
       btn.addEventListener('click', () => {
         currentTextPosition = btn.dataset.pos;
         textPositionBtns.forEach((b) => b.classList.toggle('active', b === btn));
+        renderShareCanvas();
+      });
+    });
+
+    // 테두리 표시/숨김 토글
+    const borderBtns = Array.from(document.querySelectorAll('#borderToggle .pos-btn'));
+    borderBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        currentBorderState = btn.dataset.border;
+        borderBtns.forEach((b) => b.classList.toggle('active', b === btn));
         renderShareCanvas();
       });
     });
