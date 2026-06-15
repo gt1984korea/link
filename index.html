@@ -362,88 +362,128 @@
     .verse.loading .ref { opacity: 0.45; }
     .verse.hidden { display: none; }
 
-    /* 지난 암송 구절 리스트 패널 (verse 카드 위쪽에 표시) */
-    .past-panel {
+    /* 지난 암송 구절 모달 스타일 (라이트 테마) */
+    .modal-content.past-modal-content {
       background: var(--surface);
+      width: 92%;
+      max-width: 440px;
+      border-radius: 24px;
+      padding: 24px 20px 20px;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+      border: 1.5px solid var(--brand);
+      transform: translateY(20px);
+      transition: transform 0.2s ease;
+      position: relative;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      max-height: 70vh;
+      overflow: hidden;
+    }
+    .modal-overlay.show .past-modal-content {
+      transform: translateY(0);
+    }
+    .past-modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 0 0 16px;
+      padding-right: 32px;
+      letter-spacing: -0.02em;
+    }
+    .past-list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      margin-right: -8px;
+      padding-right: 8px;
+    }
+    .past-list-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .past-list-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .past-list-scroll::-webkit-scrollbar-thumb {
+      background: var(--line);
+      border-radius: 3px;
+    }
+
+    .past-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 지난 암송 구절 카드 디자인 (라이트 테마) */
+    .past-card {
+      background: #f8fafc;
       border: 1px solid var(--line);
       border-radius: 16px;
-      padding: 18px 20px 8px;
-      margin-bottom: 14px;
-    }
-    .past-panel.hidden { display: none; }
-    .past-panel .past-head {
+      padding: 16px;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .past-card:hover {
+      border-color: #cbd5e1;
+      background: #f1f5f9;
+    }
+
+    .past-card-header {
+      display: flex;
       align-items: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-2);
-      letter-spacing: 0.02em;
-      margin: 0 0 14px;
-    }
-    .past-close-btn {
-      background: none;
-      border: none;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--brand);
-      cursor: pointer;
-      padding: 2px 8px;
-      margin-right: -8px;
-      transition: color .15s ease;
-    }
-    .past-close-btn:hover {
-      color: var(--text);
-    }
-    .past-list { display: flex; flex-direction: column; gap: 0; }
-    .past-item {
-      padding: 14px 10px;
-      border-top: 1px solid var(--line);
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background-color 0.15s ease;
-      outline: none;
-    }
-    .past-item:first-child { border-top: none; }
-    .past-item:hover {
-      background-color: #f6f8fc;
-    }
-    .past-item .past-range {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--brand);
-      background: var(--brand-dim);
-      border-radius: 6px;
-      padding: 3px 8px;
+      justify-content: space-between;
       margin-bottom: 8px;
-      letter-spacing: 0;
     }
-    .past-item .past-text {
+    .past-card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .past-card-ref {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .past-card-time {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      flex-shrink: 0;
+    }
+
+    .past-card-body {
       font-family: 'Gowun Dodum', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-      font-size: 18px;
-      line-height: 1.75;
+      font-size: 15.5px;
+      line-height: 1.6;
       color: var(--text);
       font-weight: 700;
       white-space: pre-wrap;
       word-break: keep-all;
-      margin: 0;
+      cursor: pointer;
+      transition: color 0.15s ease;
     }
-    .past-item .past-ref {
-      font-family: 'Gowun Dodum', sans-serif;
-      display: block;
+    .past-card-body:hover {
+      color: var(--brand);
+    }
+
+    .past-card-actions {
+      display: flex;
+      justify-content: flex-end;
       margin-top: 10px;
-      font-size: 14px;
-      color: var(--text-2);
-      font-weight: 700;
-      text-align: right;
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
     }
+
     .past-more-btn {
       display: block;
       width: 100%;
-      margin: 14px 0 4px;
-      padding: 11px 16px;
+      margin: 8px 0 0;
+      padding: 12px;
       font-family: inherit;
       font-size: 14px;
       font-weight: 700;
@@ -453,11 +493,15 @@
       border-radius: 12px;
       cursor: pointer;
       text-align: center;
-      letter-spacing: -0.01em;
-      transition: background .15s ease, border-color .15s ease, transform .08s ease;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
     }
-    .past-more-btn:hover { background: #dde6f6; border-color: #9db1dc; }
-    .past-more-btn:active { transform: scale(.98); }
+    .past-more-btn:hover {
+      background: #dde6f6;
+      border-color: #9db1dc;
+    }
+    .past-more-btn:active {
+      transform: scale(0.98);
+    }
 
     /* ===== 채널 최신 소식 (버튼 누르면 그 아래로 미리보기 펼침) ===== */
     /* .channel = 버튼(헤더) + 미리보기 패널을 묶는 래퍼. .menu의 flex 자식이 됨 */
@@ -1469,14 +1513,7 @@
       </div>
     </section>
 
-    <!-- 0-a. 지난 암송 구절 리스트 (토글로 열림) -->
-    <section class="past-panel hidden" id="pastVerses" aria-live="polite">
-      <div class="past-head">
-        <span>지난 암송구절</span>
-        <button class="past-close-btn" id="pastCloseBtn" type="button">닫기</button>
-      </div>
-      <div class="past-list" id="pastList"></div>
-    </section>
+
 
     <nav class="menu">
 
@@ -1615,7 +1652,7 @@
     <div class="contact-section">
       <h3>교회 연락처</h3>
 
-      <a class="contact-row" href="tel:02127211988">
+      <a class="contact-row" id="btnPhone" href="tel:02127211988">
         <div class="contact-icon phone">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
@@ -1627,7 +1664,7 @@
         </div>
       </a>
 
-      <a class="contact-row" href="mailto:nzvictorychurch@hotmail.com">
+      <a class="contact-row" id="btnEmail" href="mailto:nzvictorychurch@hotmail.com">
         <div class="contact-icon email">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <rect width="20" height="16" x="2" y="4" rx="2"/>
@@ -1640,7 +1677,7 @@
         </div>
       </a>
 
-      <a class="contact-row" href="https://www.google.com/maps/dir/?api=1&destination=90+Akoranga+Dr,+Northcote,+Auckland,+New+Zealand" target="_blank" rel="noopener noreferrer">
+      <a class="contact-row" id="btnMapSunday" href="https://www.google.com/maps/dir/?api=1&destination=90+Akoranga+Dr,+Northcote,+Auckland,+New+Zealand" target="_blank" rel="noopener noreferrer">
         <div class="contact-icon map1">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
@@ -1653,7 +1690,7 @@
         </div>
       </a>
 
-      <a class="contact-row" href="https://www.google.com/maps/dir/?api=1&destination=44+Constellation+Dr,+Rosedale,+Auckland,+New+Zealand" target="_blank" rel="noopener noreferrer">
+      <a class="contact-row" id="btnMapWeekday" href="https://www.google.com/maps/dir/?api=1&destination=44+Constellation+Dr,+Rosedale,+Auckland,+New+Zealand" target="_blank" rel="noopener noreferrer">
         <div class="contact-icon map2">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -1775,6 +1812,24 @@
       </div>
     </div>
   </div>
+
+  <!-- 지난 암송 구절 리스트 팝업 모달 -->
+  <div class="modal-overlay" id="pastVerses" role="dialog" aria-modal="true">
+    <div class="modal-content past-modal-content">
+      <button class="modal-close" id="pastCloseBtn" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <h2 class="past-modal-title">지난 암송구절</h2>
+      <div class="past-list-scroll">
+        <div class="past-list" id="pastList"></div>
+      </div>
+    </div>
+  </div>
+
+
 
   <!-- 말씀 상세 보기 모달 -->
   <div class="modal-overlay" id="verseModal" role="dialog" aria-modal="true">
@@ -1934,6 +1989,7 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2400);
     }
+    window.showToast = showToast;
 
     // 헌금 계좌번호 / 예금주 복사
     (function () {
@@ -2238,7 +2294,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc, increment }
       from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
+    import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
     import { firebaseConfig, VERSE_DOC_PATH } from "./firebase-config.js";
 
     const card = document.getElementById('verseCard');
@@ -2874,7 +2930,7 @@
     shareCanvas.addEventListener('mousemove', onDragMove);
     window.addEventListener('mouseup', onDragEnd);
 
-    // 모바일 터치 대응 (수직 스크롤 방해 방지를 위해 passive: false)
+    // 모바일 터치 대응 (수직 스크롤 방지를 위해 passive: false)
     shareCanvas.addEventListener('touchstart', onDragStart, { passive: false });
     shareCanvas.addEventListener('touchmove', onDragMove, { passive: false });
     window.addEventListener('touchend', onDragEnd);
@@ -2884,7 +2940,19 @@
     const imageShareModal = document.getElementById('imageShareModal');
     const imageShareCloseBtn = document.getElementById('imageShareCloseBtn');
 
-    function openImageShareModal() {
+    let originalShareText = null;
+    let originalShareRef = null;
+
+    function openImageShareModal(customText, customRef) {
+      if (customText && typeof customText === 'string') {
+        originalShareText = window.currentFullVerseText;
+        originalShareRef = window.currentFullVerseRef;
+        window.currentFullVerseText = customText;
+        window.currentFullVerseRef = customRef;
+      } else {
+        originalShareText = null;
+        originalShareRef = null;
+      }
       imageShareModal.classList.add('show');
       document.body.style.overflow = 'hidden';
       // 폰트 로드 완료 후 렌더 — 폴백 폰트로 그려지는 것 방지
@@ -2893,6 +2961,12 @@
     function closeImageShareModal() {
       imageShareModal.classList.remove('show');
       document.body.style.overflow = '';
+      if (originalShareText !== null) {
+        window.currentFullVerseText = originalShareText;
+        window.currentFullVerseRef = originalShareRef;
+        originalShareText = null;
+        originalShareRef = null;
+      }
     }
     imageShareCloseBtn.addEventListener('click', closeImageShareModal);
     imageShareModal.addEventListener('click', (e) => {
@@ -2953,39 +3027,113 @@
     })();
 
     const PAST_PAGE_SIZE = 5; // 한 번에 보여줄 지난 구절 개수 (나머지는 "더 보기"로 펼침)
+    let activePastLikes = []; // 지난 구절용 좋아요 구독을 관리할 리스트
 
-    function buildPastItem(v) {
-      const item = document.createElement('div');
-      item.className = 'past-item';
-
-      const p = document.createElement('p');
-      p.className = 'past-text';
-      p.textContent = (v.text || '').trim();
-      item.appendChild(p);
-
-      const ref = (v.reference || '').trim();
-      if (ref) {
-        const rf = document.createElement('span');
-        rf.className = 'past-ref';
-        rf.textContent = ref;
-        item.appendChild(rf);
+    function getRelativeTimeString(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr.replace(/-/g, '.');
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const targetDate = new Date(year, month, day);
+      targetDate.setHours(0,0,0,0);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const diffTime = today.getTime() - targetDate.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays === 0) return '오늘';
+      if (diffDays === 1) return '어제';
+      if (diffDays < 7 && diffDays > 0) {
+        const daysShort = ['일', '월', '화', '수', '목', '금', '토'];
+        return daysShort[targetDate.getDay()];
       }
-
-      // 클릭 시 팝업 모달 열기
-      item.addEventListener('click', function () {
-        openVerseModal(v.text, v.reference, v);
-      });
-
-      return item;
+      const mm = String(targetDate.getMonth() + 1);
+      const dd = String(targetDate.getDate());
+      return `${mm}월 ${dd}일`;
     }
 
-    let pastShownCount = PAST_PAGE_SIZE; // 펼친 개수를 재렌더링 후에도 유지(실시간 스냅샷이 다시 그릴 때 접히지 않도록)
+    function buildPastItem(v) {
+      const card = document.createElement('div');
+      card.className = 'past-card';
+
+      // 1. Header (Reference & Relative time)
+      const header = document.createElement('div');
+      header.className = 'past-card-header';
+
+      const titleGroup = document.createElement('div');
+      titleGroup.className = 'past-card-title-group';
+
+      const refSpan = document.createElement('span');
+      refSpan.className = 'past-card-ref';
+      refSpan.textContent = (v.reference || '').trim();
+      titleGroup.appendChild(refSpan);
+
+      header.appendChild(titleGroup);
+
+      // Time string
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'past-card-time';
+      timeSpan.textContent = getRelativeTimeString(v.endDate || v.startDate);
+      header.appendChild(timeSpan);
+
+      card.appendChild(header);
+
+      // 2. Body (text) - clicking opens details modal
+      const body = document.createElement('div');
+      body.className = 'past-card-body';
+      body.textContent = (v.text || '').trim();
+      body.addEventListener('click', function () {
+        openVerseModal(v.text, v.reference, v);
+      });
+      card.appendChild(body);
+
+      // 3. Actions (Only Like button & count)
+      const actions = document.createElement('div');
+      actions.className = 'past-card-actions';
+
+      const likeBtn = document.createElement('button');
+      likeBtn.type = 'button';
+      likeBtn.className = 'va-btn';
+      likeBtn.setAttribute('aria-label', '좋아요');
+      likeBtn.innerHTML = `
+        <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+      `;
+
+      const likeCount = document.createElement('span');
+      likeCount.className = 'va-count';
+      likeCount.textContent = '0';
+      likeBtn.appendChild(likeCount);
+
+      const ctrl = createLikeControl(likeBtn, likeCount);
+      ctrl.attach(computeVerseId(v));
+      activePastLikes.push(ctrl);
+
+      // Event listener for Like button to prevent card-body click event bubbling
+      likeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      actions.appendChild(likeBtn);
+      card.appendChild(actions);
+
+      return card;
+    }
+
+    let pastShownCount = PAST_PAGE_SIZE; // 펼친 개수를 재렌더링 후에도 유지
 
     function renderPast(past) {
+      // Clean up previous database listeners
+      activePastLikes.forEach(ctrl => ctrl.detach());
+      activePastLikes = [];
+
       pastListEl.textContent = '';
       if (!past || past.length === 0) {
         pastToggle.classList.add('hidden');
-        pastPanel.classList.add('hidden');
+        pastPanel.classList.remove('show');
+        document.body.style.overflow = '';
         pastToggle.classList.remove('open');
         pastToggle.setAttribute('aria-expanded', 'false');
         pastToggleLabel.textContent = '지난 암송구절';
@@ -3014,34 +3162,43 @@
       pastToggle.classList.remove('hidden');
     }
 
+    // 모달 열고 닫기 함수
+    function openPastModal() {
+      pastPanel.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      pastToggle.classList.add('open');
+      pastToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function closePastModal() {
+      pastPanel.classList.remove('show');
+      document.body.style.overflow = '';
+      pastToggle.classList.remove('open');
+      pastToggle.setAttribute('aria-expanded', 'false');
+      pastToggleLabel.textContent = '지난 암송구절';
+    }
+
     // 토글: 지난 구절 패널 열고 닫기
     const pastToggleLabel = document.getElementById('pastToggleLabel');
     pastToggle.addEventListener('click', function () {
-      const willOpen = pastPanel.classList.contains('hidden');
-      pastPanel.classList.toggle('hidden', !willOpen);
-      pastToggle.classList.toggle('open', willOpen);
-      pastToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-      pastToggleLabel.textContent = willOpen ? '닫기' : '지난 암송구절';
+      const willOpen = !pastPanel.classList.contains('show');
       if (willOpen) {
-        const firstItem = pastListEl.querySelector('.past-item');
-        if (firstItem) {
-          firstItem.setAttribute('tabindex', '-1');
-          firstItem.focus({ preventScroll: true });
-          firstItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else {
-          pastPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        openPastModal();
+      } else {
+        closePastModal();
       }
     });
 
     const pastCloseBtn = document.getElementById('pastCloseBtn');
     if (pastCloseBtn) {
-      pastCloseBtn.addEventListener('click', function () {
-        pastPanel.classList.add('hidden');
-        pastToggle.classList.remove('open');
-        pastToggle.setAttribute('aria-expanded', 'false');
-        pastToggleLabel.textContent = '지난 암송구절';
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      pastCloseBtn.addEventListener('click', closePastModal);
+    }
+
+    if (pastPanel) {
+      pastPanel.addEventListener('click', function (e) {
+        if (e.target === pastPanel) {
+          closePastModal();
+        }
       });
     }
 
@@ -3064,7 +3221,8 @@
 
     try {
       const app = initializeApp(firebaseConfig);
-      try { getAnalytics(app); } catch (e) { console.warn('[analytics] init failed', e); }
+      let analytics = null;
+      try { analytics = getAnalytics(app); } catch (e) { console.warn('[analytics] init failed', e); }
       db = getFirestore(app);
       const ref = doc(db, VERSE_DOC_PATH.collection, VERSE_DOC_PATH.id);
 
@@ -3102,6 +3260,51 @@
         console.warn('[verse] snapshot error', err);
         // 오류 시 캐시가 없으면 숨김 유지
         if (!elText.textContent) card.classList.add('hidden');
+      });
+
+      // 메뉴 클릭 분석 등록
+      const menuItems = [
+        { id: 'btnInstall', name: '바로가기 설치' },
+        { id: 'btnLive', name: '실시간 라이브' },
+        { id: 'btnHome', name: '교회 홈페이지' },
+        { id: 'btnYoutube', name: '유튜브 채널' },
+        { id: 'btnFacebook', name: '페이스북' },
+        { id: 'btnInstagram', name: '인스타그램' },
+        { id: 'btnGive', name: '헌금하기' },
+        { id: 'btnPhone', name: '전화 연락' },
+        { id: 'btnEmail', name: '이메일 연락' },
+        { id: 'btnMapSunday', name: '주일예배 위치' },
+        { id: 'btnMapWeekday', name: '주중모임 위치' }
+      ];
+
+      function trackClick(menuId, menuName) {
+        if (analytics) {
+          try {
+            logEvent(analytics, 'menu_click', {
+              menu_id: menuId,
+              menu_name: menuName
+            });
+          } catch (e) {
+            console.warn('[analytics] logEvent failed', e);
+          }
+        }
+        if (db) {
+          try {
+            const menuClicksRef = doc(db, 'site', 'menuClicks');
+            setDoc(menuClicksRef, { [menuId]: increment(1) }, { merge: true });
+          } catch (e) {
+            console.warn('[firestore] increment click failed', e);
+          }
+        }
+      }
+
+      menuItems.forEach(({ id, name }) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('click', () => {
+            trackClick(id, name);
+          });
+        }
       });
     } catch (e) {
       console.warn('[verse] init failed', e);

@@ -335,6 +335,56 @@
       background: none;
     }
 
+    /* 메뉴 클릭 통계 스타일 */
+    .stats-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 6px 0;
+    }
+    .stats-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .stats-count {
+      color: var(--brand);
+      font-weight: 700;
+    }
+    .stats-track {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .stats-bar {
+      height: 100%;
+      background: var(--brand);
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+    .stats-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 10px;
+    }
+    .stats-total-label {
+      font-size: 13px;
+      color: var(--text-2);
+      font-weight: 500;
+    }
+    .stats-total-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
     /* PC 레이아웃: 좌측 등록 폼 / 우측 등록된 구절 목록, 정확히 절반씩 2단 구성 */
     @media (min-width: 1024px) {
       .wrap { max-width: 1240px; }
@@ -637,6 +687,19 @@
       <p class="hint" style="margin-top:10px">
         "새 구절 알림 받기"를 허용한 기기 수입니다. 로그인이 없어 누구인지는 알 수 없고 기기 수만 집계됩니다.
       </p>
+    </section>
+
+    <!-- 메뉴 클릭 통계 -->
+    <section class="card hidden" id="statsCard">
+      <h2>메뉴 클릭 통계</h2>
+      <div id="statsList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px;">
+        <p class="hint">통계를 불러오는 중…</p>
+      </div>
+      <div class="row" style="margin-top: 18px;">
+        <button class="btn btn-danger" id="btnStatsReset" type="button" style="font-size: 14px; padding: 10px 16px;">
+          통계 초기화
+        </button>
+      </div>
     </section>
 
     <!-- 등록된 구절 목록 -->
@@ -1512,6 +1575,82 @@
     }
     btnUploadBg.addEventListener('click', uploadBackground);
 
+    /* ── 메뉴 클릭 통계 관리 ── */
+    const menuItems = [
+      { id: 'btnInstall', name: '바로가기 설치' },
+      { id: 'btnLive', name: '실시간 라이브' },
+      { id: 'btnHome', name: '교회 홈페이지' },
+      { id: 'btnYoutube', name: '유튜브 채널' },
+      { id: 'btnFacebook', name: '페이스북' },
+      { id: 'btnInstagram', name: '인스타그램' },
+      { id: 'btnGive', name: '헌금하기' },
+      { id: 'btnPhone', name: '전화 연락' },
+      { id: 'btnEmail', name: '이메일 연락' },
+      { id: 'btnMapSunday', name: '주일예배 위치' },
+      { id: 'btnMapWeekday', name: '주중모임 위치' }
+    ];
+
+    function renderStats(data) {
+      const listEl = $('statsList');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      let totalClicks = 0;
+      let maxClicks = 0;
+      menuItems.forEach(item => {
+        const val = data[item.id] || 0;
+        totalClicks += val;
+        if (val > maxClicks) maxClicks = val;
+      });
+
+      // 전체 누적 클릭 수 렌더링
+      const totalRow = document.createElement('div');
+      totalRow.className = 'stats-total-row';
+      totalRow.innerHTML = `
+        <span class="stats-total-label">전체 누적 클릭 수</span>
+        <span class="stats-total-value">${totalClicks.toLocaleString()}회</span>
+      `;
+      listEl.appendChild(totalRow);
+
+      // 개별 메뉴 클릭 통계 렌더링
+      menuItems.forEach(item => {
+        const val = data[item.id] || 0;
+        const pct = maxClicks > 0 ? (val / maxClicks) * 100 : 0;
+
+        const row = document.createElement('div');
+        row.className = 'stats-item';
+        row.innerHTML = `
+          <div class="stats-header">
+            <span>${item.name}</span>
+            <span class="stats-count">${val.toLocaleString()}회</span>
+          </div>
+          <div class="stats-track">
+            <div class="stats-bar" style="width: ${pct}%;"></div>
+          </div>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    async function resetStats() {
+      if (!confirm('정말로 모든 메뉴 클릭 통계를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+      const btn = $('btnStatsReset');
+      if (btn) btn.disabled = true;
+      try {
+        const statsRef = doc(db, 'site', 'menuClicks');
+        const zeroObj = {};
+        menuItems.forEach(item => {
+          zeroObj[item.id] = 0;
+        });
+        await setDoc(statsRef, zeroObj);
+        alert('초기화되었습니다.');
+      } catch (e) {
+        alert('초기화 실패: ' + (e.message || e));
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
     function enterAdmin() {
       gate.classList.add('hidden');
       editor.classList.remove('hidden');
@@ -1523,6 +1662,7 @@
       $('pushCard').classList.remove('hidden');
       previewCard.classList.remove('hidden');
       bgCard.classList.remove('hidden');
+      $('statsCard').classList.remove('hidden');
       loadPushCount();
       try { initDb(); } catch (e) {
         saveStatus.textContent = 'Firebase 초기화 실패: ' + (e.message || e);
@@ -1545,6 +1685,22 @@
           renderBackgrounds();
         }
       });
+
+      // 메뉴 클릭 통계 실시간 구독
+      onSnapshot(doc(db, 'site', 'menuClicks'), (snap) => {
+        const data = snap.exists() ? snap.data() : {};
+        renderStats(data);
+      });
+
+      // 통계 초기화 이벤트 바인딩
+      const btnReset = $('btnStatsReset');
+      if (btnReset) {
+        if (!btnReset._hasListener) {
+          btnReset.addEventListener('click', resetStats);
+          btnReset._hasListener = true;
+        }
+      }
+
       reload();
     }
 
