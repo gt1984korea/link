@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>AI Studio 녹음 만들기 — 사용법 가이드 · Victory Church</title>
+
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+
+  <style>
+    :root {
+      --bg:       #f6f7f9;
+      --surface:  #ffffff;
+      --line:     #e9eaee;
+      --text:     #363636;
+      --text-2:   #6b7280;
+      --text-3:   #9ca3af;
+      --brand:    #2bb673;
+      --brand-dim:#e7f6ef;
+      --navy:     #101a3f;
+      --danger:   #dc2626;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+                   'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      letter-spacing: -0.01em;
+      line-height: 1.65;
+    }
+    .wrap {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: calc(env(safe-area-inset-top) + 28px) 18px
+               calc(env(safe-area-inset-bottom) + 60px);
+    }
+
+    /* 헤더 */
+    .header { text-align: center; margin-bottom: 18px; }
+    .header .eyebrow {
+      display: inline-block; font-size: 12px; font-weight: 700;
+      color: var(--brand); background: var(--brand-dim);
+      padding: 5px 12px; border-radius: 999px; margin-bottom: 12px;
+    }
+    .header h1 {
+      font-size: 23px; font-weight: 800; color: var(--navy);
+      margin: 0 0 8px; letter-spacing: -0.02em; line-height: 1.35;
+    }
+    .header p { font-size: 14px; color: var(--text-2); margin: 0; font-weight: 500; }
+
+    /* 요약 박스 */
+    .intro {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--brand);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+    .intro h2 {
+      font-size: 15px; font-weight: 800; color: var(--navy); margin: 0 0 8px;
+    }
+    .intro p { font-size: 14px; color: var(--text); margin: 0; }
+    .intro b { color: var(--brand); }
+
+    /* 준비물 */
+    .prep {
+      background: #fffdf5;
+      border: 1px solid #f3e7c0;
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 22px;
+      font-size: 14px;
+    }
+    .prep h2 { font-size: 14px; font-weight: 800; color: #9a7b18; margin: 0 0 6px; }
+    .prep ul { margin: 0; padding-left: 18px; color: var(--text); }
+    .prep li { margin: 3px 0; }
+
+    /* 스텝 카드 */
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      scroll-margin-top: 16px;
+    }
+    .step-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .step-num {
+      flex: 0 0 auto;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--brand); color: #fff;
+      font-size: 17px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(43,182,115,.35);
+    }
+    .step-title {
+      font-size: 17px; font-weight: 800; color: var(--navy);
+      margin: 4px 0 0; line-height: 1.4; letter-spacing: -0.02em;
+    }
+    .step-body { font-size: 15px; color: var(--text); }
+    .step-body p { margin: 0 0 10px; }
+    .step-body p:last-child { margin-bottom: 0; }
+    .step-body b { color: var(--navy); font-weight: 700; }
+    .step-body .hl {
+      background: #fff3a8; padding: 1px 5px; border-radius: 5px;
+      font-weight: 700; color: #7a5b00;
+    }
+    .step-body ul { margin: 6px 0 10px; padding-left: 20px; }
+    .step-body li { margin: 4px 0; }
+    .tip {
+      font-size: 13.5px; color: var(--text-2);
+      background: var(--bg); border-radius: 10px;
+      padding: 10px 12px; margin-top: 10px;
+    }
+    .tip b { color: var(--brand); }
+
+    /* 스크린샷 */
+    figure { margin: 14px 0 0; }
+    figure img {
+      width: 100%; height: auto; display: block;
+      border: 1px solid var(--line); border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(16,26,63,.08);
+      background: var(--bg);
+    }
+    figure img.missing {
+      min-height: 120px; padding: 24px; text-align: center;
+      color: var(--text-3); font-size: 13px;
+    }
+    figcaption {
+      font-size: 12.5px; color: var(--text-3);
+      text-align: center; margin-top: 8px;
+    }
+
+    /* 복사 값 코드 */
+    code.val {
+      display: block;
+      background: var(--navy); color: #e7f6ef;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12.5px; line-height: 1.5;
+      padding: 10px 12px; border-radius: 10px;
+      margin: 6px 0 0; white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* 마무리 */
+    .done {
+      text-align: center;
+      background: var(--brand-dim);
+      border: 1px solid #bfe7d4;
+      border-radius: 16px;
+      padding: 24px 20px;
+      margin-top: 22px;
+    }
+    .done h2 { font-size: 18px; font-weight: 800; color: var(--brand); margin: 0 0 6px; }
+    .done p { font-size: 14px; color: var(--text); margin: 0; }
+
+    /* 하단 버튼 */
+    .foot { display: flex; gap: 10px; margin-top: 20px; }
+    .btn {
+      flex: 1; display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px; text-decoration: none;
+      font-size: 15px; font-weight: 700;
+      padding: 14px 16px; border-radius: 12px;
+      border: 1px solid var(--line); background: var(--surface); color: var(--navy);
+      cursor: pointer;
+    }
+    .btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="header">
+      <span class="eyebrow">Victory Church · Admin 가이드</span>
+      <h1>AI Studio로<br>구절 음성 녹음 만들기</h1>
+      <p>아래 순서대로 하나씩 따라 하면 누구나 만들 수 있어요 🙂</p>
+    </header>
+
+    <section class="intro">
+      <h2>이 가이드는 무엇인가요?</h2>
+      <p>구글 <b>AI Studio</b>로 이번 주 암송 구절을 <b>사람 같은 목소리</b>로 만들고,
+      그 파일을 관리자(admin) 화면에 올리는 방법이에요. 올리고 나면 메인 화면의
+      <b>"읽어주기"</b> 버튼이 이 녹음을 들려줍니다.</p>
+    </section>
+
+    <section class="prep">
+      <h2>🧰 미리 준비할 것</h2>
+      <ul>
+        <li><b>구글 계정</b> (AI Studio 로그인에 필요해요)</li>
+        <li>컴퓨터로 하는 것을 추천해요 (파일 다운로드가 편해요)</li>
+        <li>관리자(admin) 화면을 열어 둔 상태</li>
+      </ul>
+    </section>
+
+    <!-- 1 -->
+    <section class="step" id="step-1">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <h3 class="step-title">관리자 화면에서 "추천 설정" 복사하기</h3>
+      </div>
+      <div class="step-body">
+        <p>관리자 화면의 <b>"구절 음성 녹음"</b> 칸을 보면 초록색 <b>"AI Studio 추천 설정"</b>
+        상자가 있어요. 여기 <b>Scene · Sample Context · Speaker</b> 세 가지가 있고,
+        각각 옆에 <span class="hl">복사</span> 버튼이 있습니다.</p>
+        <p>지금은 위치만 봐 두세요. 잠시 뒤에 이 <b>복사</b> 버튼을 눌러서 AI Studio에 붙여넣을 거예요.</p>
+        <p>그리고 그 옆의 <span class="hl">AI Studio에서 녹음 만들기 ↗</span> 버튼을 누르면
+        AI Studio가 새 창으로 열립니다.</p>
+        <figure>
+          <img data-step="01" alt="관리자 화면의 AI Studio 추천 설정(초록 상자)">
+          <figcaption>관리자 화면 — AI Studio 추천 설정 상자</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="step" id="step-2">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <h3 class="step-title">AI Studio 열고 로그인하기</h3>
+      </div>
+      <div class="step-body">
+        <p>버튼을 누르면 아래처럼 <b>"Turn text into natural-sounding speech…"</b> 화면이 열려요.
+        만약 로그인 창이 나오면 <b>구글 계정으로 로그인</b>하세요.</p>
+        <p>아래에 여러 가지 카드(템플릿)가 보여도 <b>누르지 않아도 됩니다.</b> 다음 단계로 가요.</p>
+        <figure>
+          <img data-step="02" alt="AI Studio Playground 첫 화면">
+          <figcaption>AI Studio 첫 화면 (generate-speech)</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="step" id="step-3">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <h3 class="step-title">Scene · Sample Context 붙여넣기</h3>
+      </div>
+      <div class="step-body">
+        <p>화면 <b>오른쪽 위</b>에 <span class="hl">Composer</span> 라는 글자를 눌러 주세요.
+        그러면 <b>Scene</b>과 <b>Sample Context</b> 라는 입력칸이 나옵니다.</p>
+        <ul>
+          <li>관리자 화면에서 <b>Scene 복사</b> → AI Studio의 <b>Scene</b> 칸에 붙여넣기</li>
+          <li>관리자 화면에서 <b>Sample Context 복사</b> → AI Studio의 <b>Sample Context</b> 칸에 붙여넣기</li>
+        </ul>
+        <p class="tip"><b>붙여넣기 방법:</b> 칸을 한 번 누른 다음, 키보드 <b>Ctrl + V</b>
+        (맥은 <b>⌘ + V</b>)를 누르면 돼요.</p>
+        <figure>
+          <img data-step="03" alt="Composer 화면의 Scene과 Sample Context 입력칸">
+          <figcaption>Composer — Scene / Sample Context 입력</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="step" id="step-4">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <h3 class="step-title">목소리(Speaker)를 "Alnilam"으로 고르기</h3>
+      </div>
+      <div class="step-body">
+        <p>화면의 <b>Speaker 1</b> 부분을 누르면 오른쪽에 <b>Speaker settings</b> 창이 열려요.</p>
+        <p>그 안의 <b>Voice</b> 검색칸에 <span class="hl">Alnilam</span> 이라고 입력하고,
+        아래에 나오는 <b>Alnilam (Firm, Lower middle pitch)</b> 을 선택하세요.</p>
+        <p class="tip"><b>왜 Alnilam인가요?</b> 묵직하고 또렷해서 구절을 경건하게
+        읽어 주는 목소리예요.</p>
+        <figure>
+          <img data-step="04" alt="Speaker settings에서 Alnilam 목소리 선택">
+          <figcaption>Speaker settings — Alnilam 목소리 선택</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="step" id="step-5">
+      <div class="step-head">
+        <div class="step-num">5</div>
+        <h3 class="step-title">읽어줄 "구절 글자" 복사하기</h3>
+      </div>
+      <div class="step-body">
+        <p>이제 어떤 글을 읽어 줄지 알려줄 차례예요. 관리자 화면의
+        <b>미리보기(이번 주 암송 구절)</b>에서 구절 글자를 드래그해서
+        <b>복사</b>(Ctrl + C)하세요. <b>출처(예: 빌립보서 4장 6-7절)</b>까지 함께 복사하면 좋아요.</p>
+        <figure>
+          <img data-step="05" alt="관리자 미리보기의 이번 주 구절 텍스트">
+          <figcaption>관리자 미리보기 — 이번 주 구절 텍스트</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="step" id="step-6">
+      <div class="step-head">
+        <div class="step-num">6</div>
+        <h3 class="step-title">구절을 AI Studio에 붙여넣기</h3>
+      </div>
+      <div class="step-body">
+        <p>AI Studio로 돌아와서, <b>Speaker 1 - Alnilam</b> 아래의 큰 입력칸(말풍선 부분)에
+        방금 복사한 구절을 <b>붙여넣기</b>(Ctrl + V) 하세요.</p>
+        <p>줄바꿈은 복사한 그대로 두면 됩니다. 출처도 맨 아래에 같이 넣어 주세요.</p>
+        <figure>
+          <img data-step="06" alt="Speaker 1 말풍선에 구절을 붙여넣은 모습">
+          <figcaption>구절을 말풍선에 붙여넣기</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="step" id="step-7">
+      <div class="step-head">
+        <div class="step-num">7</div>
+        <h3 class="step-title">(선택) 묵상 설명까지 넣어 길게 만들기</h3>
+      </div>
+      <div class="step-body">
+        <p>이 단계는 <b>해도 되고 안 해도 됩니다.</b> 구절만으로 짧게 만들 수도 있고,
+        아래처럼 <b>[의미]</b>와 <b>[적용]</b> 설명을 덧붙여 더 풍성한 묵상 음성을 만들 수도 있어요.</p>
+        <p>설명 글을 구절 아래에 이어서 적으면, 그 부분까지 같은 목소리로 읽어 줍니다.</p>
+        <figure>
+          <img data-step="07" alt="의미와 적용 설명을 추가한 긴 스크립트 예시">
+          <figcaption>예시 — [의미] / [적용] 설명을 추가</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="step" id="step-8">
+      <div class="step-head">
+        <div class="step-num">8</div>
+        <h3 class="step-title">음성 만들기 (Run 버튼)</h3>
+      </div>
+      <div class="step-body">
+        <p>준비가 끝났어요! 화면 <b>오른쪽 아래</b>의 <span class="hl">Run (Ctrl ↵)</span>
+        버튼을 누르세요. 잠시 기다리면 음성이 만들어집니다.</p>
+        <p class="tip"><b>단축키:</b> 키보드 <b>Ctrl + Enter</b>를 눌러도 똑같이 실행돼요.
+        만들어진 음성은 ▶ 버튼으로 미리 들어볼 수 있어요.</p>
+        <figure>
+          <img data-step="08" alt="오른쪽 아래 Run 버튼">
+          <figcaption>Run (Ctrl + Enter) — 음성 만들기</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="step" id="step-9">
+      <div class="step-head">
+        <div class="step-num">9</div>
+        <h3 class="step-title">음성 파일 내려받기 (다운로드)</h3>
+      </div>
+      <div class="step-body">
+        <p>음성이 만들어지면 재생바 오른쪽에 <span class="hl">⬇ (다운로드)</span> 아이콘이 생겨요.
+        그 아이콘을 누르면 음성 파일이 컴퓨터에 저장됩니다.</p>
+        <figure>
+          <img data-step="09" alt="재생바 오른쪽의 다운로드 아이콘">
+          <figcaption>⬇ 다운로드 아이콘 누르기</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="step" id="step-10">
+      <div class="step-head">
+        <div class="step-num">10</div>
+        <h3 class="step-title">다운로드된 파일 확인하기</h3>
+      </div>
+      <div class="step-body">
+        <p><b>다운로드 폴더</b>에 <b>"Generated Audio … .wav"</b> 같은 이름의 파일이 생깁니다.
+        이 파일이 우리가 올릴 녹음이에요. 어디에 저장됐는지 위치만 기억해 두세요.</p>
+        <figure>
+          <img data-step="10" alt="다운로드 폴더에 저장된 wav 음성 파일">
+          <figcaption>다운로드 폴더의 .wav 파일</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section class="step" id="step-11">
+      <div class="step-head">
+        <div class="step-num">11</div>
+        <h3 class="step-title">관리자 화면에 업로드하기</h3>
+      </div>
+      <div class="step-body">
+        <p>마지막이에요! 관리자 화면으로 돌아와서 <b>"구절 음성 녹음"</b> 칸의
+        <span class="hl">파일 선택</span> 버튼을 누르고, 방금 다운로드한
+        <b>.wav 파일</b>을 고르세요.</p>
+        <p>그다음 <span class="hl">업로드</span> 버튼을 누르면 끝! 🎉</p>
+        <p class="tip"><b>되돌리고 싶다면?</b> 나중에 <b>"녹음 삭제 (TTS로 복귀)"</b>를 누르면
+        다시 자동 음성으로 돌아가요.</p>
+        <figure>
+          <img data-step="11" alt="관리자 화면에서 파일 선택 후 업로드">
+          <figcaption>관리자 화면 — 파일 선택 → 업로드</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <div class="done">
+      <h2>다 했어요! 🎉</h2>
+      <p>이제 메인 화면에서 <b>"읽어주기"</b>를 누르면<br>방금 만든 목소리로 구절을 들려줍니다.</p>
+    </div>
+
+    <div class="foot">
+      <a class="btn" href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">↑ 맨 위로</a>
+      <a class="btn primary" href="/admin">관리자 화면으로 돌아가기</a>
+    </div>
+
+  </div>
+
+  <script>
+    // 스크린샷 파일(images/ai-studio-guide/step-0X.png)을 불러오고,
+    // 아직 파일이 없으면 안내 문구로 대체해 화면이 깨지지 않게 함.
+    document.querySelectorAll('img[data-step]').forEach(function (img) {
+      var n = img.getAttribute('data-step');
+      img.src = 'images/ai-studio-guide/step-' + n + '.png';
+      img.loading = 'lazy';
+      img.addEventListener('error', function () {
+        img.classList.add('missing');
+        img.removeAttribute('src');
+        img.alt = '(이미지 준비 중: images/ai-studio-guide/step-' + n + '.png)';
+      });
+    });
+  </script>
+</body>
+</html>
