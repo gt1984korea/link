@@ -118,12 +118,32 @@ async function onEnableClick() {
   }
 }
 
+/* 메시징용 서비스워커를 상대경로로 직접 등록한다.
+ * FCM의 getToken은 serviceWorkerRegistration을 넘기지 않으면 항상 origin 루트의
+ * '/firebase-messaging-sw.js'를 등록하려 한다. 이 앱이 GitHub Pages 프로젝트
+ * 페이지(예: /link/)처럼 하위 경로에서 열리면 루트 경로가 404가 나면서
+ * "messaging/failed-service-worker-registration"으로 실패한다.
+ * 상대경로('firebase-messaging-sw.js')로 등록한 registration을 getToken에 넘기면
+ * Firebase Hosting(루트)과 GitHub Pages(하위 경로) 양쪽 모두에서 동작한다. */
+let swRegPromise = null;
+function getMessagingSW() {
+  if (!('serviceWorker' in navigator)) return Promise.reject(new Error('serviceWorker unsupported'));
+  if (!swRegPromise) {
+    swRegPromise = navigator.serviceWorker.register('firebase-messaging-sw.js');
+  }
+  return swRegPromise;
+}
+
 async function registerToken() {
   if (VAPID_PUBLIC_KEY.startsWith('PASTE_')) {
     console.warn('[push] VAPID 공개 키가 설정되지 않았습니다 (push.js).');
     throw new Error('VAPID key not set');
   }
-  const token = await getToken(messaging, { vapidKey: VAPID_PUBLIC_KEY });
+  const swReg = await getMessagingSW();
+  const token = await getToken(messaging, {
+    vapidKey: VAPID_PUBLIC_KEY,
+    serviceWorkerRegistration: swReg
+  });
   if (!token) throw new Error('no token');
 
   // 토큰을 문서 ID로 저장 → 같은 기기 재등록 시 자동으로 덮어써 중복 방지
