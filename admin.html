@@ -660,6 +660,45 @@
       </div>
     </section>
 
+    <!-- 새소식 관리 -->
+    <section class="card hidden" id="newsCard">
+      <h2>새소식 관리</h2>
+      <p class="hint" style="margin-top:0">
+        메인 화면 "이번 주 성경 구절" 카드 아래에 노출되는 새소식 이미지입니다.
+        노출 기간(오늘 포함)에 해당하는 새소식만 표시되며, 없으면 영역 자체가 숨겨집니다.
+        여러 개를 등록하면 모두 표시됩니다.
+      </p>
+
+      <label for="newsFileInput">새소식 이미지 업로드 (가로형 권장)</label>
+      <input type="file" id="newsFileInput" accept="image/*" style="font-size:14px; width:100%; margin-top:4px;">
+
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1; min-width:140px;">
+          <label for="newsStart">노출 시작일</label>
+          <input type="date" id="newsStart">
+        </div>
+        <div style="flex:1; min-width:140px;">
+          <label for="newsEnd">노출 종료일</label>
+          <input type="date" id="newsEnd">
+        </div>
+      </div>
+
+      <label for="newsLink" style="margin-top:10px;">링크 URL (선택 — 입력 시 이미지 탭하면 새 탭으로 열림)</label>
+      <input type="url" id="newsLink" placeholder="https://example.com" style="font-size:14px; width:100%; margin-top:4px;">
+
+      <div style="margin-top:12px;">
+        <button class="btn btn-primary" id="btnUploadNews" type="button" disabled>등록</button>
+      </div>
+      <div class="status" id="newsStatus"></div>
+
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+        <label style="margin-top:0">등록된 새소식</label>
+        <div id="newsListContainer" style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+          <!-- 동적으로 새소식 아이템들 렌더링 -->
+        </div>
+      </div>
+    </section>
+
     </div>
 
     <div class="col-list">
@@ -742,6 +781,16 @@
     const btnUploadBg = $('btnUploadBg');
     const bgStatus = $('bgStatus');
     const bgListContainer = $('bgListContainer');
+
+    // 새소식 관련 DOM 엘리먼트
+    const newsCard = $('newsCard');
+    const newsFileInput = $('newsFileInput');
+    const newsStartIn = $('newsStart');
+    const newsEndIn = $('newsEnd');
+    const newsLinkIn = $('newsLink');
+    const btnUploadNews = $('btnUploadNews');
+    const newsStatus = $('newsStatus');
+    const newsListContainer = $('newsListContainer');
 
     // 시스템 기본 제공 배경 설정
     const DEFAULT_BACKGROUNDS = [
@@ -1575,6 +1624,155 @@
     }
     btnUploadBg.addEventListener('click', uploadBackground);
 
+    /* ── 새소식 관리 ── */
+    const NEWS_STORAGE_PATH = 'news';
+    let newsData = [];
+
+    function renderNews() {
+      newsListContainer.innerHTML = '';
+      if (newsData.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'hint';
+        empty.style.margin = '0';
+        empty.textContent = '등록된 새소식이 없습니다.';
+        newsListContainer.appendChild(empty);
+        return;
+      }
+      // 노출 시작일 내림차순 정렬
+      const sorted = newsData.slice().sort((a, b) =>
+        (b.startDate || '').localeCompare(a.startDate || '') ||
+        (b.createdAt || 0) - (a.createdAt || 0)
+      );
+      const today = todayStr();
+      sorted.forEach((n) => {
+        const item = document.createElement('div');
+        item.className = 'bg-item';
+
+        // 썸네일
+        const thumb = document.createElement('div');
+        thumb.className = 'bg-preview-thumb';
+        if (n.imageUrl) thumb.style.backgroundImage = `url(${n.imageUrl})`;
+        item.appendChild(thumb);
+
+        // 정보
+        const info = document.createElement('div');
+        info.className = 'bg-info';
+        const name = document.createElement('div');
+        name.className = 'bg-name';
+        const active = (!n.startDate || n.startDate <= today) && (!n.endDate || today <= n.endDate);
+        name.textContent = (active ? '🟢 노출중 · ' : '⚪ ') + fmtRange(n.startDate, n.endDate);
+        const type = document.createElement('div');
+        type.className = 'bg-type';
+        type.textContent = n.linkUrl ? `🔗 ${n.linkUrl}` : '링크 없음';
+        info.appendChild(name);
+        info.appendChild(type);
+        item.appendChild(info);
+
+        // 제어 (삭제)
+        const controls = document.createElement('div');
+        controls.className = 'bg-controls';
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'btn-bg-delete';
+        delBtn.textContent = '삭제';
+        delBtn.addEventListener('click', async () => {
+          if (!confirm('이 새소식을 삭제할까요?')) return;
+          newsStatus.textContent = '삭제 중…';
+          newsStatus.className = 'status';
+          try {
+            // 1. Storage 파일 삭제
+            if (n.imagePath) {
+              try {
+                await deleteObject(storageRef(storage, n.imagePath));
+              } catch (err) {
+                if (err.code !== 'storage/object-not-found') throw err;
+              }
+            }
+            // 2. Firestore 데이터 업데이트
+            newsData = newsData.filter(x => x.id !== n.id);
+            await setDoc(ref, { news: newsData, updatedAt: serverTimestamp() }, { merge: true });
+            newsStatus.textContent = '새소식이 삭제되었습니다.';
+            newsStatus.className = 'status ok';
+            renderNews();
+          } catch (e) {
+            newsStatus.textContent = '삭제 실패: ' + (e.message || e);
+            newsStatus.className = 'status err';
+          }
+        });
+        controls.appendChild(delBtn);
+        item.appendChild(controls);
+
+        newsListContainer.appendChild(item);
+      });
+    }
+
+    // 파일 선택 시 업로드 버튼 상태 관리
+    newsFileInput.addEventListener('change', () => {
+      btnUploadNews.disabled = !newsFileInput.files || newsFileInput.files.length === 0;
+    });
+
+    // 새소식 이미지 업로드
+    async function uploadNews() {
+      const file = newsFileInput.files && newsFileInput.files[0];
+      if (!file) return;
+      if (file.size > 20 * 1024 * 1024) {
+        newsStatus.textContent = '파일이 너무 큽니다(20MB 초과).';
+        newsStatus.className = 'status err';
+        return;
+      }
+      const startDate = newsStartIn.value;
+      const endDate = newsEndIn.value;
+      const linkUrl = (newsLinkIn.value || '').trim();
+      if (!startDate || !endDate) {
+        newsStatus.textContent = '노출 시작일과 종료일을 모두 선택하세요.';
+        newsStatus.className = 'status err';
+        return;
+      }
+      if (startDate > endDate) {
+        newsStatus.textContent = '시작일이 종료일보다 늦을 수 없습니다.';
+        newsStatus.className = 'status err';
+        return;
+      }
+      btnUploadNews.disabled = true;
+      newsStatus.textContent = '업로드 중…';
+      newsStatus.className = 'status';
+      try {
+        const uniqueId = genId();
+        const fileExt = file.name.split('.').pop();
+        const storagePath = `${NEWS_STORAGE_PATH}/${uniqueId}.${fileExt}`;
+        const sref = storageRef(storage, storagePath);
+
+        await uploadBytes(sref, file, { contentType: file.type || 'image/png' });
+        const url = await getDownloadURL(sref);
+
+        newsData.push({
+          id: uniqueId,
+          name: file.name,
+          imageUrl: url,
+          imagePath: storagePath,
+          linkUrl: linkUrl,
+          startDate: startDate,
+          endDate: endDate,
+          createdAt: Date.now()
+        });
+
+        await setDoc(ref, { news: newsData, updatedAt: serverTimestamp() }, { merge: true });
+        newsStatus.textContent = '새소식이 등록되었습니다.';
+        newsStatus.className = 'status ok';
+        newsFileInput.value = '';
+        newsStartIn.value = '';
+        newsEndIn.value = '';
+        newsLinkIn.value = '';
+        btnUploadNews.disabled = true;
+        renderNews();
+      } catch (e) {
+        newsStatus.textContent = '업로드 실패: ' + (e.message || e);
+        newsStatus.className = 'status err';
+        btnUploadNews.disabled = false;
+      }
+    }
+    btnUploadNews.addEventListener('click', uploadNews);
+
     /* ── 메뉴 클릭 통계 관리 ── */
     const menuItems = [
       { id: 'btnInstall', name: '바로가기 설치' },
@@ -1662,6 +1860,7 @@
       $('pushCard').classList.remove('hidden');
       previewCard.classList.remove('hidden');
       bgCard.classList.remove('hidden');
+      newsCard.classList.remove('hidden');
       $('statsCard').classList.remove('hidden');
       loadPushCount();
       try { initDb(); } catch (e) {
@@ -1684,6 +1883,8 @@
           backgroundsData = d.backgrounds.slice();
           renderBackgrounds();
         }
+        newsData = Array.isArray(d.news) ? d.news.slice() : [];
+        renderNews();
       });
 
       // 메뉴 클릭 통계 실시간 구독

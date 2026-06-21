@@ -370,6 +370,62 @@
     .verse.loading .ref { opacity: 0.45; }
     .verse.hidden { display: none; }
 
+    /* 새소식 영역 */
+    .news {
+      margin-bottom: 14px;
+    }
+    .news.hidden { display: none; }
+    .news .label-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .news .label-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .news .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--brand);
+      letter-spacing: 0.03em;
+      word-break: keep-all;
+    }
+    .news .label::before {
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+    #newsList {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .news-item {
+      display: block;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1.5px solid var(--line);
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(33, 66, 141, 0.06);
+      transition: transform .08s ease, box-shadow .15s ease;
+    }
+    a.news-item:hover {
+      box-shadow: 0 4px 16px rgba(33, 66, 141, 0.14);
+    }
+    a.news-item:active { transform: scale(.99); }
+    .news-item img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
     /* 지난 암송 구절 모달 스타일 (라이트 테마) */
     .modal-content.past-modal-content {
       background: var(--surface);
@@ -1587,6 +1643,16 @@
       })();
     </script>
 
+    <!-- 0-1. 새소식 -->
+    <section class="news hidden" id="newsCard" aria-live="polite">
+      <div class="label-row">
+        <span class="label-left">
+          <span class="label">새소식</span>
+        </span>
+      </div>
+      <div id="newsList"></div>
+    </section>
+
 
 
     <nav class="menu">
@@ -2454,6 +2520,52 @@
         .sort((a, b) => (b.endDate || '').localeCompare(a.endDate || ''));
 
       return { active, past };
+    }
+
+    // 새소식: 오늘이 노출 기간 내인 항목 전부 반환(시작일 내림차순)
+    function classifyNews(d) {
+      const today = todayStr();
+      const list = (Array.isArray(d.news) ? d.news : [])
+        .filter(n => n && n.imageUrl)
+        .filter(n => {
+          const okStart = !n.startDate || n.startDate <= today;
+          const okEnd   = !n.endDate   || today <= n.endDate;
+          return okStart && okEnd;
+        })
+        .sort((a, b) =>
+          (b.startDate || '').localeCompare(a.startDate || '') ||
+          (b.createdAt || 0) - (a.createdAt || 0)
+        );
+      return list;
+    }
+
+    function renderNews(list) {
+      const card = document.getElementById('newsCard');
+      const listEl = document.getElementById('newsList');
+      if (!card || !listEl) return;
+      if (!list || list.length === 0) {
+        card.classList.add('hidden');
+        listEl.innerHTML = '';
+        return;
+      }
+      listEl.innerHTML = '';
+      list.forEach((n) => {
+        const url = (n.linkUrl || '').trim();
+        const wrap = document.createElement(url ? 'a' : 'div');
+        wrap.className = 'news-item';
+        if (url) {
+          wrap.href = url;
+          wrap.target = '_blank';
+          wrap.rel = 'noopener noreferrer';
+        }
+        const img = document.createElement('img');
+        img.src = n.imageUrl;
+        img.alt = n.name || '새소식';
+        img.loading = 'lazy';
+        wrap.appendChild(img);
+        listEl.appendChild(wrap);
+      });
+      card.classList.remove('hidden');
     }
 
     function displayVerse(text, reference) {
@@ -3359,12 +3471,14 @@
         if (!snap.exists()) {
           renderActive(null);
           renderPast([]);
+          renderNews([]);
           return;
         }
         const d = snap.data() || {};
         const { active, past } = classify(d);
         renderActive(active, d.audioUrl);
         renderPast(past);
+        renderNews(classifyNews(d));
 
         // 카드 배경 동적 설정 로드 및 적용
         const bgs = Array.isArray(d.backgrounds) ? d.backgrounds : DEFAULT_BACKGROUNDS;
