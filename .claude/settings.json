@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(firebase deploy --only storage --project victorychurch-665a9)",
+      "PowerShell(firebase deploy --only functions --project victorychurch-665a9)"
+    ]
+  }
+}

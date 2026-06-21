@@ -1,8 +1,8 @@
-/* Cloud Function: 새 암송 구절이 등록되면 웹 푸시 발송
+/* Cloud Function: 새 암송 구절 또는 새소식이 등록되면 웹 푸시 발송
  *
  * 트리거: /site/memoryVerse 문서가 수정될 때
- * 동작: verses 배열에 "새로운 id"가 추가되었으면, pushTokens에 저장된 모든 기기로
- *       데이터 메시지를 보냅니다. 각 기기의 서비스워커(firebase-messaging-sw.js)가
+ * 동작: verses 배열 또는 news 배열에 "새로운 id"가 추가되었으면, pushTokens에 저장된
+ *       모든 기기로 데이터 메시지를 보냅니다. 각 기기의 서비스워커(firebase-messaging-sw.js)가
  *       알림을 띄우고 홈 아이콘 배지를 켭니다. 만료된 토큰은 자동 정리합니다.
  */
 const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
@@ -21,29 +21,17 @@ function keyOf(v) {
   return (v.startDate || '') + '|' + ((v.text || '').trim());
 }
 
-exports.notifyNewVerse = onDocumentUpdated('site/memoryVerse', async (event) => {
-  const before = (event.data && event.data.before && event.data.before.data()) || {};
-  const after  = (event.data && event.data.after  && event.data.after.data())  || {};
+// 새소식을 고유 식별 (id 기준)
+function newsKeyOf(n) {
+  if (!n) return '';
+  if (n.id) return String(n.id);
+  return (n.startDate || '') + '|' + (n.imageUrl || '');
+}
 
-  const beforeKeys = new Set(
-    (Array.isArray(before.verses) ? before.verses : []).map(keyOf)
-  );
-  const afterVerses = Array.isArray(after.verses) ? after.verses : [];
-  const newOnes = afterVerses.filter((v) => v && (v.text || '').trim() && !beforeKeys.has(keyOf(v)));
-
-  if (newOnes.length === 0) {
-    logger.info('새로 추가된 구절 없음 → 푸시 생략');
-    return;
-  }
-
-  const latest = newOnes[newOnes.length - 1];
-  const ref = (latest.reference || '').trim();
-  const body = ref ? `${ref} — 새 암송 구절이 등록되었어요.` : '새 암송 구절이 등록되었어요.';
-
-  const db = getFirestore();
+/* 모든 등록 기기에 동일한 푸시를 보내고 만료 토큰을 정리합니다. */
+async function pushToAll(db, body, url) {
   const snap = await db.collection('pushTokens').get();
-  const docs = snap.docs.filter((d) => d.get('token'));
-  const tokens = docs.map((d) => d.get('token'));
+  const tokens = snap.docs.map((d) => d.get('token')).filter(Boolean);
 
   if (tokens.length === 0) {
     logger.info('등록된 토큰 없음 → 푸시 생략');
@@ -52,8 +40,8 @@ exports.notifyNewVerse = onDocumentUpdated('site/memoryVerse', async (event) => 
 
   const messaging = getMessaging();
   const base = {
-    data: { title: '빅토리처치', body, url: '/' },
-    webpush: { headers: { Urgency: 'high' }, fcmOptions: { link: '/' } }
+    data: { title: '빅토리처치', body, url: url || '/' },
+    webpush: { headers: { Urgency: 'high' }, fcmOptions: { link: url || '/' } }
   };
 
   const CHUNK = 500; // sendEachForMulticast 1회 최대 500개
@@ -82,6 +70,45 @@ exports.notifyNewVerse = onDocumentUpdated('site/memoryVerse', async (event) => 
   );
 
   logger.info(`푸시 발송 완료. 대상=${tokens.length}, 무효정리=${invalidTokens.length}`);
+}
+
+exports.notifyNewVerse = onDocumentUpdated('site/memoryVerse', async (event) => {
+  const before = (event.data && event.data.before && event.data.before.data()) || {};
+  const after  = (event.data && event.data.after  && event.data.after.data())  || {};
+
+  // 1) 새 암송 구절 감지
+  const beforeKeys = new Set(
+    (Array.isArray(before.verses) ? before.verses : []).map(keyOf)
+  );
+  const afterVerses = Array.isArray(after.verses) ? after.verses : [];
+  const newVerses = afterVerses.filter((v) => v && (v.text || '').trim() && !beforeKeys.has(keyOf(v)));
+
+  // 2) 새소식 감지
+  const beforeNewsKeys = new Set(
+    (Array.isArray(before.news) ? before.news : []).map(newsKeyOf)
+  );
+  const afterNews = Array.isArray(after.news) ? after.news : [];
+  const newNews = afterNews.filter((n) => n && n.imageUrl && !beforeNewsKeys.has(newsKeyOf(n)));
+
+  if (newVerses.length === 0 && newNews.length === 0) {
+    logger.info('새로 추가된 구절/새소식 없음 → 푸시 생략');
+    return;
+  }
+
+  const db = getFirestore();
+
+  // 새 구절 푸시
+  if (newVerses.length > 0) {
+    const latest = newVerses[newVerses.length - 1];
+    const ref = (latest.reference || '').trim();
+    const body = ref ? `${ref} — 새 암송 구절이 등록되었어요.` : '새 암송 구절이 등록되었어요.';
+    await pushToAll(db, body, '/');
+  }
+
+  // 새소식 푸시
+  if (newNews.length > 0) {
+    await pushToAll(db, '교회에 새소식이 올라왔어요.', '/');
+  }
 });
 
 /* 알림 구독 기기 수 집계 (admin 화면에서 호출)
