@@ -2550,7 +2550,9 @@
       }
       listEl.innerHTML = '';
       list.forEach((n) => {
-        const url = (n.linkUrl || '').trim();
+        let url = (n.linkUrl || '').trim();
+        // http(s) 절대 URL만 링크로 처리 (상대경로/javascript: 등 차단)
+        if (url && !/^https?:\/\//i.test(url)) url = '';
         const wrap = document.createElement(url ? 'a' : 'div');
         wrap.className = 'news-item';
         if (url) {
