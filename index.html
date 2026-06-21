@@ -1637,6 +1637,7 @@
               window.currentFullVerseRef = cached.reference || '';
               if (cached.voiceId) window.lastCachedVoiceId = cached.voiceId;
               if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
+              if (Array.isArray(cached.audioUrls)) window.lastCachedAudioUrls = cached.audioUrls;
             }
           }
         } catch(e) {}
@@ -2609,7 +2610,16 @@
       }, 4000);
     }
 
-    function renderActive(active, sharedAudioUrl) {
+    // 문서에서 녹음 URL 목록을 추출 (다중 녹음 우선, 레거시 단일 녹음 호환)
+    function audioUrlsFromDoc(d) {
+      if (d && Array.isArray(d.audioFiles) && d.audioFiles.length) {
+        return d.audioFiles.map(a => a && a.url).filter(Boolean);
+      }
+      if (d && d.audioUrl) return [d.audioUrl];
+      return [];
+    }
+
+    function renderActive(active, sharedAudioUrls) {
       if (!active) {
         card.classList.add('hidden');
         if (newBadge) newBadge.classList.add('hidden');
@@ -2619,16 +2629,22 @@
       const text = (active.text || '').trim();
       const reference = (active.reference || '').trim();
       const voiceId = active.voiceId || DEFAULT_VOICE;
-      const audioUrl = (sharedAudioUrl || '').trim() || null; // 공유 녹음(있으면 TTS 대신 재생)
+      // 공유 녹음 목록 (있으면 TTS 대신 순서대로 재생). 문자열 단일 값도 허용.
+      const audioUrls = (Array.isArray(sharedAudioUrls)
+        ? sharedAudioUrls
+        : (sharedAudioUrls ? [sharedAudioUrls] : []))
+        .map(u => (u || '').trim()).filter(Boolean);
+      const audioUrl = audioUrls[0] || null; // 캐시/하위호환용 대표 URL
 
       // 전역 상태 업데이트 및 이벤트 트리거 (TTS 스크립트가 구독)
       window.currentFullVerseText = text;
       window.currentFullVerseRef = reference;
       window.currentTtsVoiceId = voiceId;
       window.currentVerseAudioUrl = audioUrl;
+      window.currentVerseAudioUrls = audioUrls;
       try {
         window.dispatchEvent(new CustomEvent('vc:voicechange', { detail: { voiceId } }));
-        window.dispatchEvent(new CustomEvent('vc:audiochange', { detail: { audioUrl } }));
+        window.dispatchEvent(new CustomEvent('vc:audiochange', { detail: { audioUrl, audioUrls } }));
       } catch (e) {}
 
       // 내용 변경 시 타이핑 애니메이션 실행
@@ -2645,7 +2661,7 @@
       }
 
       try {
-        localStorage.setItem('verseCache', JSON.stringify({ text, reference, voiceId, audioUrl }));
+        localStorage.setItem('verseCache', JSON.stringify({ text, reference, voiceId, audioUrl, audioUrls }));
       } catch (e) {}
     }
 
@@ -3455,6 +3471,7 @@
         window.currentFullVerseRef = cached.reference || '';
         if (cached.voiceId) window.lastCachedVoiceId = cached.voiceId;
         if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
+        if (Array.isArray(cached.audioUrls)) window.lastCachedAudioUrls = cached.audioUrls;
         card.classList.remove('hidden');
 
         // 첫 진입 시 캐시 데이터를 화면에 바로 렌더링합니다.
@@ -3478,7 +3495,7 @@
         }
         const d = snap.data() || {};
         const { active, past } = classify(d);
-        renderActive(active, d.audioUrl);
+        renderActive(active, audioUrlsFromDoc(d));
         renderPast(past);
         renderNews(classifyNews(d));
 
@@ -3583,8 +3600,18 @@
       // Firestore에서 받아온 전역 설정 목소리 또는 캐시된 목소리 사용 (기본값: Brian)
       let VOICE_ID = window.currentTtsVoiceId || window.lastCachedVoiceId || 'nPczCjzI2devNBz1zQrb';
 
-      // 관리자가 올린 녹음 파일 URL — 있으면 TTS 대신 이 녹음을 재생
-      let recordingUrl = window.currentVerseAudioUrl || window.lastCachedAudioUrl || null;
+      // 관리자가 올린 녹음 파일 목록 — 있으면 TTS 대신 순서대로 재생
+      function pickRecordingUrls() {
+        if (Array.isArray(window.currentVerseAudioUrls) && window.currentVerseAudioUrls.length) {
+          return window.currentVerseAudioUrls.slice();
+        }
+        if (Array.isArray(window.lastCachedAudioUrls) && window.lastCachedAudioUrls.length) {
+          return window.lastCachedAudioUrls.slice();
+        }
+        const single = window.currentVerseAudioUrl || window.lastCachedAudioUrl || null;
+        return single ? [single] : [];
+      }
+      let recordingUrls = pickRecordingUrls();
 
       // 실시간으로 목사님 목소리 설정이 변경되는 이벤트를 구독
       window.addEventListener('vc:voicechange', function (e) {
@@ -3606,9 +3633,12 @@
 
       // 녹음 파일 등록/삭제가 실시간 반영되면 소스를 교체 (재생 중이면 멈춤)
       window.addEventListener('vc:audiochange', function (e) {
-        const newUrl = (e.detail && e.detail.audioUrl) || null;
-        if (recordingUrl !== newUrl) {
-          recordingUrl = newUrl;
+        const detail = e.detail || {};
+        const newUrls = Array.isArray(detail.audioUrls)
+          ? detail.audioUrls.slice()
+          : (detail.audioUrl ? [detail.audioUrl] : []);
+        if (JSON.stringify(recordingUrls) !== JSON.stringify(newUrls)) {
+          recordingUrls = newUrls;
           if (active) stopTTS();
         }
       });
@@ -3827,34 +3857,41 @@
       /* 관리자가 올린 녹음 파일 재생 (TTS 대체) — Web Audio 체인을 거치지 않고
          일반 오디오 엘리먼트로 직접 재생: 교차출처(CORS) 무음 문제를 피하고
          사람이 녹음한 목소리를 리버브 없이 자연스럽게 들려준다. 배경음악은 그대로 깔린다. */
-      function playRecording(sessionId, startTime = null) {
-        if (!active || sessionId !== playSessionId || !recordingUrl) return;
+      function playRecording(sessionId, index = 0) {
+        if (!active || sessionId !== playSessionId || !recordingUrls.length) return;
+        const url = recordingUrls[index];
+        if (!url) return; // 범위를 벗어나면 종료
+
+        // 다음 트랙 또는 처음부터 반복을 예약하는 헬퍼
+        const advance = () => {
+          if (!active || sessionId !== playSessionId) return;
+          label.textContent = '멈추기';
+          const nextIndex = index + 1;
+          if (nextIndex < recordingUrls.length) {
+            // 다음 녹음으로 짧은 간격을 두고 이어서 재생
+            setTimeout(() => {
+              if (active && sessionId === playSessionId) playRecording(sessionId, nextIndex);
+            }, 600);
+          } else {
+            // 마지막 녹음까지 끝나면 3.0초 음악만 흐른 뒤 처음부터 반복 (outro cushion)
+            setTimeout(() => {
+              if (active && sessionId === playSessionId) play(sessionId);
+            }, 3000);
+          }
+        };
 
         label.textContent = '불러오는 중...';
-        curAudio = new Audio(recordingUrl);
+        curAudio = new Audio(url);
         curAudio.preload = 'auto';
-
-        curAudio.onended = function () {
-          if (active && sessionId === playSessionId) {
-            label.textContent = '멈추기';
-            // 완독 후 3.0초 음악만 흐른 뒤 반복 (outro cushion)
-            setTimeout(() => {
-              if (active && sessionId === playSessionId) play(sessionId);
-            }, 3000);
-          }
-        };
-        curAudio.onerror = function () {
-          if (active && sessionId === playSessionId) {
-            setTimeout(() => {
-              if (active && sessionId === playSessionId) play(sessionId);
-            }, 3000);
-          }
-        };
+        curAudio.onended = advance;
+        curAudio.onerror = advance; // 한 트랙이 실패해도 다음 트랙으로 진행
 
         const startPlayback = () => {
           if (!active || sessionId !== playSessionId) return;
           label.textContent = '멈추기';
-          startBgm(); // 음성 재생과 동시에 배경음악 시작
+          // 배경음악 시작/유지 — startBgm은 멱등(이미 재생 중이면 음량만 0.35로 유지)이라
+          // 매 트랙 호출해도 끊기지 않고, 첫 트랙이 실패해도 BGM이 깔린다.
+          startBgm();
           curAudio.play().catch(e => console.warn('[REC] 녹음 재생 실패:', e));
         };
 
@@ -3866,9 +3903,9 @@
       async function play(sessionId, startTime = null) {
         if (!active || sessionId !== playSessionId) return;
 
-        // 녹음 파일이 등록되어 있으면 TTS 대신 녹음을 재생
-        if (recordingUrl) {
-          playRecording(sessionId, startTime);
+        // 녹음 파일이 등록되어 있으면 TTS 대신 녹음을 순서대로 재생
+        if (recordingUrls.length) {
+          playRecording(sessionId, 0);
           return;
         }
 
