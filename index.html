@@ -2540,16 +2540,23 @@
       return list;
     }
 
+    let _lastNewsKey = null;
     function renderNews(list) {
       const card = document.getElementById('newsCard');
       const listEl = document.getElementById('newsList');
       if (!card || !listEl) return;
       if (!list || list.length === 0) {
+        _lastNewsKey = null;
         card.classList.add('hidden');
         listEl.innerHTML = '';
         return;
       }
-      listEl.innerHTML = '';
+      // 데이터가 바뀌지 않았으면 DOM을 건드리지 않아 깜빡임 방지
+      const key = list.map(n => `${n.imageUrl}|${n.linkUrl || ''}|${n.name || ''}`).join('\n');
+      if (key === _lastNewsKey) { card.classList.remove('hidden'); return; }
+      _lastNewsKey = key;
+
+      const frag = document.createDocumentFragment();
       list.forEach((n) => {
         let url = (n.linkUrl || '').trim();
         // http(s) 절대 URL만 링크로 처리 (상대경로/javascript: 등 차단)
@@ -2564,10 +2571,12 @@
         const img = document.createElement('img');
         img.src = n.imageUrl;
         img.alt = n.name || '새소식';
-        img.loading = 'lazy';
+        img.loading = 'eager';
+        frag.appendChild(wrap);
         wrap.appendChild(img);
-        listEl.appendChild(wrap);
       });
+      listEl.innerHTML = '';
+      listEl.appendChild(frag);
       card.classList.remove('hidden');
     }
 
