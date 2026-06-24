@@ -2540,6 +2540,10 @@
       return list;
     }
 
+    // Firebase Storage URL에서 토큰 제외한 경로만 추출 (토큰이 갱신돼도 같은 이미지로 인식)
+    function _imgPath(url) {
+      try { return new URL(url).pathname; } catch { return url || ''; }
+    }
     let _lastNewsKey = null;
     function renderNews(list) {
       const card = document.getElementById('newsCard');
@@ -2551,32 +2555,36 @@
         listEl.innerHTML = '';
         return;
       }
-      // 데이터가 바뀌지 않았으면 DOM을 건드리지 않아 깜빡임 방지
-      const key = list.map(n => `${n.imageUrl}|${n.linkUrl || ''}|${n.name || ''}`).join('\n');
+      // 경로 기준 키 비교 — 토큰이 달라도 같은 이미지면 재렌더 안 함
+      const key = list.map(n => `${_imgPath(n.imageUrl)}|${n.linkUrl || ''}|${n.name || ''}`).join('\n');
       if (key === _lastNewsKey) { card.classList.remove('hidden'); return; }
       _lastNewsKey = key;
 
-      const frag = document.createDocumentFragment();
-      list.forEach((n) => {
+      // DOM diff: 기존 <img>를 최대한 재활용해 브라우저 재다운로드 방지
+      const existing = Array.from(listEl.children);
+      list.forEach((n, i) => {
         let url = (n.linkUrl || '').trim();
-        // http(s) 절대 URL만 링크로 처리 (상대경로/javascript: 등 차단)
         if (url && !/^https?:\/\//i.test(url)) url = '';
+        const oldEl = existing[i];
+        const oldImg = oldEl ? oldEl.querySelector('img') : null;
+        // 경로가 같으면 src를 건드리지 않음 → 이미 로드된 이미지 유지
+        if (oldImg && _imgPath(oldImg.src) === _imgPath(n.imageUrl)) {
+          if (url && oldEl.tagName === 'A') oldEl.href = url;
+          return;
+        }
         const wrap = document.createElement(url ? 'a' : 'div');
         wrap.className = 'news-item';
-        if (url) {
-          wrap.href = url;
-          wrap.target = '_blank';
-          wrap.rel = 'noopener noreferrer';
-        }
+        if (url) { wrap.href = url; wrap.target = '_blank'; wrap.rel = 'noopener noreferrer'; }
         const img = document.createElement('img');
         img.src = n.imageUrl;
         img.alt = n.name || '새소식';
         img.loading = 'eager';
-        frag.appendChild(wrap);
         wrap.appendChild(img);
+        if (oldEl) listEl.replaceChild(wrap, oldEl);
+        else listEl.appendChild(wrap);
       });
-      listEl.innerHTML = '';
-      listEl.appendChild(frag);
+      // 초과 아이템 제거
+      while (listEl.children.length > list.length) listEl.removeChild(listEl.lastChild);
       card.classList.remove('hidden');
     }
 
