@@ -24,10 +24,20 @@ firebase emulators:start --only hosting     # or: npx serve .
 # Deploy hosting (manual)
 firebase deploy --only hosting              # project: victorychurch-665a9
 
-# Playwright iOS screenshot/smoke check (from tests/)
-cd tests && npm run test:ios                # runs node ios-screenshots.js
+# Deploy push backend (Cloud Functions + rules) — Blaze plan required
+cd functions && npm install && cd ..        # first time only
+firebase deploy --only firestore:rules,functions,hosting
+
+# Playwright checks (from tests/)
+cd tests && npm run test:ios                # iOS screenshots (node ios-screenshots.js)
+cd tests && npm run test:banks              # bank-button smoke (node bank-buttons.test.js)
+cd tests && npm run test:image-share        # image-share smoke (node image-share.test.js)
 cd tests && npm run install:browsers        # first-time: install webkit + chromium
 ```
+
+Tests are plain Node scripts driving Playwright (no test runner) — run one directly with
+`node tests/<file>.js`. Functions/Firestore-rules changes are **not** covered by the
+auto-deploy workflow; deploy them manually (see commands above and `PUSH_SETUP.md`).
 
 Deployment is normally automatic: pushing to `main` triggers `.github/workflows/deploy.yml`
 (`FirebaseExtended/action-hosting-deploy`, channel `live`).
@@ -35,15 +45,17 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
 ## Architecture & gotchas
 
 - **`firebase.json` hosts the repo root (`"public": "."`)**, not the `public/` directory. The
-  `ignore` list excludes `public/`, `tests/`, `docs/`, `*.md`, `_*` scratch files, and `*.bak.*`.
-  The `public/` folder is a stale duplicate of the served files — treat root files as the source
-  of truth and ignore `public/` unless deliberately cleaning it up.
+  `ignore` list excludes `public/`, `tests/`, `docs/`, `functions/`, `*.md`, `*.rules`,
+  `_*` scratch files, and `*.bak.*`. The `public/` folder is a stale duplicate of the served
+  files — treat root files as the source of truth and ignore `public/` unless deliberately
+  cleaning it up.
 - **Firestore + Storage are the backend.** `index.html` subscribes (`onSnapshot`) to
   `site/memoryVerse` for real-time verse updates; `admin.html` writes to it (`setDoc ... merge`).
   The doc holds a **`verses` array** — each entry `{ id, text, reference, voiceId, startDate,
   endDate ("YYYY-MM-DD"), createdAt }` — plus shared recording fields `audioUrl` / `audioPath` /
   `audioName` and `updatedAt` at the top level. Path is defined once in `firebase-config.js` as
-  `VERSE_DOC_PATH`. Everything stays in this **single doc** (no subcollection) so the existing
+  `VERSE_DOC_PATH`. The same doc also carries a **`news` array** (church news, `{ id, imageUrl,
+  startDate, … }`). Everything stays in this **single doc** (no subcollection) so the existing
   `/site/{docId}` rules suffice. Note: array entries use `Date.now()` for `createdAt` because
   Firestore rejects `serverTimestamp()` inside arrays.
 - **Date-gated verse display.** `index.html` shows the verse whose `startDate ≤ today ≤ endDate`
@@ -63,6 +75,20 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   `firebase-config.js` — this is screen-level UX, NOT security. Real write protection must come
   from `firestore.rules`. Currently the rules `allow write: if true` on `/site/{docId}`; the file
   contains commented options to lock it down with Firebase Auth. See `MEMORY_VERSE_SETUP.md`.
+  The same rules file also opens `/verseStats/{verseId}` (verse like-counter, `increment`'d by
+  visitors) read+write, and `/pushTokens/{token}` create/update-only — clients may register their
+  own token but cannot `list`/`delete` (sending and cleanup are done server-side by the Cloud
+  Function via Admin SDK, which bypasses rules). Everything else is denied.
+- **Web push (FCM) + Cloud Functions backend.** `push.js` drives the "새 구절 알림 받기"
+  (`#btnNotify`) button: it requests notification permission, fetches an FCM token (VAPID public
+  key inline in `push.js`), and stores it at `pushTokens/{token}`. `firebase-messaging-sw.js` is
+  the messaging service worker — registered by **relative** path so it works under both Firebase
+  Hosting root and GitHub-Pages sub-paths. iOS only delivers push to the **installed PWA**
+  (home-screen app), not Safari tabs. `functions/index.js` (Node 22, deployed separately, needs
+  the **Blaze** plan) holds `notifyNewVerse` (an `onDocumentUpdated('site/memoryVerse')` trigger
+  that diffs the `verses`/`news` arrays and multicasts to all tokens, pruning invalid ones) and
+  `pushTokenCount` (an `onRequest` HTTP fn exposed at `/api/push-count` via a hosting rewrite, so
+  `admin.html` can show the subscriber count without `list` access). Setup steps in `PUSH_SETUP.md`.
 - **`firebase-config.js` is intentionally public** (client config + apiKey). Security relies on
   Firestore rules, not on hiding these values.
 - **`a2hs.js`** is a standalone "Add to Home Screen" widget (documented in `README.md`),

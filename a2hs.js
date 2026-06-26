@@ -56,6 +56,9 @@
   var isFirefox = /Firefox\//i.test(ua);
   var isSafariDesktop = isDesktop && /Safari\//i.test(ua) && !/Chrome\/|Edg\/|OPR\//i.test(ua);
   var isMac = /Macintosh|Mac OS X/i.test(ua);
+  // 삼성 인터넷(안드로이드) — 크로미움 기반이지만 beforeinstallprompt 가 안 뜨는
+  // 경우가 있어, 네이티브 프롬프트가 없을 때 전용 수동 안내를 보여준다.
+  var isSamsung = /SamsungBrowser/i.test(ua);
 
   var inApp = {
     kakao: /KAKAOTALK/i.test(ua),
@@ -382,6 +385,28 @@
           "오른쪽 위 <b>추가</b>를 누르면 완료!",
           iosVisualAddScreen()
         );
+    } else if (isSamsung) {
+      // 삼성 인터넷: 네이티브 프롬프트(deferredPrompt)가 없으면 여기로 온다.
+      // 짧은 알림으로 끝내지 말고, 삼성 인터넷 메뉴 기준 수동 안내를 보여준다.
+      if (ls(K.installed) === "1") {
+        showDialog({ title: "이미 설치되어 있어요", message: "앱 아이콘에서 열어 주세요." });
+        return;
+      }
+      h.textContent = "삼성 인터넷 바로가기 만들기";
+      sub.innerHTML = "아래 <b>3단계</b>만 따라하면 끝나요. 약 10초면 충분해요.";
+
+      var iconUrl2 = CFG.icon || "icon-192.png";
+      steps.innerHTML =
+        '<div class="a2hs-ios-intro">' +
+          '<div class="ic"><img src="' + iconUrl2 + '" alt=""></div>' +
+          '<div>' +
+            '<div class="nm">' + escapeHtml(CFG.siteName) + '</div>' +
+            '<div class="sub">이 페이지를 홈 화면에 추가해요</div>' +
+          '</div>' +
+        '</div>' +
+        step(1, '화면 <b>아래쪽</b>의 <b>메뉴</b>(≡ 삼선 버튼)를 누르세요') +
+        step(2, '<b>현재 페이지 추가</b> 를 누르세요') +
+        step(3, '<b>홈 화면</b> 을 선택하고 <b>추가</b> 를 누르면 끝!');
     } else {
       // 안드로이드 크롬: deferredPrompt 가 없다는 건 이미 설치되었거나
       // 설치 조건이 미충족된 경우. 안내 시트 대신 짧은 알림으로 끝낸다.
