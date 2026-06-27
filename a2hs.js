@@ -432,6 +432,24 @@
         step(2, '<b>현재 페이지 추가</b> 를 누르세요') +
         step(3, '<b>홈 화면</b> 을 선택하고 <b>추가</b> 를 누르면 끝!');
       steps.appendChild(manual);
+
+      // Google Play 프로텍트 경고 안내 — 삼성/안드로이드에서 앱(WebAPK) 설치 시
+      // "안전하지 않은 앱 차단됨" 경고가 뜰 수 있다. 교회 앱은 안전하며,
+      // 크게 보이는 '확인'은 설치를 '취소'하므로, 작은 글씨 '무시하고 설치하기'를
+      // 눌러야 설치가 진행된다 — 이 부분을 헷갈리는 분이 많아 강조해서 안내한다.
+      var warn = document.createElement("div");
+      warn.style.cssText =
+        "display:flex;gap:12px;align-items:flex-start;background:#fff7ed;" +
+        "border:1.5px solid #f59e0b;border-radius:14px;padding:14px;margin-top:18px";
+      warn.innerHTML =
+        '<div style="flex:0 0 auto;font-size:22px;line-height:1.2">⚠️</div>' +
+        '<div style="font-size:15px;line-height:1.55;color:#92400e">' +
+          '설치 도중 <b>“안전하지 않은 앱 차단됨”</b>(Google Play 프로텍트) 경고가 ' +
+          '떠도 <b>안전한 교회 앱</b>이에요.<br>' +
+          '<b>큰 파란 “확인” 버튼은 설치를 취소</b>하니 누르지 마시고, ' +
+          '그 위에 있는 작은 글씨 <b>“무시하고 설치하기”</b>를 누르면 설치가 완료돼요.' +
+        '</div>';
+      steps.appendChild(warn);
     } else {
       // 안드로이드 크롬: deferredPrompt 가 없다는 건 이미 설치되었거나
       // 설치 조건이 미충족된 경우. 안내 시트 대신 짧은 알림으로 끝낸다.
