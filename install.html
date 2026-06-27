@@ -451,25 +451,29 @@
       border-radius: 22px 22px 0 0; padding: 24px 20px calc(20px + env(safe-area-inset-bottom));
       max-height: 94vh; overflow: auto; box-shadow: 0 -8px 30px rgba(16,26,63,.2);
       animation: a2hs-pop-in .3s ease; }
-    .pp-h { font-size: 20px; font-weight: 800; color: #101a3f; margin: 0 0 4px; text-align: center; }
-    .pp-warn { background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 14px;
-      padding: 13px 14px; margin: 14px 0; font-size: 14px; color: #92400e; line-height: 1.6; }
-    .pp-warn b { color: #b45309; }
-    .pp-steps { margin-top: 14px; }
-    .pp-step { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0;
-      border-top: 1px solid #eee; }
-    .pp-step:first-child { border-top: 0; }
-    .pp-num { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;
-      background: #2bb673; color: #fff; font-weight: 800; font-size: 16px;
+    .pp-h { font-size: 21px; font-weight: 800; color: #101a3f; margin: 0; text-align: center; letter-spacing: -.02em; }
+    .pp-sub { font-size: 14px; color: #6b7280; text-align: center; margin: 6px 0 0; line-height: 1.5; }
+    .pp-note { display: flex; align-items: center; gap: 9px; background: #eef7f1; border-radius: 12px;
+      padding: 11px 13px; margin: 16px 0 2px; font-size: 13px; color: #1f6b48; line-height: 1.5; }
+    .pp-note svg { flex: 0 0 auto; color: #2bb673; }
+    .pp-note b { color: #15592f; }
+    .pp-cap { text-align: center; font-size: 11.5px; font-weight: 700; letter-spacing: .05em;
+      color: #aab2bd; margin: 18px 0 8px; }
+    .pp-preview { max-width: 230px; margin: 0 auto; }
+    .pp-steps { margin-top: 18px; display: flex; flex-direction: column; gap: 2px; }
+    .pp-step { display: flex; gap: 12px; align-items: center; padding: 7px 0; }
+    .pp-num { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%;
+      background: #2bb673; color: #fff; font-weight: 800; font-size: 14px;
       display: flex; align-items: center; justify-content: center; }
-    .pp-sd { flex: 1; font-size: 16px; line-height: 1.5; color: #1f2937; padding-top: 3px; }
-    .pp-sd b { color: #1a73e8; }
-    .pp-go { display: block; width: 100%; margin-top: 18px; background: #2bb673; color: #fff;
-      border: 0; border-radius: 14px; font-size: 18px; font-weight: 800; padding: 16px;
-      cursor: pointer; font-family: inherit; }
+    .pp-sd { flex: 1; font-size: 15.5px; line-height: 1.45; color: #374151; }
+    .pp-sd b { color: #1a73e8; font-weight: 800; }
+    .pp-go { display: block; width: 100%; margin-top: 20px; background: #2bb673; color: #fff;
+      border: 0; border-radius: 14px; font-size: 17px; font-weight: 800; padding: 16px;
+      cursor: pointer; font-family: inherit; box-shadow: 0 6px 16px rgba(43,182,115,.32);
+      transition: transform .1s; }
     .pp-go:active { transform: scale(.98); }
-    .pp-cancel { display: block; width: 100%; margin-top: 10px; background: transparent;
-      color: #6b7280; border: 0; font-size: 15px; padding: 8px; cursor: pointer; font-family: inherit; }
+    .pp-cancel { display: block; width: 100%; margin-top: 8px; background: transparent;
+      color: #9aa3af; border: 0; font-size: 14px; padding: 8px; cursor: pointer; font-family: inherit; }
 
     /* Play 프로텍트 화면 미리보기(애니메이션) — index.html a2hs.js 와 동일 */
     .a2hs-pp { position: relative; height: 340px; }
@@ -1218,13 +1222,14 @@
   <div class="pp-modal" id="ppModal" role="dialog" aria-modal="true" aria-label="삼성 인터넷 설치 안내">
     <div class="pp-modal-dim" id="ppDim"></div>
     <div class="pp-card">
-      <h2 class="pp-h">삼성 인터넷 설치 안내</h2>
-      <div class="pp-warn">
-        설치를 누르면 <b>“안전하지 않은 앱 차단됨”</b> 화면이 나올 수 있어요.
-        당황하지 마세요 — <b>정상</b>이고 빅토리처치 바로가기는 <b>안전</b>합니다.
-        아래 영상처럼 따라 하시면 돼요.
+      <h2 class="pp-h">바로가기 설치</h2>
+      <p class="pp-sub">설치 중 보안 안내 화면이 떠도 괜찮아요</p>
+      <div class="pp-note">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        <div><b>빅토리처치는 안전합니다.</b> 아래 영상처럼 누르면 설치돼요.</div>
       </div>
-      <div style="max-width:230px;margin:0 auto">
+      <div class="pp-cap">이렇게 따라 하세요</div>
+      <div class="pp-preview">
         <div class="a2hs-pp" role="img" aria-label="세부정보 더보기를 눌러 무시하고 설치하기가 나타나는 안내 영상">
           <div class="a2hs-pp-dlg">
             <div class="a2hs-pp-head">
@@ -1249,11 +1254,10 @@
         </div>
       </div>
       <div class="pp-steps">
-        <div class="pp-step"><div class="pp-num">1</div><div class="pp-sd"><b>세부정보 더보기</b> (⌄) 를 누르세요</div></div>
-        <div class="pp-step"><div class="pp-num">2</div><div class="pp-sd">아래에 나타나는 <b>무시하고 설치</b> 를 누르세요</div></div>
-        <div class="pp-step"><div class="pp-num">3</div><div class="pp-sd">잠시 기다리면 홈 화면에 <b>아이콘</b> 이 생겨요!</div></div>
+        <div class="pp-step"><div class="pp-num">1</div><div class="pp-sd"><b>세부정보 더보기</b> 누르기</div></div>
+        <div class="pp-step"><div class="pp-num">2</div><div class="pp-sd"><b>무시하고 설치</b> 누르기</div></div>
       </div>
-      <button class="pp-go" id="ppGo" type="button">알겠어요, 계속 설치하기</button>
+      <button class="pp-go" id="ppGo" type="button">계속 설치하기</button>
       <button class="pp-cancel" id="ppCancel" type="button">닫기</button>
     </div>
   </div>

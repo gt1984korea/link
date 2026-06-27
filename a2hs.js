@@ -449,31 +449,29 @@
       // 애니메이션으로 통과 방법을 가장 눈에 띄게 보여준다.
       var buildPlayProtectBox = function () {
         var pp = document.createElement("div");
-        pp.style.cssText =
-          "margin-top:22px;background:#fffbeb;border:1.5px solid #f59e0b;" +
-          "border-radius:16px;padding:16px 14px 18px";
+        pp.style.cssText = "margin-top:20px";
         pp.innerHTML =
-          '<div style="font-size:16px;font-weight:800;color:#b45309;line-height:1.45;margin-bottom:6px">' +
-            '⚠️ 설치할 때 이런 화면이 뜨면?' +
+          '<div style="display:flex;align-items:center;gap:9px;background:#eef4ff;border-radius:12px;' +
+            'padding:11px 13px;font-size:13.5px;color:#1e478e;line-height:1.5">' +
+            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" ' +
+            'stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto">' +
+            '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>' +
+            '<div><b style="color:#1746a2">빅토리처치는 안전합니다.</b> 아래 영상처럼 누르면 설치돼요.</div>' +
           '</div>' +
-          '<div style="font-size:14px;color:#92400e;line-height:1.6;margin-bottom:14px">' +
-            '<b>“안전하지 않은 앱 차단됨”</b> 화면이 나와도 <b>정상</b>이에요. ' +
-            '빅토리처치 바로가기는 안전합니다. <b>“확인”을 누르지 말고</b> 아래 순서대로 하세요.' +
-          '</div>' +
-          '<div style="max-width:230px;margin:0 auto 16px">' + samsungVisualPlayProtect() + '</div>' +
-          '<div class="a2hs-pp-steps"></div>';
+          '<div style="text-align:center;font-size:11.5px;font-weight:700;letter-spacing:.05em;' +
+            'color:#aab2bd;margin:16px 0 8px">이렇게 따라 하세요</div>' +
+          '<div style="max-width:230px;margin:0 auto">' + samsungVisualPlayProtect() + '</div>' +
+          '<div class="a2hs-pp-steps" style="margin-top:14px"></div>';
         pp.querySelector(".a2hs-pp-steps").innerHTML =
-          step(1, '<b>세부정보 더보기</b> (⌄) 를 누르세요') +
-          step(2, '아래에 나타나는 <b>무시하고 설치</b> 를 누르세요') +
-          step(3, '잠시 기다리면 홈 화면에 <b>아이콘</b> 이 생겨요!');
+          step(1, '<b>세부정보 더보기</b> 누르기') +
+          step(2, '<b>무시하고 설치</b> 누르기');
         return pp;
       };
 
       if (deferredPrompt) {
         // 최신 삼성 인터넷: 네이티브 설치(WebAPK) 가능 → 한 번에 설치되는 길을 우선 제공.
         // 차단 화면 통과법을 먼저 보여준 뒤 "설치하기"로 네이티브 설치창을 띄운다.
-        sub.innerHTML = "아래 <b>설치하기</b> 를 누르면 설치 창이 떠요. " +
-                        "도중에 차단 화면이 나오면 아래 영상처럼 하세요.";
+        sub.innerHTML = "아래 <b>설치하기</b> 를 누르면 끝나요. 보안 화면이 떠도 안전해요.";
         steps.appendChild(buildPlayProtectBox());
 
         var go = document.createElement("button");
