@@ -440,6 +440,79 @@
     }
     .a2hs-dlg-ok:hover { background: #249a61; }
     .a2hs-dlg-ok:active { transform: scale(.97); }
+
+    /* ── 삼성 인터넷: Google Play 프로텍트 통과 안내 모달 ── */
+    .pp-modal { position: fixed; inset: 0; z-index: 100000; display: none;
+      align-items: flex-end; justify-content: center; font-family: inherit; }
+    .pp-modal.show { display: flex; }
+    .pp-modal-dim { position: absolute; inset: 0; background: rgba(16,26,63,.55);
+      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+    .pp-card { position: relative; background: #fff; width: 100%; max-width: 460px;
+      border-radius: 22px 22px 0 0; padding: 24px 20px calc(20px + env(safe-area-inset-bottom));
+      max-height: 94vh; overflow: auto; box-shadow: 0 -8px 30px rgba(16,26,63,.2);
+      animation: a2hs-pop-in .3s ease; }
+    .pp-h { font-size: 20px; font-weight: 800; color: #101a3f; margin: 0 0 4px; text-align: center; }
+    .pp-warn { background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 14px;
+      padding: 13px 14px; margin: 14px 0; font-size: 14px; color: #92400e; line-height: 1.6; }
+    .pp-warn b { color: #b45309; }
+    .pp-steps { margin-top: 14px; }
+    .pp-step { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0;
+      border-top: 1px solid #eee; }
+    .pp-step:first-child { border-top: 0; }
+    .pp-num { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;
+      background: #2bb673; color: #fff; font-weight: 800; font-size: 16px;
+      display: flex; align-items: center; justify-content: center; }
+    .pp-sd { flex: 1; font-size: 16px; line-height: 1.5; color: #1f2937; padding-top: 3px; }
+    .pp-sd b { color: #1a73e8; }
+    .pp-go { display: block; width: 100%; margin-top: 18px; background: #2bb673; color: #fff;
+      border: 0; border-radius: 14px; font-size: 18px; font-weight: 800; padding: 16px;
+      cursor: pointer; font-family: inherit; }
+    .pp-go:active { transform: scale(.98); }
+    .pp-cancel { display: block; width: 100%; margin-top: 10px; background: transparent;
+      color: #6b7280; border: 0; font-size: 15px; padding: 8px; cursor: pointer; font-family: inherit; }
+
+    /* Play 프로텍트 화면 미리보기(애니메이션) — index.html a2hs.js 와 동일 */
+    .a2hs-pp { position: relative; height: 340px; }
+    .a2hs-pp-dlg { background: #fff; border: 1px solid #ececef; border-radius: 18px;
+      padding: 16px 16px 14px; box-shadow: 0 6px 22px rgba(16,26,63,.12); }
+    .a2hs-pp-head { display: flex; align-items: center; justify-content: center; gap: 5px;
+      font-size: 11px; color: #5f6368; margin-bottom: 9px; }
+    .a2hs-pp-ttl { font-size: 15px; font-weight: 800; color: #202124; text-align: center; margin-bottom: 13px; }
+    .a2hs-pp-app { display: flex; align-items: center; gap: 10px; background: #f1f3f4;
+      border-radius: 14px; padding: 9px 12px; margin-bottom: 12px; }
+    .a2hs-pp-appic { position: relative; width: 32px; height: 32px; flex: 0 0 auto; }
+    .a2hs-pp-appic img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #fff; }
+    .a2hs-pp-badge { position: absolute; right: -3px; bottom: -3px; width: 15px; height: 15px;
+      border-radius: 50%; background: #f9ab00; color: #fff; font-size: 10px; font-weight: 900;
+      font-style: normal; display: flex; align-items: center; justify-content: center; border: 2px solid #f1f3f4; }
+    .a2hs-pp-nm { font-size: 14px; font-weight: 700; color: #202124; }
+    .a2hs-pp-p1, .a2hs-pp-p2 { font-size: 11.5px; color: #5f6368; line-height: 1.5; text-align: left; }
+    .a2hs-pp-p2 { margin-bottom: 2px; }
+    .a2hs-pp-toggle { font-size: 13px; font-weight: 800; color: #1a73e8; text-align: left;
+      margin-top: 8px; overflow: hidden; animation: a2hs-ppToggle 5s ease-in-out infinite; }
+    .a2hs-pp-detail { overflow: hidden; max-height: 0; opacity: 0; text-align: left;
+      animation: a2hs-ppExpand 5s ease-in-out infinite; }
+    .a2hs-pp-install { display: inline-block; font-size: 13px; font-weight: 800; color: #1a73e8;
+      padding: 7px 9px; border-radius: 9px; margin-top: 6px; animation: a2hs-ppInstallHi 5s ease-in-out infinite; }
+    .a2hs-pp-ok { margin-top: 13px; background: #d3e3fd; color: #1a73e8; font-weight: 800;
+      font-size: 13px; text-align: center; border-radius: 11px; padding: 11px; }
+    .a2hs-pp-ripple { position: absolute; left: 74px; top: 202px; width: 36px; height: 36px;
+      border-radius: 50%; background: #1a73e8; transform: translate(-50%,-50%) scale(.3);
+      opacity: 0; pointer-events: none; animation: a2hs-ppRipple 5s ease-in-out infinite; }
+    .a2hs-pp-finger { position: absolute; left: 66px; top: 213px; font-size: 21px; pointer-events: none;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); animation: a2hs-ppFinger 5s ease-in-out infinite; }
+    @keyframes a2hs-ppExpand { 0%,32% { max-height: 0; opacity: 0; margin-top: 0; }
+      44% { max-height: 150px; opacity: 1; margin-top: 8px; } 88% { max-height: 150px; opacity: 1; margin-top: 8px; }
+      100% { max-height: 0; opacity: 0; margin-top: 0; } }
+    @keyframes a2hs-ppToggle { 0%,28% { opacity: 1; max-height: 30px; }
+      40%,88% { opacity: 0; max-height: 0; margin-top: 0; } 100% { opacity: 1; max-height: 30px; } }
+    @keyframes a2hs-ppRipple { 0%,16% { transform: translate(-50%,-50%) scale(.3); opacity: 0; }
+      24% { opacity: .4; } 34% { transform: translate(-50%,-50%) scale(2.4); opacity: 0; } 100% { opacity: 0; } }
+    @keyframes a2hs-ppFinger { 0% { transform: translateY(6px) scale(1); opacity: 0; }
+      12% { opacity: 1; } 22% { transform: translateY(0) scale(1); } 28% { transform: translateY(0) scale(.78); }
+      34% { transform: translateY(0) scale(1); } 48% { opacity: 1; } 58% { opacity: 0; } 100% { opacity: 0; } }
+    @keyframes a2hs-ppInstallHi { 0%,46% { background: transparent; } 56% { background: #e8f0fe; }
+      86% { background: #e8f0fe; } 100% { background: transparent; } }
   </style>
 </head>
 <body>
@@ -752,6 +825,7 @@
     // ----- 환경 감지 -----
     var ua = navigator.userAgent || '';
     var isAndroid = /android/i.test(ua);
+    var isSamsung = /SamsungBrowser/i.test(ua);
     var isIOS = /iphone|ipad|ipod/i.test(ua) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     var inApp = {
@@ -1038,6 +1112,44 @@
     document.getElementById('iosDim').addEventListener('click', closeSheet);
 
     // ----- 메인 버튼 동작 -----
+    // 실제 네이티브 설치(WebAPK) 프롬프트를 띄운다.
+    function startNativeInstall() {
+      if (deferredPrompt) {
+        btn.classList.add('loading');
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function (res) {
+          // accepted: 사용자가 "설치"를 눌렀음. 실제 설치는 OS가 1~2분 진행.
+          // → 진행 중 안내 카드 표시
+          if (res && res.outcome === 'accepted') {
+            btn.classList.remove('loading');
+            showProgressNote();
+          } else {
+            btn.classList.remove('loading');
+          }
+          deferredPrompt = null;
+        });
+        return;
+      }
+      // deferredPrompt 가 없는 경우
+      showDialog('설치할 수 없는 환경이에요.\n페이지를 새로고침한 후 다시 시도해 주세요.');
+    }
+
+    // ----- 삼성 인터넷 Play 프로텍트 안내 모달 -----
+    // 삼성 인터넷은 설치 후 "안전하지 않은 앱 차단됨" 화면이 뜨는데, 사용자가 여기서
+    // "확인"만 누르고 포기한다. 그래서 설치 프롬프트를 띄우기 "전에" 통과 방법을 먼저
+    // 보여주고, "계속 설치하기"를 누르면(=사용자 제스처) 그때 설치를 진행한다.
+    var ppModal = document.getElementById('ppModal');
+    function openPlayProtectGuide() { if (ppModal) ppModal.classList.add('show'); }
+    function closePlayProtectGuide() { if (ppModal) ppModal.classList.remove('show'); }
+    if (ppModal) {
+      document.getElementById('ppDim').addEventListener('click', closePlayProtectGuide);
+      document.getElementById('ppCancel').addEventListener('click', closePlayProtectGuide);
+      document.getElementById('ppGo').addEventListener('click', function () {
+        closePlayProtectGuide();
+        startNativeInstall();
+      });
+    }
+
     if (!isInApp) {
       btn.addEventListener('click', function () {
         if (isStandalone) return;
@@ -1045,24 +1157,12 @@
           openSheet();
           return;
         }
-        if (deferredPrompt) {
-          btn.classList.add('loading');
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then(function (res) {
-            // accepted: 사용자가 "설치"를 눌렀음. 실제 설치는 OS가 1~2분 진행.
-            // → 진행 중 안내 카드 표시
-            if (res && res.outcome === 'accepted') {
-              btn.classList.remove('loading');
-              showProgressNote();
-            } else {
-              btn.classList.remove('loading');
-            }
-            deferredPrompt = null;
-          });
+        // 삼성 인터넷 + 설치 가능 → 차단 화면 통과 안내를 먼저 보여준다.
+        if (isSamsung && deferredPrompt) {
+          openPlayProtectGuide();
           return;
         }
-        // deferredPrompt 가 없는 경우
-        showDialog('설치할 수 없는 환경이에요.\n페이지를 새로고침한 후 다시 시도해 주세요.');
+        startNativeInstall();
       });
     }
 
@@ -1100,5 +1200,49 @@
       navigator.serviceWorker.register('sw.js').catch(function () {});
     }
   </script>
+
+  <!-- 삼성 인터넷: 설치 직전 Google Play 프로텍트 통과 안내 -->
+  <div class="pp-modal" id="ppModal" role="dialog" aria-modal="true" aria-label="삼성 인터넷 설치 안내">
+    <div class="pp-modal-dim" id="ppDim"></div>
+    <div class="pp-card">
+      <h2 class="pp-h">삼성 인터넷 설치 안내</h2>
+      <div class="pp-warn">
+        설치를 누르면 <b>“안전하지 않은 앱 차단됨”</b> 화면이 나올 수 있어요.
+        당황하지 마세요 — <b>정상</b>이고 빅토리처치 바로가기는 <b>안전</b>합니다.
+        아래 영상처럼 따라 하시면 돼요.
+      </div>
+      <div style="max-width:230px;margin:0 auto">
+        <div class="a2hs-pp" role="img" aria-label="세부정보 더보기를 눌러 무시하고 설치하기가 나타나는 안내 영상">
+          <div class="a2hs-pp-dlg">
+            <div class="a2hs-pp-head">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              Google Play 프로텍트
+            </div>
+            <div class="a2hs-pp-ttl">안전하지 않은 앱 차단됨</div>
+            <div class="a2hs-pp-app">
+              <span class="a2hs-pp-appic"><img src="https://cdn.imweb.me/thumbnail/20260516/33c296729aee7.png" alt=""><i class="a2hs-pp-badge">!</i></span>
+              <span class="a2hs-pp-nm">빅토리처치</span>
+            </div>
+            <div class="a2hs-pp-p1">이 앱은 Android 이전 버전에 맞게 개발되었으며 최신 개인 정보 보호 기능을 포함하지 않습니다.</div>
+            <div class="a2hs-pp-toggle">세부정보 더보기 ⌄</div>
+            <div class="a2hs-pp-detail">
+              <div class="a2hs-pp-p2">이 앱을 설치하면 기기가 위험에 노출될 수 있습니다.</div>
+              <div class="a2hs-pp-install">무시하고 설치하기</div>
+            </div>
+            <div class="a2hs-pp-ok">확인</div>
+          </div>
+          <span class="a2hs-pp-ripple"></span>
+          <span class="a2hs-pp-finger">👆</span>
+        </div>
+      </div>
+      <div class="pp-steps">
+        <div class="pp-step"><div class="pp-num">1</div><div class="pp-sd"><b>세부정보 더보기</b> (⌄) 를 누르세요</div></div>
+        <div class="pp-step"><div class="pp-num">2</div><div class="pp-sd">아래에 나타나는 <b>무시하고 설치</b> 를 누르세요</div></div>
+        <div class="pp-step"><div class="pp-num">3</div><div class="pp-sd">잠시 기다리면 홈 화면에 <b>아이콘</b> 이 생겨요!</div></div>
+      </div>
+      <button class="pp-go" id="ppGo" type="button">알겠어요, 계속 설치하기</button>
+      <button class="pp-cancel" id="ppCancel" type="button">닫기</button>
+    </div>
+  </div>
 </body>
 </html>
