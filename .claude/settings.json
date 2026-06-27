@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "PowerShell(firebase deploy --only storage --project victorychurch-665a9)",
-      "PowerShell(firebase deploy --only functions --project victorychurch-665a9)"
+      "PowerShell(firebase deploy --only functions --project victorychurch-665a9)",
+      "Bash(ls -la .vscode)",
+      "Bash(cat .gitignore)",
+      "Bash(ls *.code-workspace)",
+      "Bash(cd tests *)",
+      "Read(//c/Users/gt198/AppData/Local/ms-playwright/**)"
     ]
   }
 }

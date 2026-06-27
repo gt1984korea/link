@@ -109,7 +109,11 @@
     "font-size:26px;line-height:1;cursor:pointer;padding:4px 8px}" +
     // 안내 시트 (고령층 친화: 큰 글씨)
     ".a2hs-sheet{position:fixed;inset:0;z-index:2147483647;display:none;" +
-    "font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif}" +
+    "font-family:'Gowun Dodum',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif}" +
+    // 시트 안에서는 Gowun Dodum 으로 통일 (앱 구절 카드와 같은 폰트)
+    ".a2hs-sheet .a2hs-h,.a2hs-sheet .a2hs-sub,.a2hs-sheet .a2hs-sd,.a2hs-sheet .a2hs-step," +
+    ".a2hs-sheet .a2hs-copy,.a2hs-sheet .a2hs-close2{font-family:'Gowun Dodum',-apple-system," +
+    "BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif}" +
     ".a2hs-sheet.show{display:block}" +
     ".a2hs-dim{position:absolute;inset:0;background:rgba(0,0,0,.5)}" +
     ".a2hs-card{position:absolute;left:0;right:0;bottom:0;background:#fff;color:#111;" +
@@ -149,6 +153,49 @@
     ".a2hs-add-mock svg{display:block;width:100%;height:auto}" +
     ".a2hs-add-mock-ic{position:absolute;left:15.38%;top:35.56%;width:23.08%;height:33.33%;" +
     "border-radius:22%;object-fit:cover;box-shadow:0 1px 4px rgba(16,26,63,.18)}" +
+    // 삼성 인터넷: Google Play 프로텍트 "안전하지 않은 앱 차단됨" 화면 미리보기
+    // — "세부정보 더보기"를 눌러 펼쳐지는 과정을 반복 애니메이션으로 보여준다(라이트 테마).
+    ".a2hs-pp{position:relative;height:340px}" +
+    ".a2hs-pp-dlg{background:#fff;border:1px solid #ececef;border-radius:18px;" +
+    "padding:16px 16px 14px;box-shadow:0 6px 22px rgba(16,26,63,.12)}" +
+    ".a2hs-pp-head{display:flex;align-items:center;justify-content:center;gap:5px;" +
+    "font-size:11px;color:#5f6368;margin-bottom:9px}" +
+    ".a2hs-pp-ttl{font-size:15px;font-weight:800;color:#202124;text-align:center;margin-bottom:13px}" +
+    ".a2hs-pp-app{display:flex;align-items:center;gap:10px;background:#f1f3f4;" +
+    "border-radius:14px;padding:9px 12px;margin-bottom:12px}" +
+    ".a2hs-pp-appic{position:relative;width:32px;height:32px;flex:0 0 auto}" +
+    ".a2hs-pp-appic img{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#fff}" +
+    ".a2hs-pp-badge{position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;border-radius:50%;" +
+    "background:#f9ab00;color:#fff;font-size:10px;font-weight:900;font-style:normal;" +
+    "display:flex;align-items:center;justify-content:center;border:2px solid #f1f3f4}" +
+    ".a2hs-pp-nm{font-size:14px;font-weight:700;color:#202124}" +
+    ".a2hs-pp-p1,.a2hs-pp-p2{font-size:11.5px;color:#5f6368;line-height:1.5;text-align:left}" +
+    ".a2hs-pp-p2{margin-bottom:2px}" +
+    ".a2hs-pp-toggle{font-size:13px;font-weight:800;color:#1a73e8;text-align:left;margin-top:8px;" +
+    "overflow:hidden;animation:a2hs-ppToggle 5s ease-in-out infinite}" +
+    ".a2hs-pp-detail{overflow:hidden;max-height:0;opacity:0;text-align:left;" +
+    "animation:a2hs-ppExpand 5s ease-in-out infinite}" +
+    ".a2hs-pp-install{display:inline-block;font-size:13px;font-weight:800;color:#1a73e8;" +
+    "padding:7px 9px;border-radius:9px;margin-top:6px;animation:a2hs-ppInstallHi 5s ease-in-out infinite}" +
+    ".a2hs-pp-ok{margin-top:13px;background:#d3e3fd;color:#1a73e8;font-weight:800;font-size:13px;" +
+    "text-align:center;border-radius:11px;padding:11px}" +
+    ".a2hs-pp-ripple{position:absolute;left:74px;top:202px;width:36px;height:36px;border-radius:50%;" +
+    "background:#1a73e8;transform:translate(-50%,-50%) scale(.3);opacity:0;pointer-events:none;" +
+    "animation:a2hs-ppRipple 5s ease-in-out infinite}" +
+    ".a2hs-pp-finger{position:absolute;left:66px;top:213px;font-size:21px;pointer-events:none;" +
+    "filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));animation:a2hs-ppFinger 5s ease-in-out infinite}" +
+    "@keyframes a2hs-ppExpand{0%,32%{max-height:0;opacity:0;margin-top:0}" +
+    "44%{max-height:150px;opacity:1;margin-top:8px}88%{max-height:150px;opacity:1;margin-top:8px}" +
+    "100%{max-height:0;opacity:0;margin-top:0}}" +
+    "@keyframes a2hs-ppToggle{0%,28%{opacity:1;max-height:30px}" +
+    "40%,88%{opacity:0;max-height:0;margin-top:0}100%{opacity:1;max-height:30px}}" +
+    "@keyframes a2hs-ppRipple{0%,16%{transform:translate(-50%,-50%) scale(.3);opacity:0}" +
+    "24%{opacity:.4}34%{transform:translate(-50%,-50%) scale(2.4);opacity:0}100%{opacity:0}}" +
+    "@keyframes a2hs-ppFinger{0%{transform:translateY(6px) scale(1);opacity:0}" +
+    "12%{opacity:1}22%{transform:translateY(0) scale(1)}28%{transform:translateY(0) scale(.78)}" +
+    "34%{transform:translateY(0) scale(1)}48%{opacity:1}58%{opacity:0}100%{opacity:0}}" +
+    "@keyframes a2hs-ppInstallHi{0%,46%{background:transparent}56%{background:#e8f0fe}" +
+    "86%{background:#e8f0fe}100%{background:transparent}}" +
     "@keyframes a2hs-pulse{0%{transform:scale(1);opacity:.7}70%{transform:scale(1.6);opacity:0}100%{transform:scale(1.6);opacity:0}}" +
     ".a2hs-pulse{transform-origin:center;animation:a2hs-pulse 1.6s ease-out infinite}" +
     // 커스텀 다이얼로그 (alert 대체)
@@ -432,6 +479,30 @@
         step(2, '<b>현재 페이지 추가</b> 를 누르세요') +
         step(3, '<b>홈 화면</b> 을 선택하고 <b>추가</b> 를 누르면 끝!');
       steps.appendChild(manual);
+
+      // 삼성 인터넷에서 설치를 누르면 안드로이드가 "Google Play 프로텍트 —
+      // 안전하지 않은 앱 차단됨" 화면을 띄워 막는 경우가 많다(WebAPK라서 그렇다).
+      // 사용자가 여기서 "확인"만 누르고 포기하므로, 통과 방법을 그림과 함께
+      // 가장 눈에 띄게 안내한다. — 이 화면이 떴을 때만 필요한 마지막 관문.
+      var pp = document.createElement("div");
+      pp.style.cssText =
+        "margin-top:22px;background:#fffbeb;border:1.5px solid #f59e0b;" +
+        "border-radius:16px;padding:16px 14px 18px";
+      pp.innerHTML =
+        '<div style="font-size:16px;font-weight:800;color:#b45309;line-height:1.45;margin-bottom:6px">' +
+          '⚠️ 설치할 때 이런 화면이 뜨면?' +
+        '</div>' +
+        '<div style="font-size:14px;color:#92400e;line-height:1.6;margin-bottom:14px">' +
+          '<b>“안전하지 않은 앱 차단됨”</b> 화면이 나와도 <b>정상</b>이에요. ' +
+          '빅토리처치 바로가기는 안전합니다. <b>“확인”을 누르지 말고</b> 아래 순서대로 하세요.' +
+        '</div>' +
+        '<div style="max-width:230px;margin:0 auto 16px">' + samsungVisualPlayProtect() + '</div>' +
+        '<div class="a2hs-pp-steps"></div>';
+      pp.querySelector(".a2hs-pp-steps").innerHTML =
+        step(1, '<b>세부정보 더보기</b> (⌄) 를 누르세요') +
+        step(2, '아래에 나타나는 <b>무시하고 설치</b> 를 누르세요') +
+        step(3, '잠시 기다리면 홈 화면에 <b>아이콘</b> 이 생겨요!');
+      steps.appendChild(pp);
     } else {
       // 안드로이드 크롬: deferredPrompt 가 없다는 건 이미 설치되었거나
       // 설치 조건이 미충족된 경우. 안내 시트 대신 짧은 알림으로 끝낸다.
@@ -630,6 +701,37 @@
   '<img class="a2hs-add-mock-ic" src="' + iconUrl + '" alt="">' +
 '</div>';
   }
+  // [삼성 전용] Google Play 프로텍트 "안전하지 않은 앱 차단됨" 화면 미리보기.
+  // 손가락이 "세부정보 더보기"를 누르면 펼쳐지며 "무시하고 설치하기"가 나타나는
+  // 과정을 CSS 애니메이션으로 반복 재생한다(라이트 테마, 실제 화면과 동일).
+  var SHIELD =
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5f6368" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>';
+  function samsungVisualPlayProtect() {
+    var iconUrl = CFG.icon || "icon-192.png";
+    return '' +
+'<div class="a2hs-pp" role="img" aria-label="세부정보 더보기를 눌러 무시하고 설치하기가 나타나는 안내 영상">' +
+  '<div class="a2hs-pp-dlg">' +
+    '<div class="a2hs-pp-head">' + SHIELD + ' Google Play 프로텍트</div>' +
+    '<div class="a2hs-pp-ttl">안전하지 않은 앱 차단됨</div>' +
+    '<div class="a2hs-pp-app">' +
+      '<span class="a2hs-pp-appic"><img src="' + iconUrl + '" alt=""><i class="a2hs-pp-badge">!</i></span>' +
+      '<span class="a2hs-pp-nm">빅토리처치</span>' +
+    '</div>' +
+    '<div class="a2hs-pp-p1">이 앱은 Android 이전 버전에 맞게 개발되었으며 최신 개인 정보 보호 기능을 포함하지 않습니다.</div>' +
+    '<div class="a2hs-pp-toggle">세부정보 더보기 ⌄</div>' +
+    '<div class="a2hs-pp-detail">' +
+      '<div class="a2hs-pp-p2">이 앱을 설치하면 기기가 위험에 노출될 수 있습니다.</div>' +
+      '<div class="a2hs-pp-install">무시하고 설치하기</div>' +
+    '</div>' +
+    '<div class="a2hs-pp-ok">확인</div>' +
+  '</div>' +
+  '<span class="a2hs-pp-ripple"></span>' +
+  '<span class="a2hs-pp-finger">👆</span>' +
+'</div>';
+  }
+
   function closeSheet() { if (sheet) sheet.classList.remove("show"); }
   function closeBanner() {
     if (!banner) return;

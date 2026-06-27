@@ -80,7 +80,7 @@ async function init() {
     showBtn();
   } else {
     setBtn('새 구절 알림 받기', false);
-    setHint('새 암송 구절이 올라오면 알려드려요');
+    setHint('새 암송 구절이 올라오면 알려드려요 · 누른 뒤 창이 뜨면 "허용"을 선택하세요');
     showBtn();
   }
 
@@ -99,11 +99,16 @@ async function onEnableClick() {
     return;
   }
   setBtn('허용 요청 중…', true);
+  // 곧 브라우저(삼성 인터넷 등)가 띄우는 권한 창에서 "허용"을 눌러야 알림이 켜진다.
+  // 어르신들이 "허용 안함"을 누르는 경우가 많아, 창이 뜨기 직전에 미리 안내한다.
+  setHint('곧 뜨는 창에서 꼭 "허용"을 눌러주세요 🔔');
+  // 안내문이 먼저 화면에 그려지도록 한 박자 양보한 뒤 권한 창을 띄운다.
+  await new Promise((r) => setTimeout(r, 60));
   try {
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') {
       setBtn('새 구절 알림 받기', false);
-      setHint('알림을 허용해야 새 구절 소식을 받을 수 있어요.');
+      setHint('"허용"을 눌러야 새 구절 소식을 받을 수 있어요. 버튼을 다시 눌러 "허용"을 선택해 주세요.');
       return;
     }
     await registerToken();

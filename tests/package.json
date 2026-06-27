@@ -6,6 +6,7 @@
   "scripts": {
     "install:browsers": "playwright install webkit chromium",
     "test:ios": "node ios-screenshots.js",
+    "test:samsung": "node samsung-screenshots.js",
     "test:banks": "node bank-buttons.test.js",
     "test:image-share": "node image-share.test.js"
   },
