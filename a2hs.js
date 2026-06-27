@@ -271,7 +271,11 @@
     try { window.dispatchEvent(new CustomEvent(name, { detail: detail || {} })); } catch (e) {}
   }
   function onAddClick() {
-    if (deferredPrompt) {
+    // 삼성 인터넷: 네이티브 prompt()가 즉시 설치창 대신 수동적인
+    // "웹 앱을 설치할 수 있음" 알림만 띄우는 경우가 많아(버튼은 계속 로딩만)
+    // 사용자가 "설치가 안 된다"고 느낀다. → 네이티브 프롬프트에 의존하지 않고
+    // 그 알림을 누르는 법 + 메뉴 수동 추가 안내를 항상 보여준다.
+    if (deferredPrompt && !isSamsung) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function (res) {
         if (res && res.outcome === "accepted") {
@@ -393,20 +397,41 @@
         return;
       }
       h.textContent = "삼성 인터넷 바로가기 만들기";
-      sub.innerHTML = "아래 <b>3단계</b>만 따라하면 끝나요. 약 10초면 충분해요.";
+      sub.innerHTML = "두 가지 방법 중 <b>편한 쪽</b>으로 하시면 돼요.";
 
       var iconUrl2 = CFG.icon || "icon-192.png";
-      steps.innerHTML =
-        '<div class="a2hs-ios-intro">' +
-          '<div class="ic"><img src="' + iconUrl2 + '" alt=""></div>' +
-          '<div>' +
-            '<div class="nm">' + escapeHtml(CFG.siteName) + '</div>' +
-            '<div class="sub">이 페이지를 홈 화면에 추가해요</div>' +
-          '</div>' +
+
+      // 방법 ①: 삼성 인터넷이 자동으로 띄우는 "웹 앱을 설치할 수 있음" 알림
+      //  — 화면 상단(또는 알림창)에 이 알림이 보이면, 그것만 누르면 바로 설치된다.
+      //    가장 쉬운 길이라 맨 위에 강조해서 보여준다.
+      var tip = document.createElement("div");
+      tip.style.cssText =
+        "display:flex;gap:12px;align-items:center;background:#eff6ff;border:1.5px solid #2563eb;" +
+        "border-radius:14px;padding:14px;margin-bottom:18px";
+      tip.innerHTML =
+        '<div style="flex:0 0 auto;width:42px;height:42px;border-radius:10px;overflow:hidden;' +
+          'background:#fff;display:flex;align-items:center;justify-content:center">' +
+          '<img src="' + iconUrl2 + '" alt="" style="width:100%;height:100%;object-fit:cover">' +
         '</div>' +
-        step(1, '화면 <b>아래쪽</b>의 <b>메뉴</b>(≡ 삼선 버튼)를 누르세요') +
+        '<div style="font-size:15px;line-height:1.5;color:#1d4ed8">' +
+          '<b>가장 쉬운 방법!</b><br>화면에 <b>“웹 앱을 설치할 수 있음”</b> 알림이 보이면, ' +
+          '그 알림만 <b>누르면</b> 바로 설치돼요.' +
+        '</div>';
+      steps.appendChild(tip);
+
+      var or = document.createElement("div");
+      or.style.cssText =
+        "text-align:center;font-size:14px;color:#9ca3af;font-weight:700;margin:0 0 6px";
+      or.textContent = "— 알림이 안 보이면 아래대로 —";
+      steps.appendChild(or);
+
+      // 방법 ②: 메뉴를 통한 수동 추가 (삼성 인터넷 메뉴는 화면 오른쪽 아래 ≡ 버튼)
+      var manual = document.createElement("div");
+      manual.innerHTML =
+        step(1, '화면 <b>오른쪽 아래</b>의 <b>메뉴</b>(≡ 삼선 버튼)를 누르세요') +
         step(2, '<b>현재 페이지 추가</b> 를 누르세요') +
         step(3, '<b>홈 화면</b> 을 선택하고 <b>추가</b> 를 누르면 끝!');
+      steps.appendChild(manual);
     } else {
       // 안드로이드 크롬: deferredPrompt 가 없다는 건 이미 설치되었거나
       // 설치 조건이 미충족된 경우. 안내 시트 대신 짧은 알림으로 끝낸다.
