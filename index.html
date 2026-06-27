@@ -33,7 +33,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js">
   <link rel="modulepreload" href="./firebase-config.js">
-  <link rel="modulepreload" href="./push.js?v=2">
+  <link rel="modulepreload" href="./push.js?v=3">
   <script>console.log('⚡ Victory Church Web Optimizer v3 Loaded');</script>
 
 
@@ -2439,14 +2439,6 @@
     // 서비스워커
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function(){});
-
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
-        }
-      });
     }
 
     // 앱을 열거나 다시 보면(=새 구절을 봤으면) 홈 화면 아이콘의 빨간 배지를 지웁니다.
@@ -3600,7 +3592,7 @@
     data-auto-banner="false"></script>
 
   <!-- 웹 푸시 알림 (새 구절 알림 받기 버튼 제어) -->
-  <script type="module" src="push.js?v=2"></script>
+  <script type="module" src="push.js?v=3"></script>
 
   <!-- TTS (ElevenLabs) -->
   <script>

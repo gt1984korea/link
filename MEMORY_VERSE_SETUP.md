@@ -62,12 +62,8 @@ cd link
 firebase deploy --only hosting
 ```
 
-`firebase.json` 은 `public/` 디렉토리를 호스팅 루트로 사용합니다.
-변경된 파일은 `index.html`, `admin.html`, `firebase-config.js` 모두
-**루트와 `public/` 양쪽에** 있어야 합니다 (현재 자동 복사 완료).
+`firebase.json` 은 루트 디렉토리(`.`)를 호스팅 루트로 사용하므로 별도의 빌드/복사 과정 없이 루트의 파일들이 바로 배포됩니다. (기존 레거시 `public/` 폴더는 정리되어 삭제되었습니다.)
 
-> 향후 편의를 위해 빌드 스크립트로 자동 동기화하거나,
-> `firebase.json` 의 `public` 을 `.` 로 바꾸는 것을 검토할 수 있습니다.
 
 ## 6. 사용
 

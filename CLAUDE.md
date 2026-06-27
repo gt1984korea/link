@@ -45,10 +45,9 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
 ## Architecture & gotchas
 
 - **`firebase.json` hosts the repo root (`"public": "."`)**, not the `public/` directory. The
-  `ignore` list excludes `public/`, `tests/`, `docs/`, `functions/`, `*.md`, `*.rules`,
-  `_*` scratch files, and `*.bak.*`. The `public/` folder is a stale duplicate of the served
-  files — treat root files as the source of truth and ignore `public/` unless deliberately
-  cleaning it up.
+  `ignore` list excludes `tests/`, `docs/`, `functions/`, `*.md`, `*.rules`,
+  `_*` scratch files, and `*.bak.*`. The legacy `public/` folder has been deleted.
+
 - **Firestore + Storage are the backend.** `index.html` subscribes (`onSnapshot`) to
   `site/memoryVerse` for real-time verse updates; `admin.html` writes to it (`setDoc ... merge`).
   The doc holds a **`verses` array** — each entry `{ id, text, reference, voiceId, startDate,
@@ -113,8 +112,3 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   (다운로드)만 노출한다. 전부 클라이언트 로컬 처리이며 Firestore/Storage에는
   아무것도 쓰지 않는다.
 
-## Files to keep in sync
-
-`index.html`, `admin.html`, and `firebase-config.js` historically had to be copied into both the
-root and `public/`. Since `firebase.json` now serves the root, edits should go to the **root**
-files; `public/` is legacy and excluded from hosting.

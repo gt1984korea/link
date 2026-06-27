@@ -10,7 +10,7 @@
  */
 
 self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener('activate', () => {});
 
 // FCM이 보낸 푸시 수신 → 알림 표시 + 홈 화면 아이콘 배지(iOS 16.4+/Android)
 self.addEventListener('push', (event) => {

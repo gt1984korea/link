@@ -23,7 +23,7 @@ service cloud.firestore {
       // 3) 커스텀 클레임 사용 (다수 관리자):
       //    allow write: if request.auth != null && request.auth.token.admin == true;
 
-      allow write: if true;
+      allow write: if request.auth != null && request.auth.token.email == 'admin@victorychurch.nz';
     }
 
     // 구절 좋아요 카운터: /verseStats/{verseId} = { likes }
