@@ -52,3 +52,54 @@ self.addEventListener('fetch', e => {
     )
   );
 });
+
+// FCM이 보낸 푸시 수신 → 알림 표시 + 홈 화면 아이콘 배지(iOS 16.4+/Android)
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (e) {
+    try { payload = { data: { body: event.data && event.data.text() } }; } catch (_) {}
+  }
+
+  // 데이터 메시지(data) 우선, 없으면 notification, 그래도 없으면 최상위에서 읽기
+  const d = payload.data || payload.notification || payload || {};
+  const title = d.title || '빅토리처치';
+  const body = d.body || '새 암송 구절이 등록되었어요.';
+  const url = d.url || '/';
+
+  try {
+    if (self.navigator && self.navigator.setAppBadge) self.navigator.setAppBadge(1);
+  } catch (e) {}
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: body,
+      icon: '/icon-192.png?v=4',
+      badge: '/icon-192.png?v=4',
+      tag: 'memory-verse',   // 같은 태그는 알림을 덮어써 중복 방지
+      renotify: true,
+      data: { url: url }
+    })
+  );
+});
+
+// 알림 탭 → 앱 열기/포커스 + 배지 제거
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+
+  try {
+    if (self.navigator && self.navigator.clearAppBadge) self.navigator.clearAppBadge();
+  } catch (e) {}
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if ('focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
+  );
+});
+

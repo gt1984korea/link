@@ -1,6 +1,7 @@
 node_modules/
 _*.mjs
 _*.png
+tests/screenshots/
 *.bak.*
 TEMP*
 .DS_Store

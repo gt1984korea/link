@@ -134,7 +134,7 @@ let swRegPromise = null;
 function getMessagingSW() {
   if (!('serviceWorker' in navigator)) return Promise.reject(new Error('serviceWorker unsupported'));
   if (!swRegPromise) {
-    swRegPromise = navigator.serviceWorker.register('firebase-messaging-sw.js');
+    swRegPromise = navigator.serviceWorker.register('sw.js');
   }
   return swRegPromise;
 }
