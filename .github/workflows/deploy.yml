@@ -1,6 +1,7 @@
 name: Firebase 자동 배포
 
 on:
+  workflow_dispatch:   # Actions 탭에서 콘텐츠 변경 없이도 수동 배포 가능
   push:
     branches:
       - main   # main 브랜치에 push 할 때만 실행
