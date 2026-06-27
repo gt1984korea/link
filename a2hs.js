@@ -437,72 +437,76 @@
           iosVisualAddScreen()
         );
     } else if (isSamsung) {
-      // 삼성 인터넷: 네이티브 프롬프트(deferredPrompt)가 없으면 여기로 온다.
-      // 짧은 알림으로 끝내지 말고, 삼성 인터넷 메뉴 기준 수동 안내를 보여준다.
+      // 삼성 인터넷.
       if (ls(K.installed) === "1") {
         showDialog({ title: "이미 설치되어 있어요", message: "앱 아이콘에서 열어 주세요." });
         return;
       }
       h.textContent = "삼성 인터넷 바로가기 만들기";
-      sub.innerHTML = "두 가지 방법 중 <b>편한 쪽</b>으로 하시면 돼요.";
 
-      var iconUrl2 = CFG.icon || "icon-192.png";
+      // 설치 도중 뜨는 "안전하지 않은 앱 차단됨"(Google Play 프로텍트) 통과 안내 박스.
+      // WebAPK라서 막히는 화면 — 여기서 "확인"만 누르고 포기하는 경우가 많아
+      // 애니메이션으로 통과 방법을 가장 눈에 띄게 보여준다.
+      var buildPlayProtectBox = function () {
+        var pp = document.createElement("div");
+        pp.style.cssText =
+          "margin-top:22px;background:#fffbeb;border:1.5px solid #f59e0b;" +
+          "border-radius:16px;padding:16px 14px 18px";
+        pp.innerHTML =
+          '<div style="font-size:16px;font-weight:800;color:#b45309;line-height:1.45;margin-bottom:6px">' +
+            '⚠️ 설치할 때 이런 화면이 뜨면?' +
+          '</div>' +
+          '<div style="font-size:14px;color:#92400e;line-height:1.6;margin-bottom:14px">' +
+            '<b>“안전하지 않은 앱 차단됨”</b> 화면이 나와도 <b>정상</b>이에요. ' +
+            '빅토리처치 바로가기는 안전합니다. <b>“확인”을 누르지 말고</b> 아래 순서대로 하세요.' +
+          '</div>' +
+          '<div style="max-width:230px;margin:0 auto 16px">' + samsungVisualPlayProtect() + '</div>' +
+          '<div class="a2hs-pp-steps"></div>';
+        pp.querySelector(".a2hs-pp-steps").innerHTML =
+          step(1, '<b>세부정보 더보기</b> (⌄) 를 누르세요') +
+          step(2, '아래에 나타나는 <b>무시하고 설치</b> 를 누르세요') +
+          step(3, '잠시 기다리면 홈 화면에 <b>아이콘</b> 이 생겨요!');
+        return pp;
+      };
 
-      // 방법 ①: 삼성 인터넷이 자동으로 띄우는 "웹 앱을 설치할 수 있음" 알림
-      //  — 화면 상단(또는 알림창)에 이 알림이 보이면, 그것만 누르면 바로 설치된다.
-      //    가장 쉬운 길이라 맨 위에 강조해서 보여준다.
-      var tip = document.createElement("div");
-      tip.style.cssText =
-        "display:flex;gap:12px;align-items:center;background:#eff6ff;border:1.5px solid #2563eb;" +
-        "border-radius:14px;padding:14px;margin-bottom:18px";
-      tip.innerHTML =
-        '<div style="flex:0 0 auto;width:42px;height:42px;border-radius:10px;overflow:hidden;' +
-          'background:#fff;display:flex;align-items:center;justify-content:center">' +
-          '<img src="' + iconUrl2 + '" alt="" style="width:100%;height:100%;object-fit:cover">' +
-        '</div>' +
-        '<div style="font-size:15px;line-height:1.5;color:#1d4ed8">' +
-          '<b>가장 쉬운 방법!</b><br>화면에 <b>“웹 앱을 설치할 수 있음”</b> 알림이 보이면, ' +
-          '그 알림만 <b>누르면</b> 바로 설치돼요.' +
-        '</div>';
-      steps.appendChild(tip);
+      if (deferredPrompt) {
+        // 최신 삼성 인터넷: 네이티브 설치(WebAPK) 가능 → 한 번에 설치되는 길을 우선 제공.
+        // 차단 화면 통과법을 먼저 보여준 뒤 "설치하기"로 네이티브 설치창을 띄운다.
+        sub.innerHTML = "아래 <b>설치하기</b> 를 누르면 설치 창이 떠요. " +
+                        "도중에 차단 화면이 나오면 아래 영상처럼 하세요.";
+        steps.appendChild(buildPlayProtectBox());
 
-      var or = document.createElement("div");
-      or.style.cssText =
-        "text-align:center;font-size:14px;color:#9ca3af;font-weight:700;margin:0 0 6px";
-      or.textContent = "— 알림이 안 보이면 아래대로 —";
-      steps.appendChild(or);
+        var go = document.createElement("button");
+        go.className = "a2hs-copy";
+        go.textContent = "설치하기";
+        go.onclick = function () {
+          if (!deferredPrompt) {
+            showDialog({ variant: "warn", title: "설치 창을 열 수 없어요", message: "페이지를 새로고침한 뒤 다시 시도해 주세요." });
+            return;
+          }
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function (res) {
+            emit("a2hs:result", { outcome: (res && res.outcome === "accepted") ? "accepted" : "dismissed" });
+            deferredPrompt = null;
+          });
+        };
+        extra.appendChild(go);
 
-      // 방법 ②: 메뉴를 통한 수동 추가 (삼성 인터넷 메뉴는 화면 오른쪽 아래 ≡ 버튼)
-      var manual = document.createElement("div");
-      manual.innerHTML =
-        step(1, '화면 <b>오른쪽 아래</b>의 <b>메뉴</b>(≡ 삼선 버튼)를 누르세요') +
-        step(2, '<b>현재 페이지 추가</b> 를 누르세요') +
-        step(3, '<b>홈 화면</b> 을 선택하고 <b>추가</b> 를 누르면 끝!');
-      steps.appendChild(manual);
-
-      // 삼성 인터넷에서 설치를 누르면 안드로이드가 "Google Play 프로텍트 —
-      // 안전하지 않은 앱 차단됨" 화면을 띄워 막는 경우가 많다(WebAPK라서 그렇다).
-      // 사용자가 여기서 "확인"만 누르고 포기하므로, 통과 방법을 그림과 함께
-      // 가장 눈에 띄게 안내한다. — 이 화면이 떴을 때만 필요한 마지막 관문.
-      var pp = document.createElement("div");
-      pp.style.cssText =
-        "margin-top:22px;background:#fffbeb;border:1.5px solid #f59e0b;" +
-        "border-radius:16px;padding:16px 14px 18px";
-      pp.innerHTML =
-        '<div style="font-size:16px;font-weight:800;color:#b45309;line-height:1.45;margin-bottom:6px">' +
-          '⚠️ 설치할 때 이런 화면이 뜨면?' +
-        '</div>' +
-        '<div style="font-size:14px;color:#92400e;line-height:1.6;margin-bottom:14px">' +
-          '<b>“안전하지 않은 앱 차단됨”</b> 화면이 나와도 <b>정상</b>이에요. ' +
-          '빅토리처치 바로가기는 안전합니다. <b>“확인”을 누르지 말고</b> 아래 순서대로 하세요.' +
-        '</div>' +
-        '<div style="max-width:230px;margin:0 auto 16px">' + samsungVisualPlayProtect() + '</div>' +
-        '<div class="a2hs-pp-steps"></div>';
-      pp.querySelector(".a2hs-pp-steps").innerHTML =
-        step(1, '<b>세부정보 더보기</b> (⌄) 를 누르세요') +
-        step(2, '아래에 나타나는 <b>무시하고 설치</b> 를 누르세요') +
-        step(3, '잠시 기다리면 홈 화면에 <b>아이콘</b> 이 생겨요!');
-      steps.appendChild(pp);
+        var alt = document.createElement("div");
+        alt.style.cssText = "font-size:13px;color:#9ca3af;line-height:1.5;margin-top:12px;text-align:center";
+        alt.innerHTML = "잘 안 되면: 오른쪽 아래 <b>메뉴(≡)</b> → <b>현재 페이지 추가</b> → <b>홈 화면</b>";
+        extra.appendChild(alt);
+      } else {
+        // 네이티브 프롬프트가 없을 때 → 메뉴 수동 추가 안내 + 차단 화면 통과 안내.
+        sub.innerHTML = "오른쪽 아래 <b>메뉴(≡)</b> 로 홈 화면에 추가할 수 있어요.";
+        var manual = document.createElement("div");
+        manual.innerHTML =
+          step(1, '화면 <b>오른쪽 아래</b>의 <b>메뉴</b>(≡ 삼선 버튼)를 누르세요') +
+          step(2, '<b>현재 페이지 추가</b> 를 누르세요') +
+          step(3, '<b>홈 화면</b> 을 선택하고 <b>추가</b> 를 누르면 끝!');
+        steps.appendChild(manual);
+        steps.appendChild(buildPlayProtectBox());
+      }
     } else {
       // 안드로이드 크롬: deferredPrompt 가 없다는 건 이미 설치되었거나
       // 설치 조건이 미충족된 경우. 안내 시트 대신 짧은 알림으로 끝낸다.

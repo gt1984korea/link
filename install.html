@@ -1138,16 +1138,24 @@
     // 삼성 인터넷은 설치 후 "안전하지 않은 앱 차단됨" 화면이 뜨는데, 사용자가 여기서
     // "확인"만 누르고 포기한다. 그래서 설치 프롬프트를 띄우기 "전에" 통과 방법을 먼저
     // 보여주고, "계속 설치하기"를 누르면(=사용자 제스처) 그때 설치를 진행한다.
-    var ppModal = document.getElementById('ppModal');
-    function openPlayProtectGuide() { if (ppModal) ppModal.classList.add('show'); }
-    function closePlayProtectGuide() { if (ppModal) ppModal.classList.remove('show'); }
-    if (ppModal) {
-      document.getElementById('ppDim').addEventListener('click', closePlayProtectGuide);
-      document.getElementById('ppCancel').addEventListener('click', closePlayProtectGuide);
-      document.getElementById('ppGo').addEventListener('click', function () {
-        closePlayProtectGuide();
-        startNativeInstall();
-      });
+    // 모달 마크업은 이 스크립트 "뒤"에 있어, 스크립트 실행 시점엔 아직 DOM 에 없다.
+    // 그래서 요소를 캐시하지 말고 호출 시점에 조회하고, 버튼 바인딩은 DOM 준비 후 한다.
+    function openPlayProtectGuide() { var m = document.getElementById('ppModal'); if (m) m.classList.add('show'); }
+    function closePlayProtectGuide() { var m = document.getElementById('ppModal'); if (m) m.classList.remove('show'); }
+    function wirePlayProtectGuide() {
+      var m = document.getElementById('ppModal');
+      if (!m) return;
+      var dim = document.getElementById('ppDim');
+      var cancel = document.getElementById('ppCancel');
+      var go = document.getElementById('ppGo');
+      if (dim) dim.addEventListener('click', closePlayProtectGuide);
+      if (cancel) cancel.addEventListener('click', closePlayProtectGuide);
+      if (go) go.addEventListener('click', function () { closePlayProtectGuide(); startNativeInstall(); });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', wirePlayProtectGuide);
+    } else {
+      wirePlayProtectGuide();
     }
 
     if (!isInApp) {
@@ -1157,9 +1165,14 @@
           openSheet();
           return;
         }
-        // 삼성 인터넷 + 설치 가능 → 차단 화면 통과 안내를 먼저 보여준다.
-        if (isSamsung && deferredPrompt) {
-          openPlayProtectGuide();
+        // 삼성 인터넷: 설치 가능하면 차단 화면 통과 안내를 먼저 보여주고,
+        // 네이티브 설치창이 없는 구형이면 메뉴 수동 추가 방법을 안내한다.
+        if (isSamsung) {
+          if (deferredPrompt) {
+            openPlayProtectGuide();
+          } else {
+            showDialog('오른쪽 아래 메뉴(≡) → "현재 페이지 추가" → "홈 화면" 을 차례로 누르면 추가돼요.', '삼성 인터넷에서 추가하기');
+          }
           return;
         }
         startNativeInstall();
