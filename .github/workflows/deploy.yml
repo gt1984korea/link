@@ -47,8 +47,22 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-sa.json" >> "$GITHUB_ENV"
 
       # FirebaseExtended/action-hosting-deploy 대신 CLI 로 직접 배포한다.
-      # CLI 는 배포마다 새 버전을 만들어 릴리스하므로, 콘텐츠가 라이브와 동일해도
-      # "supplied version ... is the current active version" (FAILED_PRECONDITION)
-      # 으로 실패하지 않는다.
+      # 다만 콘텐츠가 라이브와 byte 단위로 동일하면 Firebase 는 같은 content-hash
+      # version 을 재사용하고, 이미 활성(active)인 그 버전을 다시 release 하려다
+      # 400 FAILED_PRECONDITION ("supplied version ... is the current active
+      # version") 으로 실패한다. 이 경우 사이트는 이미 원하는 상태이므로
+      # 에러를 무시하고 성공으로 처리한다. 그 외 에러는 그대로 실패시킨다.
       - name: Firebase Hosting 배포
-        run: npx --yes firebase-tools@latest deploy --only hosting --project victorychurch-665a9 --non-interactive
+        run: |
+          set +e
+          out=$(npx --yes firebase-tools@latest deploy --only hosting --project victorychurch-665a9 --non-interactive 2>&1)
+          code=$?
+          set -e
+          echo "$out"
+          if [ "$code" -ne 0 ]; then
+            if echo "$out" | grep -q "is the current active version"; then
+              echo "ℹ️  배포할 콘텐츠가 이미 라이브 버전과 동일합니다. 재배포를 건너뜁니다 (성공 처리)."
+              exit 0
+            fi
+            exit "$code"
+          fi
