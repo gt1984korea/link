@@ -24,7 +24,7 @@
   <meta name="apple-mobile-web-app-title" content="빅토리처치">
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=optional" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
   <link rel="preload" href="https://fonts.gstatic.com/s/gowundodum/v12/3Jn5SD_00GqwlBnWc1TUJF0F.ttf" as="font" type="font/ttf" crossorigin>
 
   <!-- Performance Optimization: Module Preloads & Logo Preload -->
@@ -360,7 +360,7 @@
     .verse .ref {
       font-family: 'Gowun Dodum', sans-serif;
       display: block;
-      margin-top: 16px;
+      margin-bottom: 16px;
       font-size: 18px;
       color: var(--text-2);
       font-weight: 700;
@@ -424,7 +424,13 @@
       display: block;
       width: 100%;
       height: auto;
+      /* 로드 전 자리 확보 → 이미지가 뜰 때 페이지가 출렁이지 않음.
+         실제 비율은 로드 후 JS(renderNews)가 inline style로 덮어씀. */
+      aspect-ratio: 3 / 2;
+      object-fit: cover;
+      background: #eef2fb;
     }
+    .news-item img.loaded { object-fit: fill; }
 
     /* 지난 암송 구절 모달 스타일 (라이트 테마) */
     .modal-content.past-modal-content {
@@ -1593,8 +1599,8 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
       </div>
-      <h1 class="text" id="verseText"></h1>
       <span class="ref" id="verseRef"></span>
+      <h1 class="text" id="verseText"></h1>
       <div class="tts-row" id="verseActions">
         <button class="va-btn" id="likeBtn" type="button" aria-pressed="false" aria-label="좋아요">
           <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2557,20 +2563,42 @@
       list.forEach((n, i) => {
         let url = (n.linkUrl || '').trim();
         if (url && !/^https?:\/\//i.test(url)) url = '';
+        const wantTag = url ? 'A' : 'DIV';
         const oldEl = existing[i];
         const oldImg = oldEl ? oldEl.querySelector('img') : null;
-        // 경로가 같으면 src를 건드리지 않음 → 이미 로드된 이미지 유지
-        if (oldImg && _imgPath(oldImg.src) === _imgPath(n.imageUrl)) {
-          if (url && oldEl.tagName === 'A') oldEl.href = url;
+        const samePath = !!oldImg && _imgPath(oldImg.src) === _imgPath(n.imageUrl);
+
+        // 같은 이미지 + 같은 래퍼 태그 → 제자리에서 링크/대체텍스트만 갱신 (재다운로드 없음)
+        if (samePath && oldEl.tagName === wantTag) {
+          if (url) oldEl.href = url;
+          oldImg.alt = n.name || '새소식';
           return;
         }
+
+        // 그 외엔 래퍼를 새로 만든다. 단 같은 이미지면 기존 <img> 노드를
+        // 그대로 옮겨 담아(append = 이동) 브라우저 재다운로드를 막는다.
         const wrap = document.createElement(url ? 'a' : 'div');
         wrap.className = 'news-item';
         if (url) { wrap.href = url; wrap.target = '_blank'; wrap.rel = 'noopener noreferrer'; }
-        const img = document.createElement('img');
-        img.src = n.imageUrl;
+
+        let img;
+        if (samePath) {
+          img = oldImg;                       // 이미 로드된 노드 재사용 (비율 inline style도 유지)
+        } else {
+          img = document.createElement('img');
+          img.loading = 'eager';
+          // 로드 후 실제 비율을 적용해 placeholder 비율(3:2)과의 미세한 차이를 보정
+          const applyRatio = () => {
+            if (img.naturalWidth && img.naturalHeight) {
+              img.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+              img.classList.add('loaded');
+            }
+          };
+          img.addEventListener('load', applyRatio);
+          img.src = n.imageUrl;
+          if (img.complete) applyRatio();     // 캐시된 이미지 대응
+        }
         img.alt = n.name || '새소식';
-        img.loading = 'eager';
         wrap.appendChild(img);
         if (oldEl) listEl.replaceChild(wrap, oldEl);
         else listEl.appendChild(wrap);
@@ -2585,6 +2613,13 @@
       const htmlText = text.replace(/\n/g, '<br>');
       elText.innerHTML = htmlText;
       elRef.textContent = reference || '';
+      // Gowun Dodum은 굵기 400만 있는 단일 폰트라 글자마다 서브셋 로드 타이밍이 어긋나면
+      // 일부만 폴백(진짜 볼드)로 굵게 떠 보인다. 본문/출처에 쓰인 글자의 서브셋을
+      // 미리 로드해 swap으로 한꺼번에 같은 폰트로 통일시킨다.
+      if (document.fonts && document.fonts.load) {
+        const chars = (text || '') + (reference || '');
+        document.fonts.load(`700 28px 'Gowun Dodum'`, chars).catch(() => {});
+      }
     }
 
     // 활성 구절을 고유하게 식별하는 키 (id 우선, 없으면 시작일+본문 조합)

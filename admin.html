@@ -131,7 +131,7 @@
       margin: 0;
     }
     .preview .ref {
-      display: block; margin-top: 10px; font-size: 13px;
+      display: block; margin-bottom: 10px; font-size: 13px;
       color: var(--text-2); font-weight: 600; text-align: right;
     }
 
@@ -229,7 +229,7 @@
       margin: 0 0 4px;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .vrow-ref { font-size: 12px; color: var(--text-2); font-weight: 600; }
+    .vrow-ref { font-size: 12px; color: var(--text-2); font-weight: 600; margin-bottom: 4px; }
     .vrow-actions { display: flex; gap: 8px; margin-top: 12px; }
     .vrow-actions .btn { padding: 9px 12px; font-size: 13px; }
     .btn-danger { background: #fff; color: var(--danger); border-color: #f3c7c7; }
@@ -385,6 +385,35 @@
       color: var(--navy);
     }
 
+    /* 탭 메뉴 */
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-2);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 15px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s ease, border-color .15s ease, color .15s ease, transform .08s ease;
+    }
+    .tab-btn:hover { border-color: #d4d6dc; color: var(--text); }
+    .tab-btn:active { transform: scale(.97); }
+    .tab-btn.active {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+
     /* PC 레이아웃: 좌측 등록 폼 / 우측 등록된 구절 목록, 정확히 절반씩 2단 구성 */
     @media (min-width: 1024px) {
       .wrap { max-width: 1240px; }
@@ -421,6 +450,17 @@
         padding-right: 4px;
       }
       #listCard #listHint { flex-shrink: 0; }
+
+      /* 구절 탭이 아닐 때는 단일 컬럼으로(우측 빈 공간 방지) */
+      body:not([data-tab="verse"]) .admin-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      body:not([data-tab="verse"]) .col-list {
+        position: static;
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
+      }
     }
   </style>
 </head>
@@ -445,6 +485,16 @@
       <p class="hint">※ 이 게이트는 단순 보호입니다. 실제 쓰기 보안은 Firestore 보안 규칙으로 합니다.</p>
     </section>
 
+    <!-- 탭 메뉴 (입장 후 표시) -->
+    <nav class="tabs hidden" id="tabNav" role="tablist" aria-label="관리 메뉴">
+      <button type="button" class="tab-btn active" role="tab" aria-selected="true" data-target="verse">📖 암송 구절</button>
+      <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="audio">🎙️ 음성 녹음</button>
+      <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="sns">📱 SNS·영상</button>
+      <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="bg">🖼️ 카드 배경</button>
+      <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="news">📰 새소식</button>
+      <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="stats">📊 통계·알림</button>
+    </nav>
+
     <div class="admin-grid">
 
     <div class="col-form">
@@ -453,11 +503,11 @@
     <section class="card hidden" id="editor">
       <h2 id="editorTitle">새 암송 구절 추가</h2>
 
-      <label for="verseText">구절 본문</label>
-      <textarea id="verseText" placeholder="예) 하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니…"></textarea>
-
       <label for="verseRef">출처</label>
       <input type="text" id="verseRef" placeholder="예) 요한복음 3:16">
+
+      <label for="verseText">구절 본문</label>
+      <textarea id="verseText" placeholder="예) 하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니…"></textarea>
 
       <label>표시 기간 (이 기간에만 메인 화면에 표시됩니다)</label>
       <div class="date-row">
@@ -713,8 +763,8 @@
       <h2>현재 화면 미리보기(사용자 화면)</h2>
       <div class="preview">
         <span class="label">이번 주 암송 구절</span>
-        <p class="text" id="pvText">—</p>
         <span class="ref" id="pvRef"></span>
+        <p class="text" id="pvText">—</p>
       </div>
       <p class="hint" style="margin-top:14px">저장하면 모든 사용자 화면에 실시간 반영됩니다.</p>
     </section>
@@ -922,17 +972,17 @@
         }
         row.appendChild(top);
 
-        const tx = document.createElement('p');
-        tx.className = 'vrow-text';
-        tx.textContent = (v.text || '').trim();
-        row.appendChild(tx);
-
         if ((v.reference || '').trim()) {
           const rf = document.createElement('div');
           rf.className = 'vrow-ref';
           rf.textContent = v.reference.trim();
           row.appendChild(rf);
         }
+
+        const tx = document.createElement('p');
+        tx.className = 'vrow-text';
+        tx.textContent = (v.text || '').trim();
+        row.appendChild(tx);
 
         const act = document.createElement('div');
         act.className = 'vrow-actions';
@@ -2049,19 +2099,52 @@
       }
     }
 
+    // 탭별로 묶인 카드 그룹 (id 기준)
+    const TAB_GROUPS = {
+      verse: ['editor', 'previewCard', 'listCard'],
+      audio: ['audioCard'],
+      sns:   ['instaCard', 'fbCard', 'ytCard'],
+      bg:    ['bgCard'],
+      news:  ['newsCard'],
+      stats: ['pushCard', 'statsCard'],
+    };
+
+    function switchTab(name, scroll = true) {
+      if (!TAB_GROUPS[name]) name = 'verse';
+      document.body.setAttribute('data-tab', name);
+      Object.entries(TAB_GROUPS).forEach(([tab, ids]) => {
+        const show = tab === name;
+        ids.forEach(id => {
+          const el = $(id);
+          if (el) el.classList.toggle('hidden', !show);
+        });
+      });
+      document.querySelectorAll('#tabNav .tab-btn').forEach(b => {
+        const on = b.dataset.target === name;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    const tabBtns = Array.from(document.querySelectorAll('#tabNav .tab-btn'));
+    tabBtns.forEach((b, i) => {
+      b.addEventListener('click', () => switchTab(b.dataset.target));
+      // 좌/우 화살표로 탭 이동(접근성)
+      b.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        const dir = e.key === 'ArrowRight' ? 1 : -1;
+        const next = tabBtns[(i + dir + tabBtns.length) % tabBtns.length];
+        switchTab(next.dataset.target);
+        next.focus();
+      });
+    });
+
     function enterAdmin() {
       gate.classList.add('hidden');
-      editor.classList.remove('hidden');
-      listCard.classList.remove('hidden');
-      $('audioCard').classList.remove('hidden');
-      $('instaCard').classList.remove('hidden');
-      $('fbCard').classList.remove('hidden');
-      $('ytCard').classList.remove('hidden');
-      $('pushCard').classList.remove('hidden');
-      previewCard.classList.remove('hidden');
-      bgCard.classList.remove('hidden');
-      newsCard.classList.remove('hidden');
-      $('statsCard').classList.remove('hidden');
+      $('tabNav').classList.remove('hidden');
+      switchTab('verse', false);
       loadPushCount();
       try { initDb(); } catch (e) {
         saveStatus.textContent = 'Firebase 초기화 실패: ' + (e.message || e);
