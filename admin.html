@@ -404,22 +404,20 @@
         position: sticky;
         top: 20px;
         max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
         display: flex;
         flex-direction: column;
         gap: 14px;
         min-width: 0;
+        padding-right: 6px;
       }
       .col-form .card, .col-list .card { margin-bottom: 0; }
       #listCard {
-        flex: 1;
-        min-height: 0;
         display: flex;
         flex-direction: column;
       }
       #listCard .vlist {
-        overflow-y: auto;
-        flex: 1;
-        min-height: 0;
         padding-right: 4px;
       }
       #listCard #listHint { flex-shrink: 0; }
@@ -1147,6 +1145,25 @@
         nameSpan.textContent = a.name;
         nameSpan.style.cssText = 'flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-2); font-size:14px;';
 
+        // 순서 이동 버튼 (위/아래)
+        const up = document.createElement('button');
+        up.type = 'button';
+        up.className = 'btn btn-ghost';
+        up.textContent = '▲';
+        up.title = '위로';
+        up.style.cssText = 'padding:5px 9px; font-size:13px; flex:0 0 auto;';
+        up.disabled = i === 0;
+        up.addEventListener('click', () => moveAudio(i, -1));
+
+        const down = document.createElement('button');
+        down.type = 'button';
+        down.className = 'btn btn-ghost';
+        down.textContent = '▼';
+        down.title = '아래로';
+        down.style.cssText = 'padding:5px 9px; font-size:13px; flex:0 0 auto;';
+        down.disabled = i === audioFilesData.length - 1;
+        down.addEventListener('click', () => moveAudio(i, 1));
+
         const del = document.createElement('button');
         del.type = 'button';
         del.className = 'btn btn-ghost';
@@ -1156,6 +1173,8 @@
 
         head.appendChild(badge);
         head.appendChild(nameSpan);
+        head.appendChild(up);
+        head.appendChild(down);
         head.appendChild(del);
 
         const au = document.createElement('audio');
@@ -1296,6 +1315,34 @@
       } catch (e) {
         audioStatus.textContent = '삭제 실패: ' + (e.message || e);
         audioStatus.className = 'status err';
+      }
+    }
+
+    // 녹음 순서 변경 (dir: -1 위로, +1 아래로) — Storage는 그대로 두고 배열 순서만 저장
+    async function moveAudio(idx, dir) {
+      const prev = audioFilesData.slice();   // 실패 시 복구용 (renderAudio가 audioFilesData를 덮어쓰기 때문)
+      const next = audioFilesData.slice();
+      const to = idx + dir;
+      if (to < 0 || to >= next.length) return;
+      [next[idx], next[to]] = [next[to], next[idx]]; // 인접 항목과 자리 교환
+      // 낙관적 렌더링 — 즉시 새 순서 반영
+      renderAudio({ audioFiles: next });
+      audioStatus.textContent = '순서 저장 중…';
+      audioStatus.className = 'status';
+      try {
+        await setDoc(ref, {
+          audioFiles: next,
+          audioUrl: deleteField(),
+          audioPath: deleteField(),
+          audioName: deleteField(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        audioStatus.textContent = '순서를 저장했습니다. 읽어주기가 이 순서대로 재생합니다.';
+        audioStatus.className = 'status ok';
+      } catch (e) {
+        audioStatus.textContent = '순서 저장 실패: ' + (e.message || e);
+        audioStatus.className = 'status err';
+        renderAudio({ audioFiles: prev }); // 실패 시 이전 순서로 복구
       }
     }
 
