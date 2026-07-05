@@ -492,6 +492,7 @@
       <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="sns">📱 SNS·영상</button>
       <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="bg">🖼️ 카드 배경</button>
       <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="news">📰 새소식</button>
+      <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="prayer">🙏 중보기도</button>
       <button type="button" class="tab-btn" role="tab" aria-selected="false" data-target="stats">📊 통계·알림</button>
     </nav>
 
@@ -796,6 +797,18 @@
       </div>
     </section>
 
+    <!-- 중보기도 관리 -->
+    <section class="card hidden" id="prayerAdminCard">
+      <h2>중보기도 관리</h2>
+      <p class="hint" style="margin:-6px 0 14px">
+        공개 글은 제목·내용이 게시판(<code>/prayer</code>)에 노출됩니다. <b>비공개</b> 글은 <b>제목만</b> 게시판에 보이고,
+        내용은 여기에서만 확인됩니다. 부적절한 글은 <b>삭제</b>로 내릴 수 있습니다.
+      </p>
+      <div id="prayerAdminList" style="display:flex; flex-direction:column; gap:10px;">
+        <p class="hint">불러오는 중…</p>
+      </div>
+    </section>
+
     <!-- 등록된 구절 목록 -->
     <section class="card hidden" id="listCard">
       <h2>등록된 암송 구절</h2>
@@ -813,11 +826,11 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp, deleteField }
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp, deleteField, collection, deleteDoc }
       from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject }
       from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
-    import { firebaseConfig, VERSE_DOC_PATH, ADMIN_PASSCODE } from "./firebase-config.js";
+    import { firebaseConfig, VERSE_DOC_PATH, ADMIN_PASSCODE, PRAYER_COLLECTION, PRAYER_CONTENT_COLLECTION } from "./firebase-config.js";
 
     const $ = (id) => document.getElementById(id);
     const gate = $('gate'), editor = $('editor'), previewCard = $('previewCard');
@@ -935,6 +948,95 @@
       const okE = !v.endDate   || today <= v.endDate;
       return okS && okE;
     }
+
+    /* ───────── 중보기도 관리 ───────── */
+    function escHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    // 비공개 글의 실제 내용(/prayerContents)을 join 하기 위한 캐시
+    let prayerItems = [];
+    let prayerContentMap = {};   // { [id]: text }
+    function renderPrayers() {
+      const box = $('prayerAdminList');
+      if (!box) return;
+      const items = prayerItems.slice();
+      // 최신순 정렬 (createdAt 내림차순)
+      items.sort((a, b) => {
+        const am = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+        const bm = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+        return bm - am;
+      });
+      if (!items.length) {
+        box.innerHTML = '<p class="hint">아직 등록된 기도제목이 없습니다.</p>';
+        return;
+      }
+      box.innerHTML = items.map((it) => {
+        const priv = it.visibility === 'private';
+        const hidden = it.status && it.status !== 'active';
+        const badge = priv
+          ? '<span style="font-size:11px;font-weight:800;color:#b45309;background:#fef3c7;padding:2px 8px;border-radius:6px">비공개</span>'
+          : '<span style="font-size:11px;font-weight:800;color:#2bb673;background:#e7f6ef;padding:2px 8px;border-radius:6px">공개</span>';
+        const hiddenBadge = hidden
+          ? ' <span style="font-size:11px;font-weight:800;color:#dc2626;background:#fee2e2;padding:2px 8px;border-radius:6px">숨김</span>'
+          : '';
+        // 공개 글은 content, 비공개 글은 join한 실제 내용
+        const body = priv ? (prayerContentMap[it.id] || '') : (it.content || '');
+        const bodyHtml = body
+          ? `<div style="font-size:14px;line-height:1.55;color:var(--text);white-space:pre-wrap;word-break:break-word;margin-bottom:12px;">${escHtml(body)}</div>`
+          : '<p class="hint" style="margin:0 0 12px">(내용 없음)</p>';
+        const hideBtn = hidden
+          ? `<button type="button" class="btn" data-prayer-show="${escHtml(it.id)}" style="font-size:13px;padding:8px 14px;background:#e7f6ef;color:#2bb673;">다시 보이기</button>`
+          : `<button type="button" class="btn" data-prayer-hide="${escHtml(it.id)}" style="font-size:13px;padding:8px 14px;background:#f1f3f6;color:var(--text-2);">숨기기</button>`;
+        return `
+          <div style="border:1px solid var(--line);border-radius:12px;padding:14px 16px;${hidden ? 'opacity:.62;' : ''}">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              ${badge}${hiddenBadge}
+              <b style="font-size:13px;color:var(--navy)">${escHtml((it.name || '').trim() || '익명')}</b>
+              <span style="font-size:11px;color:var(--text-3);margin-left:auto">🙏 ${(typeof it.prayCount === 'number' ? it.prayCount : 0)} · ${formatTime(it.createdAt)}</span>
+            </div>
+            <div style="font-size:15px;font-weight:800;color:var(--navy);line-height:1.4;word-break:break-word;margin-bottom:6px;">${escHtml(it.title || '')}</div>
+            ${bodyHtml}
+            <div style="display:flex;gap:8px;">
+              ${hideBtn}
+              <button type="button" class="btn btn-danger" data-prayer-del="${escHtml(it.id)}" style="font-size:13px;padding:8px 14px;">삭제</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+    async function deletePrayer(id) {
+      if (!id || !db) return;
+      if (!window.confirm('이 기도제목을 삭제할까요? 되돌릴 수 없습니다.')) return;
+      try {
+        await deleteDoc(doc(db, PRAYER_COLLECTION, id));
+        // 비공개 내용 문서도 함께 삭제(있으면)
+        try { await deleteDoc(doc(db, PRAYER_CONTENT_COLLECTION, id)); } catch (e2) {}
+      } catch (e) {
+        alert('삭제 실패: ' + (e.message || e));
+      }
+    }
+    // status 토글: 게시판에서 숨김('hidden') / 다시 보이기('active')
+    async function setPrayerHidden(id, hidden) {
+      if (!id || !db) return;
+      try {
+        await setDoc(doc(db, PRAYER_COLLECTION, id), { status: hidden ? 'hidden' : 'active' }, { merge: true });
+      } catch (e) {
+        alert((hidden ? '숨기기' : '복원') + ' 실패: ' + (e.message || e));
+      }
+    }
+    (function bindPrayerActions() {
+      const box = document.getElementById('prayerAdminList');
+      if (!box) return;
+      box.addEventListener('click', (e) => {
+        const del = e.target.closest('[data-prayer-del]');
+        if (del) { deletePrayer(del.getAttribute('data-prayer-del')); return; }
+        const hide = e.target.closest('[data-prayer-hide]');
+        if (hide) { setPrayerHidden(hide.getAttribute('data-prayer-hide'), true); return; }
+        const show = e.target.closest('[data-prayer-show]');
+        if (show) { setPrayerHidden(show.getAttribute('data-prayer-show'), false); return; }
+      });
+    })();
 
     // 등록된 구절 목록 렌더링
     function renderList() {
@@ -2106,6 +2208,7 @@
       sns:   ['instaCard', 'fbCard', 'ytCard'],
       bg:    ['bgCard'],
       news:  ['newsCard'],
+      prayer:['prayerAdminCard'],
       stats: ['pushCard', 'statsCard'],
     };
 
@@ -2175,6 +2278,20 @@
         const data = snap.exists() ? snap.data() : {};
         renderStats(data);
       });
+
+      // 중보기도 실시간 구독 (공개+비공개 전부)
+      onSnapshot(collection(db, PRAYER_COLLECTION), (snap) => {
+        prayerItems = [];
+        snap.forEach((s) => { prayerItems.push(Object.assign({ id: s.id }, s.data() || {})); });
+        renderPrayers();
+      }, (err) => { console.warn('[prayer-admin] snapshot error', err); });
+
+      // 비공개 글 내용 실시간 구독 → 위 목록에 join
+      onSnapshot(collection(db, PRAYER_CONTENT_COLLECTION), (snap) => {
+        prayerContentMap = {};
+        snap.forEach((s) => { prayerContentMap[s.id] = (s.data() || {}).text || ''; });
+        renderPrayers();
+      }, (err) => { console.warn('[prayer-content-admin] snapshot error', err); });
 
       // 통계 초기화 이벤트 바인딩
       const btnReset = $('btnStatsReset');

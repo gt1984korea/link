@@ -5,12 +5,13 @@
  *       모든 기기로 데이터 메시지를 보냅니다. 각 기기의 서비스워커(firebase-messaging-sw.js)가
  *       알림을 띄우고 홈 아이콘 배지를 켭니다. 만료된 토큰은 자동 정리합니다.
  */
-const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
+const nodemailer = require('nodemailer');
 
 initializeApp();
 
@@ -133,5 +134,139 @@ exports.pushTokenCount = onRequest({ cors: true, region: 'us-central1' }, async 
   } catch (e) {
     logger.error('pushTokenCount 실패', e);
     res.status(500).json({ error: 'failed' });
+  }
+});
+
+/* 중보기도 등록 시 이메일 알림 발송 */
+exports.sendPrayerEmail = onDocumentCreated('prayers/{id}', async (event) => {
+  const snap = event.data;
+  if (!snap) {
+    logger.info('데이터 스냅샷 없음');
+    return;
+  }
+  const data = snap.data();
+  const id = event.params.id;
+
+  logger.info(`새 중보기도 요청 감지: ${id}`, data);
+
+  const db = getFirestore();
+  
+  // 1. Firestore에서 SMTP 설정 조회 (보안 상 클라이언트 조회 차단된 systemConfig/email)
+  let smtpConfig;
+  try {
+    const configSnap = await db.collection('systemConfig').doc('email').get();
+    if (configSnap.exists) {
+      smtpConfig = configSnap.data();
+    }
+  } catch (err) {
+    logger.error('systemConfig/email 조회 실패', err);
+  }
+
+  if (!smtpConfig || !smtpConfig.user || !smtpConfig.pass) {
+    logger.warn('SMTP 설정이 Firestore(systemConfig/email)에 존재하지 않거나 불완전하여 이메일을 발송할 수 없습니다.');
+    return;
+  }
+
+  // 2. 비공개 기도제목인 경우, prayerContents/{id} 에서 실제 기도내용 조회
+  let content = data.content || '';
+  if (data.visibility === 'private') {
+    try {
+      const contentSnap = await db.collection('prayerContents').doc(id).get();
+      if (contentSnap.exists) {
+        content = contentSnap.data().text || '';
+      }
+    } catch (err) {
+      logger.error(`비공개 기도내용 조회 실패 (ID: ${id})`, err);
+    }
+  }
+
+  // 3. SMTP 트랜스포터 설정
+  const transporter = nodemailer.createTransport({
+    host: smtpConfig.host || 'smtp.naver.com',
+    port: smtpConfig.port || 465,
+    secure: smtpConfig.secure !== false, // 기본값: true (SSL)
+    auth: {
+      user: smtpConfig.user,
+      pass: smtpConfig.pass
+    }
+  });
+
+  const name = data.name || '익명';
+  const title = data.title || '(제목 없음)';
+  const visibilityText = data.visibility === 'private' ? '비공개' : '공개';
+  
+  // 뉴질랜드 시간대 기준으로 일시 문자열 생성
+  const createdAtStr = data.createdAt 
+    ? new Date(data.createdAt.toDate()).toLocaleString('ko-KR', { timeZone: 'Pacific/Auckland' }) 
+    : new Date().toLocaleString('ko-KR', { timeZone: 'Pacific/Auckland' });
+
+  // 4. 이메일 본문 작성
+  const mailSubject = `[중보기도 요청] ${name} 성도님의 기도제목이 등록되었습니다.`;
+  const mailText = `
+[새 중보기도 등록 안내]
+
+- 작성자: ${name}
+- 등록 일시: ${createdAtStr} (뉴질랜드 시간)
+- 공개 여부: ${visibilityText}
+- 기도 제목: ${title}
+
+[기도 내용]
+${content || '(내용이 없습니다)'}
+  `;
+
+  const mailHtml = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e9eaee; border-radius: 12px; background-color: #ffffff;">
+      <h2 style="color: #16265c; border-bottom: 2px solid #21428d; padding-bottom: 10px; margin-top: 0;">🙏 새 중보기도 등록 안내</h2>
+      <p style="font-size: 15px; color: #333333; line-height: 1.6;">새로운 중보기도 제목이 등록되었습니다. 함께 기도해주세요.</p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+        <tr style="border-bottom: 1px solid #e9eaee;">
+          <th style="text-align: left; padding: 10px 0; width: 120px; color: #666666;">작성자</th>
+          <td style="padding: 10px 0; font-weight: bold; color: #1e293b;">${name}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #e9eaee;">
+          <th style="text-align: left; padding: 10px 0; color: #666666;">등록 일시</th>
+          <td style="padding: 10px 0; color: #1e293b;">${createdAtStr}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #e9eaee;">
+          <th style="text-align: left; padding: 10px 0; color: #666666;">공개 여부</th>
+          <td style="padding: 10px 0; color: #1e293b;">
+            <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; ${data.visibility === 'private' ? 'background-color: #fee2e2; color: #991b1b;' : 'background-color: #dcfce7; color: #166534;'}">
+              ${visibilityText}
+            </span>
+          </td>
+        </tr>
+        <tr style="border-bottom: 1px solid #e9eaee;">
+          <th style="text-align: left; padding: 10px 0; color: #666666;">기도 제목</th>
+          <td style="padding: 10px 0; font-weight: bold; color: #16265c; font-size: 15px;">${title}</td>
+        </tr>
+      </table>
+      
+      <div style="background-color: #f8fafc; border-left: 4px solid #21428d; padding: 15px; border-radius: 4px; margin-top: 20px;">
+        <h4 style="margin-top: 0; margin-bottom: 10px; color: #475569;">기도 내용</h4>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #1e293b; white-space: pre-wrap;">${content || '(내용이 없습니다)'}</p>
+      </div>
+      
+      <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e9eaee; padding-top: 15px;">
+        본 메일은 빅토리처치 중보기도 시스템에서 자동으로 발송되었습니다.
+      </div>
+    </div>
+  `;
+
+  // 수신자 지정 (기본값 설정 및 Firestore 설정 덮어쓰기 지원)
+  const defaultTo = 'nzvictorychurch@hotmail.com, gt1984@naver.com';
+  const finalTo = smtpConfig.to ? smtpConfig.to : defaultTo;
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"${smtpConfig.senderName || '빅토리처치 중보기도'}" <${smtpConfig.user}>`,
+      to: finalTo,
+      subject: mailSubject,
+      text: mailText,
+      html: mailHtml
+    });
+    logger.info(`이메일 발송 성공: ${info.messageId} -> 수신자: ${finalTo}`);
+  } catch (err) {
+    logger.error('이메일 SMTP 발송 오류', err);
   }
 });

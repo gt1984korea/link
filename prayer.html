@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>중보기도 — 뉴질랜드 빅토리처치</title>
+
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=4">
+  <link rel="apple-touch-icon" href="icon-192.png?v=4">
+  <link rel="apple-mobile-web-app-title" content="빅토리처치">
+  <link rel="apple-mobile-web-app-capable" content="yes">
+
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:       #f2f4f8;
+      --surface:  #ffffff;
+      --line:     #e9eaee;
+      --text:     #1e293b;
+      --text-2:   #475569;
+      --text-3:   #64748b;
+      --brand:    #21428d;
+      --brand-dim:#e8edf7;
+      --navy:     #16265c;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      letter-spacing: -0.01em;
+    }
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding:
+        calc(env(safe-area-inset-top) + 16px)
+        20px
+        calc(env(safe-area-inset-bottom) + 40px);
+    }
+
+    /* Header */
+    .header { text-align: center; padding-bottom: 14px; position: relative; }
+    .back {
+      position: absolute; left: 0; top: calc(env(safe-area-inset-top) - 2px);
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 17px; font-weight: 800; color: var(--brand);
+      text-decoration: none; padding: 10px 14px 10px 4px;
+      border-radius: 10px;
+    }
+    .back:active { background: #eef1f7; }
+    .header .logo { width: 96px; margin: 0 auto 8px; }
+    .header .logo img { width: 100%; height: auto; display: block; }
+    .header h1 { font-size: 20px; font-weight: 800; color: var(--navy); margin: 0 0 4px; letter-spacing: -0.02em; }
+    .header p { font-size: 12.5px; color: var(--text-2); margin: 0; font-weight: 500; }
+
+    /* Section label */
+    .label {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 13px; font-weight: 800; color: var(--brand);
+      letter-spacing: 0.02em;
+    }
+    .label-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; margin: 0 2px 12px;
+    }
+    .label-row .count { font-size: 12.5px; font-weight: 700; color: var(--text-3); }
+
+    /* 기도 안내 구절 카드 */
+    .guide { margin-bottom: 20px; }
+    .guide-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 10px;
+    }
+    .guide-card .cat {
+      display: block;
+      font-size: 13px; font-weight: 800; color: var(--brand);
+      margin: 0 0 8px; letter-spacing: 0.01em;
+    }
+    .guide-card .t {
+      font-family: 'Gowun Dodum', serif;
+      font-size: 15px; line-height: 1.7; color: var(--text);
+      margin: 0 0 8px; word-break: keep-all;
+    }
+    .guide-card .r { font-size: 12.5px; font-weight: 700; color: var(--text-2); }
+
+    /* 개별 카드별 배경 및 테두리 테마 */
+    .guide-card.type-word {
+      background: #eef2ff;
+      border-color: #c7d2fe;
+    }
+    .guide-card.type-word .cat {
+      color: #4338ca;
+    }
+    .guide-card.type-mutual {
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+    .guide-card.type-mutual .cat {
+      color: #b45309;
+    }
+    .guide-card.type-authority {
+      background: #f5f3ff;
+      border-color: #ddd6fe;
+    }
+    .guide-card.type-authority .cat {
+      color: #6d28d9;
+    }
+
+    /* 요청 버튼 */
+    .request-btn {
+      width: 100%;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 18px;
+      font-family: inherit;
+      font-size: 16px; font-weight: 800;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      margin-bottom: 26px;
+      box-shadow: 0 6px 16px rgba(33,66,141,.22);
+      transition: transform .08s ease, background .15s ease;
+    }
+    .request-btn:hover { background: #1a3570; }
+    .request-btn:active { transform: scale(.99); }
+
+    /* 공개 목록 */
+    .board { margin-top: 4px; }
+    .prayer-item {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 12px;
+    }
+    .prayer-item .meta {
+      display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px;
+    }
+    .prayer-item .name { font-size: 13px; font-weight: 700; color: var(--text-2); word-break: break-all; }
+    .prayer-item .time { font-size: 11.5px; color: var(--text-3); font-weight: 500; margin-left: auto; white-space: nowrap; }
+    .prayer-item .ptitle {
+      font-size: 16px; font-weight: 800; color: var(--navy);
+      line-height: 1.4; word-break: break-word; margin: 0 0 8px;
+    }
+    .prayer-item .body {
+      font-size: 14.5px; line-height: 1.6; color: var(--text);
+      white-space: pre-wrap; word-break: break-word; margin-bottom: 14px;
+    }
+    .prayer-item .private-note {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12.5px; font-weight: 600; color: var(--text-3);
+      background: #f5f6f8; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px;
+    }
+    .pray-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: inherit; font-size: 13.5px; font-weight: 700;
+      color: var(--brand);
+      background: var(--brand-dim);
+      border: 1.5px solid transparent;
+      border-radius: 50px;
+      padding: 9px 16px;
+      cursor: pointer;
+      transition: transform .08s ease, background .15s ease;
+    }
+    .pray-btn:hover { background: #dbe4f5; }
+    .pray-btn:active { transform: scale(.97); }
+    .pray-btn .emoji { font-size: 15px; line-height: 1; }
+    .pray-btn.prayed {
+      color: #fff; background: var(--brand); cursor: default;
+    }
+    .pray-btn.prayed:hover { background: var(--brand); }
+    .pray-btn.pop { animation: pop .32s ease; }
+    @keyframes pop { 0%{transform:scale(1);} 40%{transform:scale(1.14);} 100%{transform:scale(1);} }
+
+    .empty {
+      text-align: center; color: var(--text-3); font-size: 13.5px;
+      line-height: 1.7; padding: 32px 12px; font-weight: 500;
+    }
+    .hidden { display: none !important; }
+
+    /* 작성 폼 (페이지 인라인 카드) */
+    .modal-overlay {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      margin-bottom: 26px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(16, 26, 60, .08);
+      animation: fadeIn .18s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+    .modal-inner { display: flex; flex-direction: column; }
+    .modal-head {
+      flex: 0 0 auto;
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .modal-head h2 { font-size: 17px; font-weight: 800; color: var(--navy); margin: 0; flex: 1; }
+    .modal-close {
+      flex: 0 0 auto; width: 36px; height: 36px; border: none; background: #f1f3f6;
+      border-radius: 50%; color: var(--text-2); font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; line-height: 1;
+    }
+    .modal-body {
+      padding: 16px 18px 4px;
+    }
+    .modal-body .sub { font-size: 12.5px; color: var(--text-2); margin: 0 0 18px; }
+    .modal-body label.fld { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 7px; }
+    .modal-body input[type=text], .modal-body textarea {
+      width: 100%; font-family: inherit; font-size: 16px; color: var(--text);
+      background: #f7f8fa; border: 1.5px solid var(--line); border-radius: 12px;
+      padding: 13px 14px; margin-bottom: 16px; resize: none;
+    }
+    .modal-body input:focus, .modal-body textarea:focus { outline: none; border-color: var(--brand); background: #fff; }
+    .modal-body textarea { min-height: 130px; line-height: 1.55; }
+    .fld-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .fld-row .fld { margin: 0 0 7px; }
+    .char-count { font-size: 12px; font-weight: 700; color: var(--text-3); white-space: nowrap; }
+    .char-count.warn { color: #dc2626; }
+    .opt { font-weight: 500; color: var(--text-3); }
+    .field-err { color: #dc2626; font-size: 12.5px; font-weight: 600; margin: -8px 0 14px; }
+    .vis-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+    .vis-opt {
+      display: flex; align-items: flex-start; gap: 10px;
+      border: 1.5px solid var(--line); border-radius: 12px; padding: 13px 14px;
+      cursor: pointer; transition: border-color .15s ease, background .15s ease;
+    }
+    .vis-opt:has(input:checked) { border-color: var(--brand); background: var(--brand-dim); }
+    .vis-opt input { margin: 3px 0 0; accent-color: var(--brand); flex: 0 0 auto; }
+    .vis-opt .vt { font-size: 13.5px; font-weight: 700; color: var(--text); display: block; }
+    .vis-opt .vd { font-size: 12px; color: var(--text-2); margin-top: 2px; display: block; line-height: 1.4; }
+    .modal-actions {
+      flex: 0 0 auto;
+      display: flex; gap: 10px;
+      padding: 12px 18px 16px;
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .modal-actions button {
+      flex: 1; font-family: inherit; font-size: 15px; font-weight: 800;
+      border-radius: 12px; padding: 15px; cursor: pointer; border: none;
+    }
+    .btn-cancel { background: #eef0f4; color: var(--text-2); flex: 0 0 34%; }
+    .btn-submit { background: var(--brand); color: #fff; }
+    .btn-submit:disabled { opacity: .55; cursor: default; }
+
+    /* 완료 안내 (전체 화면) */
+    .success-screen {
+      position: fixed; inset: 0;
+      background: linear-gradient(160deg, #21428d 0%, #16265c 100%);
+      color: #fff;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 32px 28px;
+      z-index: 200;
+      animation: fadeIn .2s ease;
+    }
+    .success-screen .emoji { font-size: 64px; margin-bottom: 20px; animation: pop .4s ease; }
+    .success-screen h2 { font-size: 22px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.02em; }
+    .success-screen p {
+      font-size: 15px; line-height: 1.7; color: rgba(255,255,255,.9);
+      margin: 0 0 36px; max-width: 300px; word-break: keep-all;
+    }
+    .success-screen .ok-btn {
+      background: #fff; color: var(--brand);
+      border: none; border-radius: 14px; padding: 16px 44px;
+      font-family: inherit; font-size: 16px; font-weight: 800; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="header">
+      <a class="back" href="/">← 홈</a>
+      <div class="logo"><img src="logo.png" alt="Victory Church"></div>
+      <h1>중보기도</h1>
+      <p>서로의 기도제목을 나누고 함께 기도해요</p>
+    </header>
+
+    <section class="guide">
+      <div class="guide-card type-word">
+        <span class="cat">📖 오늘의 말씀</span>
+        <p class="t">“하나님은 한 분이시요 또 하나님과 사람 사이에 중보자도<br>한 분이시니 곧 사람이신 그리스도 예수라”</p>
+        <span class="r">디모데전서 2:5</span>
+      </div>
+      <div class="guide-card type-mutual">
+        <span class="cat">🤝 서로를 위한 기도</span>
+        <p class="t">“너희 죄를 서로 고하며 병 낫기를 위하여 서로 기도하라 의인의 간구는 역사하는 힘이 많음이니라”</p>
+        <span class="r">야고보서 5:16</span>
+      </div>
+      <div class="guide-card type-authority">
+        <span class="cat">🙏 영적 권위자를 위한 기도</span>
+        <p class="t">“그러므로 내가 첫째로 권하노니 모든 사람을 위하여 간구와 도고와 감사를 하되 임금들과 높은 지위에 있는 모든 사람을 위하여 하라”</p>
+        <span class="r">디모데전서 2:1-2</span>
+      </div>
+    </section>
+
+    <button class="request-btn" id="requestBtn" type="button">🙏 중보기도 요청하기</button>
+
+    <!-- 작성 폼 (페이지 인라인 — 버튼을 누르면 이 자리에서 펼쳐짐) -->
+    <div class="modal-overlay hidden" id="formModal" role="group" aria-label="중보기도 요청">
+      <div class="modal-inner">
+        <div class="modal-head">
+          <h2>중보기도 요청</h2>
+          <button class="modal-close" id="cancelBtn" type="button" aria-label="닫기">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="sub">함께 기도할 제목을 나눠주세요.</p>
+
+          <label class="fld" for="fName">이름 또는 별명</label>
+          <input type="text" id="fName" maxlength="40" placeholder="예: 김성도 (비워두면 '익명')">
+
+          <div class="fld-row">
+            <label class="fld" for="fTitle">기도 제목</label>
+            <span class="char-count" id="titleCount">0 / 100</span>
+          </div>
+          <input type="text" id="fTitle" maxlength="100" placeholder="예: 아버지 건강 회복">
+
+          <div class="fld-row">
+            <label class="fld" for="fText">기도 내용 <span class="opt">(선택)</span></label>
+            <span class="char-count" id="textCount">0 / 1000</span>
+          </div>
+          <textarea id="fText" maxlength="1000" placeholder="구체적인 내용을 적어주세요"></textarea>
+          <p class="field-err hidden" id="fErr">기도 제목을 입력해 주세요.</p>
+
+          <div class="vis-group">
+            <label class="vis-opt">
+              <input type="radio" name="vis" value="public" checked>
+              <span>
+                <span class="vt">공개</span>
+                <span class="vd">제목과 내용을 모든 성도가 보고 함께 기도해요</span>
+              </span>
+            </label>
+            <label class="vis-opt">
+              <input type="radio" name="vis" value="private">
+              <span>
+                <span class="vt">비공개</span>
+                <span class="vd">제목만 게시판에 보이고, 내용은 중보기도팀만 봐요</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" id="cancelBtn2" type="button">취소</button>
+          <button class="btn-submit" id="submitBtn" type="button">기도제목 올리기</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="board">
+      <div class="label-row">
+        <span class="label">🕊️ 공개 기도제목</span>
+        <span class="count" id="prayerCount"></span>
+      </div>
+      <div id="prayerList"></div>
+      <div class="empty hidden" id="emptyState">
+        아직 나눠진 기도제목이 없어요.<br>가장 먼저 기도제목을 나눠보세요.
+      </div>
+    </section>
+  </div>
+
+  <!-- 완료 안내 (전체 화면) -->
+  <div class="success-screen hidden" id="successScreen" role="dialog" aria-modal="true">
+    <div class="emoji">🙏</div>
+    <h2 id="successTitle">기도제목이 등록됐어요</h2>
+    <p id="successMsg">함께 기도해요.</p>
+    <button class="ok-btn" id="successOk" type="button">확인</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, setDoc, writeBatch, increment, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { firebaseConfig, PRAYER_COLLECTION, PRAYER_CONTENT_COLLECTION } from "./firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const listEl   = document.getElementById('prayerList');
+    const emptyEl   = document.getElementById('emptyState');
+    const countEl  = document.getElementById('prayerCount');
+
+    /* ── 유틸 ── */
+    function prayedLocally(id) {
+      try { return localStorage.getItem('vc_prayed_' + id) === '1'; } catch (e) { return false; }
+    }
+    function markPrayed(id) {
+      try { localStorage.setItem('vc_prayed_' + id, '1'); } catch (e) {}
+    }
+    function fmtCount(n) { return (typeof n === 'number' && n > 0) ? n.toLocaleString('ko-KR') : '0'; }
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function relTime(ms) {
+      if (!ms) return '';
+      const diff = Date.now() - ms;
+      const min = Math.floor(diff / 60000);
+      if (min < 1) return '방금 전';
+      if (min < 60) return min + '분 전';
+      const hr = Math.floor(min / 60);
+      if (hr < 24) return hr + '시간 전';
+      const day = Math.floor(hr / 24);
+      if (day < 7) return day + '일 전';
+      const d = new Date(ms);
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`;
+    }
+
+    /* ── 기도제목 실시간 구독 (제목/메타는 공개·비공개 모두 노출, 내용은 공개 글만) ── */
+    // 게시판은 /prayers 만 읽습니다. 비공개 "내용"(/prayerContents)은 절대 읽지 않아 방문자에게 전송되지 않습니다.
+    onSnapshot(collection(db, PRAYER_COLLECTION), (snap) => {
+      const items = [];
+      snap.forEach((docSnap) => {
+        const d = docSnap.data() || {};
+        if (d.status && d.status !== 'active') return; // 숨김 처리된 글 제외
+        items.push({
+          id: docSnap.id,
+          name: (d.name || '').trim() || '익명',
+          title: d.title || '',
+          content: d.content || '',
+          isPrivate: d.visibility === 'private',
+          prayCount: typeof d.prayCount === 'number' ? d.prayCount : 0,
+          createdMs: d.createdAt && d.createdAt.toMillis ? d.createdAt.toMillis() : 0
+        });
+      });
+      // 최신순 정렬 (클라이언트 정렬 — 복합 인덱스 불필요)
+      items.sort((a, b) => b.createdMs - a.createdMs);
+      render(items);
+    }, (err) => {
+      console.warn('[prayers] snapshot error', err);
+    });
+
+    function render(items) {
+      countEl.textContent = items.length ? `${items.length}개` : '';
+      if (!items.length) {
+        listEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+      listEl.innerHTML = items.map((it) => {
+        const prayed = prayedLocally(it.id);
+        const bodyHtml = it.isPrivate
+          ? `<div class="private-note">🔒 비공개 기도제목이에요 · 내용은 중보기도팀만 봐요</div>`
+          : (it.content ? `<div class="body">${esc(it.content)}</div>` : '');
+        return `
+          <div class="prayer-item">
+            <div class="meta">
+              <span class="name">${esc(it.name)}</span>
+              <span class="time">${relTime(it.createdMs)}</span>
+            </div>
+            <div class="ptitle">${esc(it.title)}</div>
+            ${bodyHtml}
+            <button class="pray-btn${prayed ? ' prayed' : ''}" data-id="${esc(it.id)}" type="button"${prayed ? ' aria-disabled="true"' : ''}>
+              <span class="emoji">🙏</span>
+              <span class="lbl">${prayed ? '함께 기도했어요' : '함께 기도해요'}</span>
+              <span class="cnt">${fmtCount(it.prayCount)}</span>
+            </button>
+          </div>`;
+      }).join('');
+    }
+
+    /* ── "함께 기도" 카운터 (한 방향 +1, 기기당 1회) ── */
+    listEl.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.pray-btn');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      if (!id || prayedLocally(id) || btn.dataset.busy === '1') return;
+      btn.dataset.busy = '1';
+      markPrayed(id);
+      // 낙관적 UI
+      btn.classList.add('prayed', 'pop');
+      const lbl = btn.querySelector('.lbl'); if (lbl) lbl.textContent = '함께 기도했어요';
+      const cnt = btn.querySelector('.cnt');
+      if (cnt) cnt.textContent = fmtCount((parseInt(cnt.textContent.replace(/[^\d]/g, ''), 10) || 0) + 1);
+      try {
+        await setDoc(doc(db, PRAYER_COLLECTION, id), { prayCount: increment(1) }, { merge: true });
+      } catch (err) {
+        console.warn('[prayers] pray failed', err);
+        // 롤백: 로컬 표시 + UI(라벨/카운트)까지 되돌리기
+        try { localStorage.removeItem('vc_prayed_' + id); } catch (e2) {}
+        btn.classList.remove('prayed');
+        if (lbl) lbl.textContent = '함께 기도해요';
+        if (cnt) cnt.textContent = fmtCount(Math.max(0, (parseInt(cnt.textContent.replace(/[^\d]/g, ''), 10) || 0) - 1));
+      } finally {
+        btn.dataset.busy = '';
+      }
+    });
+
+    /* ── 작성 화면 ── */
+    const modal = document.getElementById('formModal');
+    const fName = document.getElementById('fName');
+    const fTitle = document.getElementById('fTitle');
+    const fText = document.getElementById('fText');
+    const fErr  = document.getElementById('fErr');
+    const titleCount = document.getElementById('titleCount');
+    const textCount = document.getElementById('textCount');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // 글자 수 실시간 표시 (한도 도달 시 빨간색)
+    function updateCount(el, countEl, max) {
+      const n = el.value.length;
+      countEl.textContent = n + ' / ' + max;
+      countEl.classList.toggle('warn', n >= max);
+    }
+
+    const requestBtn = document.getElementById('requestBtn');
+
+    function openModal() {
+      try { const saved = localStorage.getItem('vc_prayer_name'); if (saved && !fName.value) fName.value = saved; } catch (e) {}
+      fErr.classList.add('hidden');
+      updateCount(fTitle, titleCount, 100);
+      updateCount(fText, textCount, 1000);
+      requestBtn.classList.add('hidden');
+      modal.classList.remove('hidden');
+      modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => fTitle.focus({ preventScroll: true }), 120);
+    }
+    function closeModal() {
+      modal.classList.add('hidden');
+      requestBtn.classList.remove('hidden');
+      requestBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    requestBtn.addEventListener('click', openModal);
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    document.getElementById('cancelBtn2').addEventListener('click', closeModal);
+    fTitle.addEventListener('input', () => {
+      if (fTitle.value.trim()) fErr.classList.add('hidden');
+      updateCount(fTitle, titleCount, 100);
+    });
+    fText.addEventListener('input', () => updateCount(fText, textCount, 1000));
+
+    submitBtn.addEventListener('click', async () => {
+      const title = fTitle.value.trim().slice(0, 100);
+      if (!title) { fErr.textContent = '기도 제목을 입력해 주세요.'; fErr.classList.remove('hidden'); fTitle.focus(); return; }
+      const content = fText.value.trim().slice(0, 1000);
+      const name = fName.value.trim().slice(0, 40);
+      const visibility = (document.querySelector('input[name="vis"]:checked') || {}).value === 'private' ? 'private' : 'public';
+      submitBtn.disabled = true;
+      const id = (crypto.randomUUID ? crypto.randomUUID() : 'p' + Date.now() + Math.random().toString(36).slice(2));
+      try {
+        // 두 문서를 원자적으로 기록 — 부분 실패로 "내용 유실" 방지 (둘 다 성공 or 둘 다 실패)
+        const batch = writeBatch(db);
+        // /prayers 에는 제목과 메타만(공개 글은 내용 포함, 비공개 글은 content='')
+        batch.set(doc(db, PRAYER_COLLECTION, id), {
+          id,
+          name: name,
+          title: title,
+          content: visibility === 'public' ? content : '',
+          visibility,
+          prayCount: 0,
+          status: 'active',
+          createdAt: serverTimestamp()
+        });
+        // 비공개 글의 실제 내용은 별도 컬렉션에 — 게시판은 이 컬렉션을 읽지 않음
+        if (visibility === 'private' && content) {
+          batch.set(doc(db, PRAYER_CONTENT_COLLECTION, id), { text: content });
+        }
+        await batch.commit();
+        try { if (name) localStorage.setItem('vc_prayer_name', name); } catch (e) {}
+        fTitle.value = ''; fText.value = '';
+        updateCount(fTitle, titleCount, 100);
+        updateCount(fText, textCount, 1000);
+        closeModal();
+        showSuccess(visibility);
+      } catch (err) {
+        console.warn('[prayers] submit failed', err);
+        fErr.textContent = '등록에 실패했어요. 잠시 후 다시 시도해 주세요.';
+        fErr.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    /* ── 완료 안내 (전체 화면) ── */
+    const successScreen = document.getElementById('successScreen');
+    function showSuccess(visibility) {
+      const title = document.getElementById('successTitle');
+      const msg = document.getElementById('successMsg');
+      if (visibility === 'private') {
+        title.textContent = '기도제목이 전달됐어요';
+        msg.textContent = '중보기도팀이 함께 기도합니다. 🙏';
+      } else {
+        title.textContent = '기도제목이 등록됐어요';
+        msg.textContent = '이제 성도들이 함께 기도해요. 🙏';
+      }
+      successScreen.classList.remove('hidden');
+    }
+    document.getElementById('successOk').addEventListener('click', () => {
+      successScreen.classList.add('hidden');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>

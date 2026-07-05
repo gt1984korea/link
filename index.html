@@ -24,17 +24,22 @@
   <meta name="apple-mobile-web-app-title" content="빅토리처치">
   <meta name="apple-mobile-web-app-capable" content="yes">
 
-  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+  <!-- Preconnect: 폰트/Firebase CDN 조기 연결로 첫 렌더 지연 감소 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+
+  <!-- Gowun Dodum: 렌더 블로킹 없이 비동기 로드 (본문·구절은 시스템 폰트로 즉시 표시 후 스왑) -->
   <link rel="preload" href="https://fonts.gstatic.com/s/gowundodum/v12/3Jn5SD_00GqwlBnWc1TUJF0F.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap"></noscript>
 
   <!-- Performance Optimization: Module Preloads & Logo Preload -->
   <link rel="preload" as="image" href="logo.png" type="image/png">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js">
-  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js">
   <link rel="modulepreload" href="./firebase-config.js">
   <link rel="modulepreload" href="./push.js?v=3">
-  <script>console.log('⚡ Victory Church Web Optimizer v3 Loaded');</script>
 
 
   <style>
@@ -207,6 +212,10 @@
     .item.youtube .ic{ background: #fee2e2; color: #dc2626; }
     .item.facebook .ic { background: #e7f0ff; color: #1877f2; }
     .item.instagram .ic{ background: #fdeef5; color: #d6249f; }
+    /* 중보기도 바로가기 (앵커 태그) */
+    a.item { text-decoration: none; }
+    .item.prayer .ic { background: #eef7f0; color: #2f9e6b; }
+    .item.prayer .chev { color: #2f9e6b; }
 
     .item.live .ic   { background: #fef3c7; color: #d97706; position: relative; }
     .item.live .ic::after {
@@ -416,10 +425,31 @@
       box-shadow: 0 2px 10px rgba(33, 66, 141, 0.06);
       transition: transform .08s ease, box-shadow .15s ease;
     }
+    a.news-item {
+      position: relative;
+    }
     a.news-item:hover {
       box-shadow: 0 4px 16px rgba(33, 66, 141, 0.14);
     }
     a.news-item:active { transform: scale(.99); }
+    /* 링크가 걸린 새소식에만 붙는 클릭 안내 오버레이 */
+    .news-hint {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      padding: 11px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      color: #fff;
+      text-align: center;
+      border-radius: 12px;
+      background: rgba(33, 66, 141, 0.94);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.32);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+    }
     .news-item img {
       display: block;
       width: 100%;
@@ -1806,6 +1836,20 @@
         </div>
       </div>
 
+      <!-- 중보기도 (교회 연락처 바로 위) -->
+      <a class="item prayer" id="btnPrayer" href="/prayer">
+        <span class="ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3c-1.2 2.4-2.6 3.6-4.5 4.2C5.8 7.8 5 9 5 10.6c0 3 2.8 5.6 7 9.4 4.2-3.8 7-6.4 7-9.4 0-1.6-.8-2.8-2.5-3.4C14.6 6.6 13.2 5.4 12 3z"/>
+          </svg>
+        </span>
+        <span class="body">
+          <span class="t1">중보기도 요청하기</span>
+          <span class="t2">기도제목을 나누고 함께 기도해요</span>
+        </span>
+        <span class="chev">바로가기</span>
+      </a>
+
     </nav>
 
     <div class="contact-section">
@@ -2462,7 +2506,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc, increment }
       from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
     import { firebaseConfig, VERSE_DOC_PATH } from "./firebase-config.js";
 
     const card = document.getElementById('verseCard');
@@ -2558,6 +2601,21 @@
       if (key === _lastNewsKey) { card.classList.remove('hidden'); return; }
       _lastNewsKey = key;
 
+      // 링크가 걸린 항목엔 클릭 안내 오버레이를 붙이고, 아니면 제거
+      const ensureHint = (wrap, hasLink) => {
+        let hint = wrap.querySelector('.news-hint');
+        if (hasLink) {
+          if (!hint) {
+            hint = document.createElement('div');
+            hint.className = 'news-hint';
+            hint.textContent = '👆 사진을 클릭하시면 해당 화면으로 이동해요';
+            wrap.appendChild(hint);
+          }
+        } else if (hint) {
+          hint.remove();
+        }
+      };
+
       // DOM diff: 기존 <img>를 최대한 재활용해 브라우저 재다운로드 방지
       const existing = Array.from(listEl.children);
       list.forEach((n, i) => {
@@ -2572,6 +2630,7 @@
         if (samePath && oldEl.tagName === wantTag) {
           if (url) oldEl.href = url;
           oldImg.alt = n.name || '새소식';
+          ensureHint(oldEl, !!url);
           return;
         }
 
@@ -2600,6 +2659,7 @@
         }
         img.alt = n.name || '새소식';
         wrap.appendChild(img);
+        ensureHint(wrap, !!url);
         if (oldEl) listEl.replaceChild(wrap, oldEl);
         else listEl.appendChild(wrap);
       });
@@ -3526,7 +3586,14 @@
     try {
       const app = initializeApp(firebaseConfig);
       let analytics = null;
-      try { analytics = getAnalytics(app); } catch (e) { console.warn('[analytics] init failed', e); }
+      let logEventFn = null;
+      // 애널리틱스는 첫 렌더에 불필요하므로 지연 로드 (크리티컬 경로 축소)
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js")
+        .then(({ getAnalytics, logEvent }) => {
+          try { analytics = getAnalytics(app); logEventFn = logEvent; }
+          catch (e) { console.warn('[analytics] init failed', e); }
+        })
+        .catch((e) => console.warn('[analytics] load failed', e));
       db = getFirestore(app);
       const ref = doc(db, VERSE_DOC_PATH.collection, VERSE_DOC_PATH.id);
 
@@ -3584,9 +3651,9 @@
       ];
 
       function trackClick(menuId, menuName) {
-        if (analytics) {
+        if (analytics && logEventFn) {
           try {
-            logEvent(analytics, 'menu_click', {
+            logEventFn(analytics, 'menu_click', {
               menu_id: menuId,
               menu_name: menuName
             });

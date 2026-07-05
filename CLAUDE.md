@@ -88,6 +88,22 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   that diffs the `verses`/`news` arrays and multicasts to all tokens, pruning invalid ones) and
   `pushTokenCount` (an `onRequest` HTTP fn exposed at `/api/push-count` via a hosting rewrite, so
   `admin.html` can show the subscriber count without `list` access). Setup steps in `PUSH_SETUP.md`.
+- **중보기도(intercessory prayer)** lives on a **separate page `prayer.html`** (served at `/prayer`
+  via `cleanUrls`), reached from an `#btnPrayer` shortcut in `index.html`'s `.menu`. Unlike verses/news,
+  prayers are user-generated so they go in a **dedicated top-level collection `/prayers/{id}`** (path in
+  `firebase-config.js` as `PRAYER_COLLECTION`), NOT the `/site/memoryVerse` doc. Each doc: `{ id, name,
+  title, content, visibility('public'|'private'), prayCount, status('active'|'hidden'), createdAt }`.
+  **`title`(기도 제목) is shown on the board for BOTH public and private posts**; `content`(내용) is only
+  stored here for public posts (private → `content:''`). A private post's real 내용 lives in a **separate
+  `/prayerContents/{id}` collection** (`PRAYER_CONTENT_COLLECTION`, `{ text }`) that **`prayer.html` never
+  reads** — so private content is never shipped to board visitors; only `admin.html` joins it. There is **no
+  login** — the author types their own `name`. `prayer.html` subscribes to the whole `/prayers` collection,
+  filters `status=='active'` and sorts client-side (no composite index), and renders a "🙏 함께 기도" counter
+  reusing the `increment()` + `localStorage['vc_prayed_{id}']` idiom (one-way +1, device-deduped). Firestore
+  rules: `/prayers` `create` is field-validated (private must have `content==''`), `update` allows only a
+  `prayCount` +1 bump (title/content can't be tampered); `/prayerContents` `create`-validated, `update` denied;
+  both `read`/`delete` open (관례적 비공개 — 완전 비공개는 관리자 Auth 필요). See `PRAYER_SETUP.md`.
+  Rules changes need **manual** `firebase deploy --only firestore:rules`.
 - **`firebase-config.js` is intentionally public** (client config + apiKey). Security relies on
   Firestore rules, not on hiding these values.
 - **`a2hs.js`** is a standalone "Add to Home Screen" widget (documented in `README.md`),
