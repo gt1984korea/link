@@ -10,7 +10,7 @@ import { getFirestore, doc, setDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import { getMessaging, getToken, onMessage, isSupported }
   from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging.js';
-import { firebaseConfig } from './firebase-config.js';
+import { firebaseConfig } from './firebase-config.js?v=2';
 
 /* ⚠️ 설정 필요: Firebase Console > 프로젝트 설정 > 클라우드 메시징 >
  *   "웹 푸시 인증서(Web Push certificates)"에서 생성한 공개 키(공개 VAPID 키)를 붙여넣으세요.
