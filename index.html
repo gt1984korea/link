@@ -2566,7 +2566,7 @@
       return { active, past };
     }
 
-    // 새소식: 오늘이 노출 기간 내인 항목 전부 반환(시작일 내림차순)
+    // 새소식: 오늘이 노출 기간 내인 항목 전부 반환(저장된 순서 유지)
     function classifyNews(d) {
       const today = todayStr();
       const list = (Array.isArray(d.news) ? d.news : [])
@@ -2575,11 +2575,7 @@
           const okStart = !n.startDate || n.startDate <= today;
           const okEnd   = !n.endDate   || today <= n.endDate;
           return okStart && okEnd;
-        })
-        .sort((a, b) =>
-          (b.startDate || '').localeCompare(a.startDate || '') ||
-          (b.createdAt || 0) - (a.createdAt || 0)
-        );
+        });
       return list;
     }
 
