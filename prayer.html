@@ -288,21 +288,22 @@
       <p>서로의 기도제목을 나누고 함께 기도해요</p>
     </header>
 
+    <section class="board">
+      <div class="label-row">
+        <span class="label">🕊️ 공개 기도제목</span>
+        <span class="count" id="prayerCount"></span>
+      </div>
+      <div id="prayerList"></div>
+      <div class="empty hidden" id="emptyState">
+        아직 나눠진 기도제목이 없어요.<br>가장 먼저 기도제목을 나눠보세요.
+      </div>
+    </section>
+
     <section class="guide">
-      <div class="guide-card type-word">
-        <span class="cat">📖 오늘의 말씀</span>
-        <p class="t">“하나님은 한 분이시요 또 하나님과 사람 사이에 중보자도<br>한 분이시니 곧 사람이신 그리스도 예수라”</p>
-        <span class="r">디모데전서 2:5</span>
-      </div>
-      <div class="guide-card type-mutual">
-        <span class="cat">🤝 서로를 위한 기도</span>
-        <p class="t">“너희 죄를 서로 고하며 병 낫기를 위하여 서로 기도하라 의인의 간구는 역사하는 힘이 많음이니라”</p>
-        <span class="r">야고보서 5:16</span>
-      </div>
-      <div class="guide-card type-authority">
-        <span class="cat">🙏 영적 권위자를 위한 기도</span>
-        <p class="t">“그러므로 내가 첫째로 권하노니 모든 사람을 위하여 간구와 도고와 감사를 하되 임금들과 높은 지위에 있는 모든 사람을 위하여 하라”</p>
-        <span class="r">디모데전서 2:1-2</span>
+      <div class="guide-card type-word" id="randomVerseCard">
+        <span class="cat" id="randomVerseCat">📖 오늘의 말씀</span>
+        <p class="t" id="randomVerseText">“하나님은 한 분이시요 또 하나님과 사람 사이에 중보자도<br>한 분이시니 곧 사람이신 그리스도 예수라”</p>
+        <span class="r" id="randomVerseRef">디모데전서 2:5</span>
       </div>
     </section>
 
@@ -357,17 +358,6 @@
         </div>
       </div>
     </div>
-
-    <section class="board">
-      <div class="label-row">
-        <span class="label">🕊️ 공개 기도제목</span>
-        <span class="count" id="prayerCount"></span>
-      </div>
-      <div id="prayerList"></div>
-      <div class="empty hidden" id="emptyState">
-        아직 나눠진 기도제목이 없어요.<br>가장 먼저 기도제목을 나눠보세요.
-      </div>
-    </section>
   </div>
 
   <!-- 완료 안내 (전체 화면) -->
@@ -390,6 +380,40 @@
     const listEl   = document.getElementById('prayerList');
     const emptyEl   = document.getElementById('emptyState');
     const countEl  = document.getElementById('prayerCount');
+
+    // 오늘의 말씀 3개 중 1개 랜덤 보여주기
+    const verses = [
+      {
+        cat: '📖 오늘의 말씀',
+        text: '“하나님은 한 분이시요 또 하나님과 사람 사이에 중보자도<br>한 분이시니 곧 사람이신 그리스도 예수라”',
+        ref: '디모데전서 2:5',
+        type: 'type-word'
+      },
+      {
+        cat: '🤝 서로를 위한 기도',
+        text: '“너희 죄를 서로 고하며 병 낫기를 위하여 서로 기도하라 의인의 간구는 역사하는 힘이 많음이니라”',
+        ref: '야고보서 5:16',
+        type: 'type-mutual'
+      },
+      {
+        cat: '🙏 영적 권위자를 위한 기도',
+        text: '“그러므로 내가 첫째로 권하노니 모든 사람을 위하여 간구와 도고와 감사를 하되 임금들과 높은 지위에 있는 모든 사람을 위하여 하라”',
+        ref: '디모데전서 2:1-2',
+        type: 'type-authority'
+      }
+    ];
+    try {
+      const idx = Math.floor(Math.random() * verses.length);
+      const chosen = verses[idx];
+      document.getElementById('randomVerseCat').textContent = chosen.cat;
+      document.getElementById('randomVerseText').innerHTML = chosen.text;
+      document.getElementById('randomVerseRef').textContent = chosen.ref;
+      
+      const card = document.getElementById('randomVerseCard');
+      card.className = 'guide-card ' + chosen.type;
+    } catch (e) {
+      console.warn('[randomVerse] failed to load', e);
+    }
 
     /* ── 유틸 ── */
     function prayedLocally(id) {
