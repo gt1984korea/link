@@ -136,30 +136,6 @@
     .request-btn:hover { background: #1a3570; }
     .request-btn:active { transform: scale(.99); }
 
-    /* 카카오톡 버튼 */
-    .kakao-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      background: #FEE500;
-      color: #191919;
-      border: none;
-      border-radius: 14px;
-      padding: 18px;
-      font-family: inherit;
-      font-size: 16px; font-weight: 800;
-      text-decoration: none;
-      letter-spacing: -0.01em;
-      cursor: pointer;
-      margin-bottom: 26px;
-      box-shadow: 0 6px 16px rgba(254, 229, 0, 0.2);
-      transition: transform .08s ease, background .15s ease;
-    }
-    .kakao-btn:hover { background: #fddc00; }
-    .kakao-btn:active { transform: scale(.99); }
-
     /* 공개 목록 */
     .board { margin-top: 4px; }
     .prayer-item {
@@ -333,7 +309,6 @@
     </section>
 
     <button class="request-btn" id="requestBtn" type="button">🙏 중보기도 요청하기</button>
-    <a class="kakao-btn" id="kakaoBtn" href="YOUR_KAKAOTALK_LINK_HERE" target="_blank" rel="noopener noreferrer">💬 목사님 카카오톡 연결하기</a>
 
     <!-- 작성 폼 (페이지 인라인 — 버튼을 누르면 이 자리에서 펼쳐짐) -->
     <div class="modal-overlay hidden" id="formModal" role="group" aria-label="중보기도 요청">
@@ -568,7 +543,6 @@
     }
 
     const requestBtn = document.getElementById('requestBtn');
-    const kakaoBtn = document.getElementById('kakaoBtn');
 
     function openModal() {
       try { const saved = localStorage.getItem('vc_prayer_name'); if (saved && !fName.value) fName.value = saved; } catch (e) {}
@@ -576,7 +550,6 @@
       updateCount(fTitle, titleCount, 100);
       updateCount(fText, textCount, 1000);
       requestBtn.classList.add('hidden');
-      kakaoBtn.classList.add('hidden');
       modal.classList.remove('hidden');
       modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setTimeout(() => fTitle.focus({ preventScroll: true }), 120);
@@ -584,7 +557,6 @@
     function closeModal() {
       modal.classList.add('hidden');
       requestBtn.classList.remove('hidden');
-      kakaoBtn.classList.remove('hidden');
       requestBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
