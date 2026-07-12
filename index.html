@@ -3771,6 +3771,7 @@
       let bgmSource   = null;
       let bgmVolume   = null;
       let playSessionId = 0;
+      const BGM_DELAY_MS = 2500; // 내레이션이 먼저 들리도록, 이 시간(ms) 뒤에 배경음악을 은은하게 깔기 시작
 
       /* 중후한 목소리 보정을 위한 이퀄라이저(EQ) 필터 노드 */
       let voiceBassBoost = null;
@@ -3859,10 +3860,10 @@
         }
       }
 
-      /* 지정한 MP3 파일('bgm.mp3')을 재생하는 배경음악 함수 */
+      /* 지정한 MP3 파일('빛과 섬김의 교회.mp3')을 재생하는 배경음악 함수 */
       function initBgmAudio() {
         if (bgmAudio) return;
-        bgmAudio = new Audio('bgm.mp3');
+        bgmAudio = new Audio('빛과 섬김의 교회.mp3');
         bgmAudio.crossOrigin = 'anonymous'; // CORS 차단 방지용 anonymous 설정
         bgmAudio.preload = 'auto'; // 리소스 사전 로드 강제
         bgmAudio.loop = true;
@@ -3913,6 +3914,13 @@
         } catch (e) {
           console.warn('[BGM] Failed to play background audio file:', e);
         }
+      }
+
+      /* 내레이션 시작 직후가 아니라, 잠시(BGM_DELAY_MS) 뒤에 배경음악이 깔리도록 예약 */
+      function scheduleBgmStart(sessionId) {
+        setTimeout(() => {
+          if (active && sessionId === playSessionId) startBgm();
+        }, BGM_DELAY_MS);
       }
 
       function stopBgm() {
@@ -4000,7 +4008,8 @@
           label.textContent = '멈추기';
           // 배경음악 시작/유지 — startBgm은 멱등(이미 재생 중이면 음량만 0.35로 유지)이라
           // 매 트랙 호출해도 끊기지 않고, 첫 트랙이 실패해도 BGM이 깔린다.
-          startBgm();
+          // 내레이션이 먼저 나오도록, 배경음악은 BGM_DELAY_MS 뒤에 은은하게 깔기 시작 (첫 트랙에서만)
+          if (index === 0) scheduleBgmStart(sessionId);
           curAudio.play().catch(e => console.warn('[REC] 녹음 재생 실패:', e));
         };
 
@@ -4062,7 +4071,7 @@
 
           // 인트로 딜레이 없이 음성을 바로 재생 (배경음악이 먼저 깔리지 않도록)
           label.textContent = '멈추기';
-          startBgm(); // 음성 재생과 동시에 배경음악 시작
+          scheduleBgmStart(sessionId); // 내레이션 시작 후 잠시 뒤에 배경음악을 은은하게 시작
           curAudio.play();
 
         } catch (e) {
@@ -4090,7 +4099,7 @@
         const v = maleVoice || koVoices[0];
         
         if (v) utt.voice = v;
-        startBgm(); // 음성 재생과 동시에 배경음악 시작
+        scheduleBgmStart(sessionId); // 내레이션 시작 후 잠시 뒤에 배경음악을 은은하게 시작
         utt.onend = () => {
           if (active && sessionId === playSessionId) {
             // 완독 후 3.0초 쉬고 반복 (배경음악 3초 단독 재생)
