@@ -2,11 +2,12 @@
  *
  * 트리거: /site/memoryVerse 문서가 수정될 때
  * 동작: verses 배열 또는 news 배열에 "새로운 id"가 추가되었으면, pushTokens에 저장된
- *       모든 기기로 데이터 메시지를 보냅니다. 각 기기의 서비스워커(firebase-messaging-sw.js)가
+ *       모든 기기로 데이터 메시지를 보냅니다. 각 기기의 서비스워커(sw.js)가
  *       알림을 띄우고 홈 아이콘 배지를 켭니다. 만료된 토큰은 자동 정리합니다.
  */
 const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -136,6 +137,67 @@ exports.pushTokenCount = onRequest({ cors: true, region: 'us-central1' }, async 
     res.status(500).json({ error: 'failed' });
   }
 });
+
+/* ElevenLabs TTS 프록시 (index.html "읽어주기"에서 /api/tts 로 호출)
+ * API 키를 클라이언트에 노출하지 않기 위해 서버에서 대신 호출합니다.
+ * 키 등록(1회): firebase functions:secrets:set ELEVENLABS_KEY
+ * 호스팅 rewrite: /api/tts → ttsProxy (firebase.json)
+ */
+const ELEVENLABS_KEY = defineSecret('ELEVENLABS_KEY');
+
+exports.ttsProxy = onRequest(
+  { cors: true, region: 'us-central1', secrets: [ELEVENLABS_KEY] },
+  async (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'method not allowed' });
+      return;
+    }
+    const body = req.body || {};
+    const text = typeof body.text === 'string' ? body.text.trim() : '';
+    const voiceId = typeof body.voiceId === 'string' ? body.voiceId.trim() : '';
+    // 남용 방지: 구절 낭독 용도에 맞는 길이/형식만 허용
+    if (!text || text.length > 1200) {
+      res.status(400).json({ error: 'invalid text' });
+      return;
+    }
+    if (!/^[A-Za-z0-9]{8,64}$/.test(voiceId)) {
+      res.status(400).json({ error: 'invalid voiceId' });
+      return;
+    }
+    try {
+      const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': ELEVENLABS_KEY.value()
+        },
+        body: JSON.stringify({
+          text,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: 0.78,          // 안정성 높임 (중후하고 신뢰감 있는 억양 유지)
+            similarity_boost: 0.85,   // 선명도 높임
+            style: 0.0,               // 감정 기복을 최소화하여 정중하고 경건하게 낭독
+            use_speaker_boost: true   // 기본 음질 강화 활성화
+          }
+        })
+      });
+      if (!r.ok) {
+        logger.warn(`ttsProxy 업스트림 오류: ${r.status}`);
+        res.status(502).json({ error: 'upstream ' + r.status });
+        return;
+      }
+      const buf = Buffer.from(await r.arrayBuffer());
+      res.set('Content-Type', 'audio/mpeg');
+      res.set('Cache-Control', 'no-store');
+      res.send(buf);
+    } catch (e) {
+      logger.error('ttsProxy 실패', e);
+      res.status(500).json({ error: 'failed' });
+    }
+  }
+);
 
 /* 중보기도 등록 시 이메일 알림 발송 */
 exports.sendPrayerEmail = onDocumentCreated('prayers/{id}', async (event) => {

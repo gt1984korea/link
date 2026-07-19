@@ -34,6 +34,10 @@
       {
         "source": "/api/push-count",
         "function": { "functionId": "pushTokenCount", "region": "us-central1" }
+      },
+      {
+        "source": "/api/tts",
+        "function": { "functionId": "ttsProxy", "region": "us-central1" }
       }
     ],
     "headers": [
@@ -70,12 +74,6 @@
       },
       {
         "source": "sw.js",
-        "headers": [
-          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
-        ]
-      },
-      {
-        "source": "firebase-messaging-sw.js",
         "headers": [
           { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
         ]

@@ -65,7 +65,9 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   treated as an always-active verse, and admin pre-fills it for one-click migration into `verses`.
 - **Read-aloud audio source priority:** if `audioUrl` is set (an admin-uploaded recording in
   Firebase Storage at `audio/memoryVerse`, rules in `storage.rules`), the "읽어주기" button plays
-  that recording instead of ElevenLabs TTS. The recording is played via a plain `Audio` element
+  that recording instead of ElevenLabs TTS. TTS calls go through the **`/api/tts` hosting rewrite
+  → `ttsProxy` Cloud Function** (`functions/index.js`); the ElevenLabs API key lives only in
+  Secret Manager (`firebase functions:secrets:set ELEVENLABS_KEY`) — never put it in client code. The recording is played via a plain `Audio` element
   (NOT routed through the Web Audio chain) deliberately — routing cross-origin Storage media
   through `createMediaElementSource` causes silent playback without CORS config, and a human
   recording shouldn't get the synthetic-voice reverb/EQ. BGM (same-origin `bgm.mp3`) still plays
@@ -80,10 +82,11 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   Function via Admin SDK, which bypasses rules). Everything else is denied.
 - **Web push (FCM) + Cloud Functions backend.** `push.js` drives the "새 구절 알림 받기"
   (`#btnNotify`) button: it requests notification permission, fetches an FCM token (VAPID public
-  key inline in `push.js`), and stores it at `pushTokens/{token}`. `firebase-messaging-sw.js` is
-  the messaging service worker — registered by **relative** path so it works under both Firebase
-  Hosting root and GitHub-Pages sub-paths. iOS only delivers push to the **installed PWA**
-  (home-screen app), not Safari tabs. `functions/index.js` (Node 22, deployed separately, needs
+  key inline in `push.js`), and stores it at `pushTokens/{token}`. The messaging service worker
+  is **`sw.js`** (the single SW — it also handles caching and `push`/`notificationclick`),
+  registered by **relative** path so it works under both Firebase Hosting root and GitHub-Pages
+  sub-paths. The old `firebase-messaging-sw.js` was dead (never registered) and has been deleted.
+  iOS only delivers push to the **installed PWA** (home-screen app), not Safari tabs. `functions/index.js` (Node 22, deployed separately, needs
   the **Blaze** plan) holds `notifyNewVerse` (an `onDocumentUpdated('site/memoryVerse')` trigger
   that diffs the `verses`/`news` arrays and multicasts to all tokens, pruning invalid ones) and
   `pushTokenCount` (an `onRequest` HTTP fn exposed at `/api/push-count` via a hosting rewrite, so
@@ -111,8 +114,11 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   (Android), iOS Safari share-sheet instructions, and in-app-browser (KakaoTalk/Instagram/etc.)
   "open in external browser" guidance. `index.html` coordinates install button loading state via
   the `appinstalled` and custom `a2hs:result` events.
-- **`sw.js` is a no-op service worker** (no caching) — it exists only to satisfy Android's PWA
-  installability criteria. It is served with `no-store` headers.
+- **`sw.js` is the single service worker**: precache + network-first HTML navigations +
+  stale-while-revalidate for same-origin assets, **plus** the web-push `push`/`notificationclick`
+  handlers (no Firebase SDK inside — plain standard APIs). It is served with `no-store` headers so
+  updates roll out immediately. Because same-origin JS is cached stale-while-revalidate, bump the
+  `?v=N` query on `firebase-config.js`/`push.js` references when changing them.
 - **Audio is built with the Web Audio API** inside `index.html`: TTS uses an EQ/convolver chain
   for a deeper, cathedral-reverb voice, and BGM (`bgm.mp3`) plays through a gain node with
   fade-in/out, starting at the 48s highlight. AudioContext must be resumed inside a user-gesture

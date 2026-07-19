@@ -65,8 +65,13 @@ async function run() {
   check('다른 스와치 선택 시 캔버스 변경', secondSwatchData !== brandBlueData);
   check('다른 스와치 active 표시', await secondSwatch.evaluate((el) => el.classList.contains('active')));
 
-  // 4) 저장 버튼 제거 확인
-  check('저장 버튼 제거됨', await page.locator('#imgSaveBtn').count() === 0);
+  // 4) 공유/저장 버튼 상호 배타 노출 확인
+  //    파일 공유(canShare files) 지원 → "공유하기"만, 미지원(데스크톱/헤드리스) → "저장"만.
+  //    둘 중 정확히 하나만 보여야 하고, 액션 영역이 비면 안 된다(과거 버그).
+  const shareVisible = await page.locator('#imgShareBtn:not(.hidden)').count() === 1;
+  const saveVisible = await page.locator('#imgSaveBtn:not(.hidden)').count() === 1;
+  check('공유하기/저장 중 하나만 노출', shareVisible !== saveVisible,
+    `share=${shareVisible}, save=${saveVisible}`);
 
   // 5) 모달 닫기
   await page.locator('#imageShareCloseBtn').click();

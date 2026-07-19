@@ -317,6 +317,8 @@
       box-shadow: 0 1px 4px rgba(229, 57, 53, 0.45);
       animation: newBadgePulse 1.4s ease-in-out infinite;
     }
+    /* .hidden(단일 클래스)보다 .verse .new-badge(클래스 2개)가 우선이라 별도 규칙 필요 */
+    .verse .new-badge.hidden { display: none; }
     @keyframes newBadgePulse {
       0%, 100% { transform: scale(1); opacity: 1; }
       50%      { transform: scale(1.12); opacity: 0.82; }
@@ -1624,6 +1626,7 @@
       <div class="label-row">
         <span class="label-left">
           <span class="label">이번 주 성경 구절</span>
+          <span class="new-badge hidden" id="verseNewBadge">NEW</span>
         </span>
         <button class="past-toggle hidden" id="pastToggle" type="button" aria-expanded="false">
           <span id="pastToggleLabel">지난 암송구절</span>
@@ -1759,7 +1762,7 @@
 
       <!-- 3. 유튜브 (누르면 최신 영상 미리보기 펼침) -->
       <div class="channel">
-        <button class="item youtube channel-head" id="btnYoutube" type="button" data-href="https://www.youtube.com/@nzvictory/videos" aria-expanded="false">
+        <button class="item youtube channel-head" id="btnYoutube" type="button" data-href="https://www.youtube.com/@nzvictory/videos">
           <span class="ic">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <rect width="20" height="15" x="2" y="4.5" rx="4"/>
@@ -1792,7 +1795,7 @@
 
       <!-- 4. 페이스북 (관리자가 등록한 게시물이 있을 때만 펼침, 없으면 바로 링크) -->
       <div class="channel">
-        <button class="item facebook channel-head" id="btnFacebook" type="button" data-href="https://www.facebook.com/people/Victory-Church-NZ/100075886399936/" aria-expanded="false">
+        <button class="item facebook channel-head" id="btnFacebook" type="button" data-href="https://www.facebook.com/people/Victory-Church-NZ/100075886399936/">
           <span class="ic">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
@@ -1814,7 +1817,7 @@
 
       <!-- 6. 인스타그램 (누르면 미리보기 펼침) -->
       <div class="channel">
-        <button class="item instagram channel-head" id="btnInstagram" type="button" data-href="https://www.instagram.com/victorius_nz/" aria-expanded="false">
+        <button class="item instagram channel-head" id="btnInstagram" type="button" data-href="https://www.instagram.com/victorius_nz/">
           <span class="ic">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
@@ -2134,6 +2137,7 @@
       </div>
       <div class="image-share-actions">
         <button class="img-share-btn primary" id="imgShareBtn" type="button">공유하기</button>
+        <button class="img-share-btn primary" id="imgSaveBtn" type="button">저장</button>
       </div>
     </div>
   </div>
@@ -3356,12 +3360,28 @@
       img.src = objectUrl;
     });
 
-    // 공유하기
+    // 공유하기 / 저장
     const imgShareBtn = document.getElementById('imgShareBtn');
+    const imgSaveBtn = document.getElementById('imgSaveBtn');
 
     function canvasToPngBlob() {
       return new Promise((resolve) => shareCanvas.toBlob(resolve, 'image/png'));
     }
+
+    // 파일 공유 미지원 환경(주로 데스크톱)용: PNG 다운로드
+    imgSaveBtn.addEventListener('click', async () => {
+      const blob = await canvasToPngBlob();
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'victory-verse.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (window.showToast) window.showToast('이미지가 저장되었습니다');
+    });
 
     imgShareBtn.addEventListener('click', async () => {
       const blob = await canvasToPngBlob();
@@ -3375,14 +3395,15 @@
       } catch (e) { /* 사용자가 공유 취소 — 무시 */ }
     });
 
-    // 이미지 파일 공유를 지원하지 않는 환경(주로 데스크톱)에서는 "공유하기" 숨김
+    // 파일 공유 지원 → "공유하기"만, 미지원(주로 데스크톱) → "저장"만 노출
     (function () {
       let supportsFileShare = false;
       try {
         const probe = new File([new Uint8Array([1])], 'probe.png', { type: 'image/png' });
         supportsFileShare = !!(navigator.canShare && navigator.canShare({ files: [probe] }));
       } catch (e) { supportsFileShare = false; }
-      if (!supportsFileShare) imgShareBtn.classList.add('hidden');
+      if (supportsFileShare) imgSaveBtn.classList.add('hidden');
+      else imgShareBtn.classList.add('hidden');
     })();
 
     const PAST_PAGE_SIZE = 5; // 한 번에 보여줄 지난 구절 개수 (나머지는 "더 보기"로 펼침)
@@ -3576,23 +3597,12 @@
       });
     }
 
-    // 마지막으로 본 활성 구절 캐시 (오프라인 첫 화면용)
-    try {
-      const cached = JSON.parse(localStorage.getItem('verseCache') || 'null');
-      if (cached && cached.text) {
-        window.lastRenderedText = cached.text;
-        window.lastRenderedRef = cached.reference || '';
-        window.currentFullVerseText = cached.text;
-        window.currentFullVerseRef = cached.reference || '';
-        if (cached.voiceId) window.lastCachedVoiceId = cached.voiceId;
-        if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
-        if (Array.isArray(cached.audioUrls)) window.lastCachedAudioUrls = cached.audioUrls;
-        card.classList.remove('hidden');
-
-        // 첫 진입 시 캐시 데이터를 화면에 바로 렌더링합니다.
-        displayVerse(cached.text, cached.reference || '');
-      }
-    } catch (e) {}
+    // 캐시된 구절의 첫 페인트는 구절 카드 아래 인라인 스크립트가 verseCache로 처리한다.
+    // (여기서 다시 렌더링하면 로직이 이중화되므로) 모듈에서는 폰트 서브셋 예열만 보강한다.
+    if (window.lastRenderedText && document.fonts && document.fonts.load) {
+      const chars = window.lastRenderedText + (window.lastRenderedRef || '');
+      document.fonts.load(`700 28px 'Gowun Dodum'`, chars).catch(() => {});
+    }
 
     try {
       const app = initializeApp(firebaseConfig);
@@ -3715,9 +3725,8 @@
       const icon  = document.getElementById('ttsIcon');
       if (!btn) return;
 
-      /* ElevenLabs 설정 */
-      const XI_KEY   = '0fb32fdf3fa82c68378bcf9a8e5de0a0acef05ceb7b0012c054b8ebbb0b831fe';
-      const MODEL    = 'eleven_multilingual_v2';
+      /* TTS는 Cloud Function 프록시(/api/tts, functions/index.js의 ttsProxy)를 경유한다.
+         ElevenLabs API 키는 서버(Secret Manager)에만 보관 — 클라이언트에 노출 금지. */
 
       // Firestore에서 받아온 전역 설정 목소리 또는 캐시된 목소리 사용 (기본값: Brian)
       let VOICE_ID = window.currentTtsVoiceId || window.lastCachedVoiceId || 'nPczCjzI2devNBz1zQrb';
@@ -3734,6 +3743,7 @@
         return single ? [single] : [];
       }
       let recordingUrls = pickRecordingUrls();
+      let recErrors = 0; // 이번 사이클에서 재생 실패한 녹음 트랙 수 (전곡 실패 시 무한 재시도 방지)
 
       // 실시간으로 목사님 목소리 설정이 변경되는 이벤트를 구독
       window.addEventListener('vc:voicechange', function (e) {
@@ -3957,30 +3967,17 @@
         return text + (ref ? '\n\n' + ref : '');
       }
 
-      /* ElevenLabs API 호출 (목사님 톤 튜닝 적용) */
+      /* TTS 음성 요청 — 같은 출처의 Cloud Function 프록시 경유 (톤 튜닝은 서버에서 적용) */
       async function fetchSpeech(text) {
-        const res = await fetch(
-          `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
-          {
-            method: 'POST',
-            headers: {
-              'Accept': 'audio/mpeg',
-              'Content-Type': 'application/json',
-              'xi-api-key': XI_KEY
-            },
-            body: JSON.stringify({
-              text,
-              model_id: MODEL,
-              voice_settings: {
-                stability: 0.78,          // 안정성 높임 (중후하고 신뢰감 있는 억양 유지)
-                similarity_boost: 0.85,   // 선명도 높임
-                style: 0.0,               // 감정 기복을 최소화하여 정중하고 경건하게 낭독
-                use_speaker_boost: true   // 기본 음질 강화 활성화
-              }
-            })
-          }
-        );
-        if (!res.ok) throw new Error('ElevenLabs ' + res.status);
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: {
+            'Accept': 'audio/mpeg',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text, voiceId: VOICE_ID })
+        });
+        if (!res.ok) throw new Error('TTS proxy ' + res.status);
         return res.blob();
       }
 
@@ -4003,6 +4000,13 @@
               if (active && sessionId === playSessionId) playRecording(sessionId, nextIndex);
             }, 600);
           } else {
+            // 한 사이클의 전 트랙이 실패(만료된 Storage URL 등)면 반복하지 않고 중지
+            if (recErrors >= recordingUrls.length) {
+              stopTTS();
+              if (window.showToast) window.showToast('음원을 불러올 수 없어요. 잠시 후 다시 시도해 주세요.');
+              return;
+            }
+            recErrors = 0; // 다음 사이클을 위해 초기화
             // 마지막 녹음까지 끝나면 3.0초 음악만 흐른 뒤 처음부터 반복 (outro cushion)
             setTimeout(() => {
               if (active && sessionId === playSessionId) play(sessionId);
@@ -4013,8 +4017,8 @@
         label.textContent = '불러오는 중...';
         curAudio = new Audio(url);
         curAudio.preload = 'auto';
-        curAudio.onended = advance;
-        curAudio.onerror = advance; // 한 트랙이 실패해도 다음 트랙으로 진행
+        curAudio.onended = function () { recErrors = 0; advance(); };
+        curAudio.onerror = function () { recErrors++; advance(); }; // 한 트랙이 실패해도 다음 트랙으로 진행
 
         const startPlayback = () => {
           if (!active || sessionId !== playSessionId) return;
@@ -4130,6 +4134,7 @@
       function startTTS() {
         active = true;
         playSessionId++;
+        recErrors = 0;
         const currentSessionId = playSessionId;
 
         btn.classList.add('playing');

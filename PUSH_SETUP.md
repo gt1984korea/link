@@ -61,7 +61,7 @@ firebase deploy --only firestore:rules,functions,hosting
 | 파일 | 역할 |
 |------|------|
 | [`push.js`](push.js) | "알림 받기" 버튼 제어, 권한 요청, 토큰을 `pushTokens`에 저장 |
-| [`firebase-messaging-sw.js`](firebase-messaging-sw.js) | 백그라운드 푸시 수신 → 알림 표시 + 홈 아이콘 배지(setAppBadge) |
+| [`sw.js`](sw.js) | 백그라운드 푸시 수신 → 알림 표시 + 홈 아이콘 배지(setAppBadge). 정적 자산 캐싱도 겸함 |
 | [`functions/index.js`](functions/index.js) | 새 구절 등록 감지 → 모든 토큰에 푸시 발송, 만료 토큰 정리 |
 | `firestore.rules` | `pushTokens` 컬렉션 등록 허용(목록/삭제는 함수만) |
 | `index.html` | 알림 버튼 UI + 앱 열 때 배지 지우기(`clearAppBadge`) |

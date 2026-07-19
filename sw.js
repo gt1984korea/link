@@ -1,7 +1,8 @@
 /* 서비스워커 v6 — 정적 자산 캐싱 + 안드로이드 PWA 설치 요건 충족
  * HTML 내비게이션은 network-first(최신 우선), 그 외 동일 출처는 stale-while-revalidate */
-const CACHE = 'vc-v9';
-const PRECACHE = ['/', '/firebase-config.js', '/a2hs.js', '/icon-192.png?v=7', '/icon-512.png?v=7'];
+const CACHE = 'vc-v10';
+// 아이콘 버전은 index.html/manifest가 참조하는 ?v=4와 일치시켜야 프리캐시가 적중한다
+const PRECACHE = ['/', '/firebase-config.js', '/a2hs.js', '/icon-192.png?v=4', '/icon-512.png?v=4'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();

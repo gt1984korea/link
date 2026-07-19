@@ -128,8 +128,12 @@ async function onEnableClick() {
  * '/firebase-messaging-sw.js'를 등록하려 한다. 이 앱이 GitHub Pages 프로젝트
  * 페이지(예: /link/)처럼 하위 경로에서 열리면 루트 경로가 404가 나면서
  * "messaging/failed-service-worker-registration"으로 실패한다.
- * 상대경로('firebase-messaging-sw.js')로 등록한 registration을 getToken에 넘기면
- * Firebase Hosting(루트)과 GitHub Pages(하위 경로) 양쪽 모두에서 동작한다. */
+ * 상대경로로 등록한 registration을 getToken에 넘기면 Firebase Hosting(루트)과
+ * GitHub Pages(하위 경로) 양쪽 모두에서 동작한다.
+ *
+ * ⚠️ 이 앱의 메시징 SW는 sw.js "하나"다 (캐싱 + push/notificationclick 핸들러 겸용).
+ *    과거의 firebase-messaging-sw.js는 등록되지 않는 죽은 파일이어서 제거했다 —
+ *    푸시 표시 로직을 고칠 땐 sw.js를 수정할 것. */
 let swRegPromise = null;
 function getMessagingSW() {
   if (!('serviceWorker' in navigator)) return Promise.reject(new Error('serviceWorker unsupported'));
