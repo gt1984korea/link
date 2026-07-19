@@ -144,9 +144,9 @@ exports.pushTokenCount = onRequest({ cors: true, region: 'us-central1' }, async 
  * 키 등록(1회): firebase functions:secrets:set ELEVENLABS_KEY
  * 호스팅 rewrite: /api/tts → ttsProxy (firebase.json)
  */
-/* TEMP-DISABLED-FOR-DEPLOY */ const ELEVENLABS_KEY = null; // defineSecret('ELEVENLABS_KEY');
+const ELEVENLABS_KEY = defineSecret('ELEVENLABS_KEY');
 
-/* TEMP-DISABLED-FOR-DEPLOY */ const _ttsProxyDisabled = onRequest ? null : onRequest(
+exports.ttsProxy = onRequest(
   { cors: true, region: 'us-central1', secrets: [ELEVENLABS_KEY] },
   async (req, res) => {
     if (req.method !== 'POST') {

@@ -9,3 +9,4 @@ Thumbs.db
 docs/.bkit-memory.json
 docs/.pdca-status.json
 .firebase/
+*debug.log
