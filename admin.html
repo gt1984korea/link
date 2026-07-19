@@ -405,6 +405,12 @@
       font-weight: 700;
       color: var(--navy);
     }
+    /* 통계 기간 선택 버튼 활성 상태 */
+    .stats-range-active {
+      background: var(--brand) !important;
+      border-color: var(--brand) !important;
+      color: #fff !important;
+    }
 
     /* 탭 메뉴 */
     .tabs {
@@ -805,17 +811,42 @@
       </p>
     </section>
 
-    <!-- 메뉴 클릭 통계 -->
+    <!-- 방문 · 클릭 통계 -->
     <section class="card hidden" id="statsCard">
-      <h2>메뉴 클릭 통계</h2>
-      <div id="statsList" style="display: flex; flex-direction: column; gap: 4px; margin-top: 10px;">
+      <h2>방문 · 클릭 통계</h2>
+      <div id="statsRangeBtns" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+        <button class="btn btn-ghost" data-range="today" type="button">오늘</button>
+        <button class="btn btn-ghost" data-range="7" type="button">최근 7일</button>
+        <button class="btn btn-ghost" data-range="30" type="button">최근 30일</button>
+        <button class="btn btn-ghost" data-range="all" type="button">전체</button>
+      </div>
+      <div class="row" style="align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
+        <input type="date" id="statsFrom" style="flex:0 1 auto;">
+        <span style="color:#8a8f98;">~</span>
+        <input type="date" id="statsTo" style="flex:0 1 auto;">
+        <button class="btn btn-ghost" id="btnStatsApply" type="button">기간 조회</button>
+      </div>
+      <p class="hint" id="statsPeriodLabel" style="margin-top:10px;"></p>
+
+      <h2 style="font-size:16px; margin-top:20px;">📱 화면 방문 수</h2>
+      <div id="statsViews" style="display:flex; flex-direction:column; gap:4px; margin-top:8px;">
         <p class="hint">통계를 불러오는 중…</p>
       </div>
+
+      <h2 style="font-size:16px; margin-top:20px;">👆 버튼 클릭 수 (많이 누른 순)</h2>
+      <div id="statsList" style="display:flex; flex-direction:column; gap:4px; margin-top:8px;">
+        <p class="hint">통계를 불러오는 중…</p>
+      </div>
+
       <div class="row" style="margin-top: 18px;">
         <button class="btn btn-danger" id="btnStatsReset" type="button" style="font-size: 14px; padding: 10px 16px;">
           통계 초기화
         </button>
       </div>
+      <p class="hint" style="margin-top:10px">
+        방문자 기기 기준 날짜로 일자별 집계됩니다. 같은 통계가 Google Analytics(이벤트
+        <code>menu_click</code>, <code>page_view</code>)에도 함께 기록됩니다.
+      </p>
     </section>
 
     <!-- 중보기도 관리 -->
@@ -2192,7 +2223,9 @@
     }
     btnUploadNews.addEventListener('click', uploadNews);
 
-    /* ── 메뉴 클릭 통계 관리 ── */
+    /* ── 방문 · 클릭 통계 관리 ──
+       데이터: /stats/{YYYY-MM-DD} = { clicks: {버튼id: n}, views: {화면: n} } (index.html·prayer.html이 기록)
+       레거시: /site/menuClicks (기간 구분 없는 구버전 누적) — "전체" 기간에만 합산 표시 */
     const menuItems = [
       { id: 'btnInstall', name: '바로가기 설치' },
       { id: 'btnLive', name: '실시간 라이브' },
@@ -2204,68 +2237,161 @@
       { id: 'btnPhone', name: '전화 연락' },
       { id: 'btnEmail', name: '이메일 연락' },
       { id: 'btnMapSunday', name: '주일예배 위치' },
-      { id: 'btnMapWeekday', name: '주중모임 위치' }
+      { id: 'btnMapWeekday', name: '주중모임 위치' },
+      { id: 'btnPrayer', name: '중보기도' },
+      { id: 'btnNotify', name: '새 구절 알림 받기' },
+      { id: 'btnReceipt', name: '기부금 영수증' },
+      { id: 'ttsBtn', name: '읽어주기' },
+      { id: 'likeBtn', name: '구절 좋아요' },
+      { id: 'shareBtn', name: '이미지로 공유' }
     ];
+    const PAGE_NAMES = { home: '홈 (메인 화면)', prayer: '중보기도 게시판' };
 
-    function renderStats(data) {
-      const listEl = $('statsList');
-      if (!listEl) return;
-      listEl.innerHTML = '';
+    let statsDocs = {};      // { 'YYYY-MM-DD': { clicks, views } } — 실시간 구독 캐시
+    let legacyClicks = {};   // 구버전 /site/menuClicks 누적
+    let statsRange = { mode: '7' }; // 'today' | '7' | '30' | 'all' | 'custom'(from/to)
 
-      let totalClicks = 0;
-      let maxClicks = 0;
-      menuItems.forEach(item => {
-        const val = data[item.id] || 0;
-        totalClicks += val;
-        if (val > maxClicks) maxClicks = val;
-      });
+    function statsDayKey(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
 
-      // 전체 누적 클릭 수 렌더링
+    // 현재 선택된 기간의 [from, to] 문자열 (null이면 제한 없음)
+    function statsRangeBounds() {
+      const today = statsDayKey(new Date());
+      if (statsRange.mode === 'today') return [today, today];
+      if (statsRange.mode === '7' || statsRange.mode === '30') {
+        const d = new Date();
+        d.setDate(d.getDate() - (Number(statsRange.mode) - 1));
+        return [statsDayKey(d), today];
+      }
+      if (statsRange.mode === 'custom') return [statsRange.from || null, statsRange.to || null];
+      return [null, null]; // all
+    }
+
+    function statsBarList(el, rows, emptyMsg) {
+      el.innerHTML = '';
+      const shown = rows.filter(r => r.count > 0);
+      if (!shown.length) {
+        el.innerHTML = `<p class="hint">${emptyMsg}</p>`;
+        return 0;
+      }
+      const total = shown.reduce((s, r) => s + r.count, 0);
+      const max = shown[0].count;
       const totalRow = document.createElement('div');
       totalRow.className = 'stats-total-row';
       totalRow.innerHTML = `
-        <span class="stats-total-label">전체 누적 클릭 수</span>
-        <span class="stats-total-value">${totalClicks.toLocaleString()}회</span>
+        <span class="stats-total-label">합계</span>
+        <span class="stats-total-value">${total.toLocaleString()}회</span>
       `;
-      listEl.appendChild(totalRow);
-
-      // 개별 메뉴 클릭 통계 렌더링
-      menuItems.forEach(item => {
-        const val = data[item.id] || 0;
-        const pct = maxClicks > 0 ? (val / maxClicks) * 100 : 0;
-
+      el.appendChild(totalRow);
+      shown.forEach((r, i) => {
+        const pct = max > 0 ? (r.count / max) * 100 : 0;
         const row = document.createElement('div');
         row.className = 'stats-item';
         row.innerHTML = `
           <div class="stats-header">
-            <span>${item.name}</span>
-            <span class="stats-count">${val.toLocaleString()}회</span>
+            <span>${i + 1}. ${r.name}</span>
+            <span class="stats-count">${r.count.toLocaleString()}회</span>
           </div>
           <div class="stats-track">
             <div class="stats-bar" style="width: ${pct}%;"></div>
           </div>
         `;
-        listEl.appendChild(row);
+        el.appendChild(row);
       });
+      return total;
+    }
+
+    function renderStats() {
+      const listEl = $('statsList');
+      const viewsEl = $('statsViews');
+      if (!listEl || !viewsEl) return;
+
+      const [from, to] = statsRangeBounds();
+      const clicks = {};
+      const views = {};
+      Object.keys(statsDocs).forEach(day => {
+        if (from && day < from) return;
+        if (to && day > to) return;
+        const d = statsDocs[day] || {};
+        Object.entries(d.clicks || {}).forEach(([k, v]) => { clicks[k] = (clicks[k] || 0) + (Number(v) || 0); });
+        Object.entries(d.views || {}).forEach(([k, v]) => { views[k] = (views[k] || 0) + (Number(v) || 0); });
+      });
+
+      // 구버전 누적(기간 구분 없음)은 "전체" 조회 때만 합산
+      let legacyNote = '';
+      if (statsRange.mode === 'all') {
+        let legacySum = 0;
+        Object.entries(legacyClicks).forEach(([k, v]) => {
+          const n = Number(v) || 0;
+          if (n > 0) { clicks[k] = (clicks[k] || 0) + n; legacySum += n; }
+        });
+        if (legacySum > 0) legacyNote = ` · 구버전 누적 ${legacySum.toLocaleString()}회 포함`;
+      }
+
+      // 기간 라벨
+      const labels = { today: '오늘', '7': '최근 7일', '30': '최근 30일', all: '전체 기간' };
+      const label = statsRange.mode === 'custom'
+        ? `${from || '처음'} ~ ${to || '오늘'}`
+        : labels[statsRange.mode];
+      $('statsPeriodLabel').textContent = `조회 기간: ${label}${legacyNote}`;
+
+      // 버튼 클릭: 이름 매핑 + 많이 누른 순 정렬 (미등록 id도 표시)
+      const nameOf = {};
+      menuItems.forEach(m => { nameOf[m.id] = m.name; });
+      const clickRows = Object.entries(clicks)
+        .map(([id, count]) => ({ name: nameOf[id] || id, count }))
+        .sort((a, b) => b.count - a.count);
+      statsBarList(listEl, clickRows, '선택한 기간에 클릭 기록이 없습니다.');
+
+      const viewRows = Object.entries(views)
+        .map(([id, count]) => ({ name: PAGE_NAMES[id] || id, count }))
+        .sort((a, b) => b.count - a.count);
+      statsBarList(viewsEl, viewRows, '선택한 기간에 방문 기록이 없습니다.');
+    }
+
+    function setStatsRange(mode, from, to) {
+      statsRange = { mode, from, to };
+      document.querySelectorAll('#statsRangeBtns .btn').forEach(b => {
+        b.classList.toggle('stats-range-active', b.dataset.range === mode);
+      });
+      renderStats();
     }
 
     async function resetStats() {
-      if (!confirm('정말로 모든 메뉴 클릭 통계를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+      if (!confirm('정말로 모든 방문·클릭 통계를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.\n(Google Analytics 기록은 삭제되지 않습니다)')) return;
       const btn = $('btnStatsReset');
       if (btn) btn.disabled = true;
       try {
-        const statsRef = doc(db, 'site', 'menuClicks');
-        const zeroObj = {};
-        menuItems.forEach(item => {
-          zeroObj[item.id] = 0;
-        });
-        await setDoc(statsRef, zeroObj);
+        const days = Object.keys(statsDocs);
+        for (const day of days) {
+          await deleteDoc(doc(db, 'stats', day));
+        }
+        await deleteDoc(doc(db, 'site', 'menuClicks')).catch(() => {});
         alert('초기화되었습니다.');
       } catch (e) {
         alert('초기화 실패: ' + (e.message || e));
       } finally {
         if (btn) btn.disabled = false;
       }
+    }
+
+    // 기간 버튼/직접 입력 바인딩
+    document.querySelectorAll('#statsRangeBtns .btn').forEach(b => {
+      b.addEventListener('click', () => setStatsRange(b.dataset.range));
+    });
+    const btnStatsApply = $('btnStatsApply');
+    if (btnStatsApply) {
+      btnStatsApply.addEventListener('click', () => {
+        const from = $('statsFrom').value || null;
+        const to = $('statsTo').value || null;
+        if (!from && !to) { alert('조회할 기간(시작일 또는 종료일)을 선택하세요.'); return; }
+        if (from && to && from > to) { alert('시작일이 종료일보다 늦습니다.'); return; }
+        setStatsRange('custom', from, to);
+      });
     }
 
     // 탭별로 묶인 카드 그룹 (id 기준)
@@ -2340,11 +2466,20 @@
         renderNews();
       });
 
-      // 메뉴 클릭 통계 실시간 구독
+      // 방문·클릭 통계 실시간 구독 (/stats 일자별 문서 전체 — 하루 1문서라 규모 작음)
+      onSnapshot(collection(db, 'stats'), (snap) => {
+        statsDocs = {};
+        snap.forEach((s) => { statsDocs[s.id] = s.data() || {}; });
+        renderStats();
+      }, (err) => { console.warn('[stats] snapshot error', err); });
+
+      // 구버전 누적 통계(/site/menuClicks) — "전체" 기간에 합산 표시용
       onSnapshot(doc(db, 'site', 'menuClicks'), (snap) => {
-        const data = snap.exists() ? snap.data() : {};
-        renderStats(data);
+        legacyClicks = snap.exists() ? (snap.data() || {}) : {};
+        renderStats();
       });
+
+      setStatsRange('7'); // 기본: 최근 7일
 
       // 중보기도 실시간 구독 (공개+비공개 전부)
       onSnapshot(collection(db, PRAYER_COLLECTION), (snap) => {

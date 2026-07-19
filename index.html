@@ -2526,6 +2526,7 @@
     import { getFirestore, doc, onSnapshot, setDoc, increment }
       from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import { firebaseConfig, VERSE_DOC_PATH } from "./firebase-config.js?v=2";
+    import { trackClick as bumpClickStat, trackView as bumpViewStat } from "./stats.js?v=1";
 
     const card = document.getElementById('verseCard');
     const elText = document.getElementById('verseText');
@@ -3616,6 +3617,7 @@
         })
         .catch((e) => console.warn('[analytics] load failed', e));
       db = getFirestore(app);
+      bumpViewStat(db, 'home'); // 홈 화면 방문 집계
       const ref = doc(db, VERSE_DOC_PATH.collection, VERSE_DOC_PATH.id);
 
       onSnapshot(ref, (snap) => {
@@ -3668,7 +3670,13 @@
         { id: 'btnPhone', name: '전화 연락' },
         { id: 'btnEmail', name: '이메일 연락' },
         { id: 'btnMapSunday', name: '주일예배 위치' },
-        { id: 'btnMapWeekday', name: '주중모임 위치' }
+        { id: 'btnMapWeekday', name: '주중모임 위치' },
+        { id: 'btnPrayer', name: '중보기도' },
+        { id: 'btnNotify', name: '새 구절 알림 받기' },
+        { id: 'btnReceipt', name: '기부금 영수증' },
+        { id: 'ttsBtn', name: '읽어주기' },
+        { id: 'likeBtn', name: '구절 좋아요' },
+        { id: 'shareBtn', name: '이미지로 공유' }
       ];
 
       function trackClick(menuId, menuName) {
@@ -3682,14 +3690,8 @@
             console.warn('[analytics] logEvent failed', e);
           }
         }
-        if (db) {
-          try {
-            const menuClicksRef = doc(db, 'site', 'menuClicks');
-            setDoc(menuClicksRef, { [menuId]: increment(1) }, { merge: true });
-          } catch (e) {
-            console.warn('[firestore] increment click failed', e);
-          }
-        }
+        // 자체 통계: /stats/{오늘} 문서에 일자별 카운트 (admin 기간별 조회용)
+        bumpClickStat(db, menuId);
       }
 
       menuItems.forEach(({ id, name }) => {

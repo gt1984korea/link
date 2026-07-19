@@ -107,6 +107,16 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   `prayCount` +1 bump (title/content can't be tampered); `/prayerContents` `create`-validated, `update` denied;
   both `read`/`delete` open (관례적 비공개 — 완전 비공개는 관리자 Auth 필요). See `PRAYER_SETUP.md`.
   Rules changes need **manual** `firebase deploy --only firestore:rules`.
+- **방문/클릭 통계 (자체 + GA 이중 기록).** `stats.js`(공용 ES 모듈)가 Firestore
+  `/stats/{YYYY-MM-DD}`(방문자 로컬 날짜) 문서에 `{ clicks: {버튼id: n}, views: {home|prayer: n} }`를
+  `increment()`로 일자별 집계한다. `index.html`은 트래킹 버튼 목록(`menuItems`)의 클릭 +
+  `views.home`, `prayer.html`은 `views.prayer`를 기록하고, 동시에 GA(Firebase Analytics,
+  지연 로드)로 `menu_click` 이벤트/자동 `page_view`도 보낸다. `admin.html` 통계 탭은
+  `/stats` 컬렉션 전체를 `onSnapshot`으로 구독해 기간(오늘/7일/30일/전체/직접 입력)별로
+  클라이언트에서 합산·정렬해 바 차트로 보여준다. 구버전 누적 문서 `/site/menuClicks`는 더
+  이상 쓰지 않지만 "전체" 기간 조회 때만 합산 표시한다(초기화 버튼이 둘 다 삭제).
+  `/stats` 규칙은 verseStats와 같은 개방형 — **rules 변경은 수동 배포 필요**
+  (`firebase deploy --only firestore:rules`).
 - **`firebase-config.js` is intentionally public** (client config + apiKey). Security relies on
   Firestore rules, not on hiding these values.
 - **`a2hs.js`** is a standalone "Add to Home Screen" widget (documented in `README.md`),
@@ -133,4 +143,3 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   true면 "공유하기"(파일 공유), 아니면 "공유하기" 버튼을 숨기고 "저장"
   (다운로드)만 노출한다. 전부 클라이언트 로컬 처리이며 Firestore/Storage에는
   아무것도 쓰지 않는다.
-
