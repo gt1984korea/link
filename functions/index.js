@@ -144,10 +144,13 @@ exports.pushTokenCount = onRequest({ cors: true, region: 'us-central1' }, async 
  * 키 등록(1회): firebase functions:secrets:set ELEVENLABS_KEY
  * 호스팅 rewrite: /api/tts → ttsProxy (firebase.json)
  */
-const ELEVENLABS_KEY = defineSecret('ELEVENLABS_KEY');
+// TEMP: ttsProxy 시크릿 미등록으로 인한 배포 차단 회피 (weeklyStatsEmail만 우선 실행)
+// 나중에 firebase functions:secrets:set ELEVENLABS_KEY 후 복구 필요
+const ELEVENLABS_KEY = null; // defineSecret('ELEVENLABS_KEY');
 
-exports.ttsProxy = onRequest(
-  { cors: true, region: 'us-central1', secrets: [ELEVENLABS_KEY] },
+// ttsProxy는 일시 비활성화 — ELEVENLABS_KEY 등록 후 복구
+const _ttsProxyDisabled = onRequest ? null : onRequest(
+  { cors: true, region: 'us-central1' },
   async (req, res) => {
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'method not allowed' });
