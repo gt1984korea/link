@@ -7,6 +7,7 @@
  */
 const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onRequest } = require('firebase-functions/v2/https');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
 const { initializeApp } = require('firebase-admin/app');
@@ -143,9 +144,9 @@ exports.pushTokenCount = onRequest({ cors: true, region: 'us-central1' }, async 
  * 키 등록(1회): firebase functions:secrets:set ELEVENLABS_KEY
  * 호스팅 rewrite: /api/tts → ttsProxy (firebase.json)
  */
-const ELEVENLABS_KEY = defineSecret('ELEVENLABS_KEY');
+/* TEMP-DISABLED-FOR-DEPLOY */ const ELEVENLABS_KEY = null; // defineSecret('ELEVENLABS_KEY');
 
-exports.ttsProxy = onRequest(
+/* TEMP-DISABLED-FOR-DEPLOY */ const _ttsProxyDisabled = onRequest ? null : onRequest(
   { cors: true, region: 'us-central1', secrets: [ELEVENLABS_KEY] },
   async (req, res) => {
     if (req.method !== 'POST') {
@@ -332,3 +333,174 @@ ${content || '(내용이 없습니다)'}
     logger.error('이메일 SMTP 발송 오류', err);
   }
 });
+
+/* ── 주간 방문·클릭 통계 이메일 ──
+ * 매주 토요일 18:00 (뉴질랜드 시간), /stats/{YYYY-MM-DD} 일자별 집계를 최근 7일로 합산해
+ * 이전 7일과 비교한 리포트를 메일로 보냅니다. SMTP 설정은 sendPrayerEmail과 동일하게
+ * Firestore systemConfig/email 문서를 사용하며, 수신자는 statsTo 필드로 덮어쓸 수 있습니다.
+ */
+const STATS_MENU_NAMES = {
+  btnInstall: '바로가기 설치',
+  btnLive: '실시간 라이브',
+  btnHome: '교회 홈페이지',
+  btnYoutube: '유튜브 채널',
+  btnFacebook: '페이스북',
+  btnInstagram: '인스타그램',
+  btnGive: '헌금하기',
+  btnPhone: '전화 연락',
+  btnEmail: '이메일 연락',
+  btnMapSunday: '주일예배 위치',
+  btnMapWeekday: '주중모임 위치',
+  btnPrayer: '중보기도',
+  btnNotify: '새 구절 알림 받기',
+  btnReceipt: '기부금 영수증',
+  ttsBtn: '읽어주기',
+  likeBtn: '구절 좋아요',
+  shareBtn: '이미지로 공유'
+};
+const STATS_PAGE_NAMES = { home: '홈 (메인 화면)', prayer: '중보기도 게시판' };
+
+// 뉴질랜드 시간대 기준 YYYY-MM-DD (offsetDays일 전/후)
+function nzDayKey(offsetDays = 0) {
+  const d = new Date(Date.now() + offsetDays * 86400000);
+  return d.toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
+}
+
+// [from, to] 범위의 일자별 문서를 clicks/views 합계로 접기
+function sumStatsRange(docsById, from, to) {
+  const clicks = {};
+  const views = {};
+  Object.keys(docsById).forEach((day) => {
+    if (day < from || day > to) return;
+    const d = docsById[day] || {};
+    Object.entries(d.clicks || {}).forEach(([k, v]) => { clicks[k] = (clicks[k] || 0) + (Number(v) || 0); });
+    Object.entries(d.views || {}).forEach(([k, v]) => { views[k] = (views[k] || 0) + (Number(v) || 0); });
+  });
+  return { clicks, views };
+}
+
+// 지난주 대비 증감 뱃지
+function deltaBadge(cur, prev) {
+  const diff = cur - prev;
+  if (diff > 0) return `<span style="color:#166534; font-size:12px;">▲ +${diff.toLocaleString()}</span>`;
+  if (diff < 0) return `<span style="color:#991b1b; font-size:12px;">▼ ${diff.toLocaleString()}</span>`;
+  return '<span style="color:#9ca3af; font-size:12px;">—</span>';
+}
+
+// {키: 수} 맵을 이름 매핑 + 내림차순 정렬된 HTML 표 행으로
+function statsTableRows(curMap, prevMap, nameMap) {
+  const rows = Object.entries(curMap)
+    .map(([id, count]) => ({ id, name: nameMap[id] || id, count }))
+    .sort((a, b) => b.count - a.count);
+  if (rows.length === 0) {
+    return '<tr><td colspan="3" style="padding:10px 0; color:#9ca3af;">기록이 없습니다.</td></tr>';
+  }
+  return rows.map((r, i) => `
+    <tr style="border-bottom:1px solid #e9eaee;">
+      <td style="padding:8px 0; color:#1e293b;">${i + 1}. ${r.name}</td>
+      <td style="padding:8px 0; text-align:right; font-weight:bold; color:#16265c;">${r.count.toLocaleString()}회</td>
+      <td style="padding:8px 0 8px 12px; text-align:right; width:70px;">${deltaBadge(r.count, prevMap[r.id] || 0)}</td>
+    </tr>`).join('');
+}
+
+exports.weeklyStatsEmail = onSchedule(
+  { schedule: 'every saturday 18:00', timeZone: 'Pacific/Auckland', region: 'us-central1' },
+  async () => {
+    const db = getFirestore();
+
+    // SMTP 설정 (sendPrayerEmail과 공유)
+    let smtpConfig;
+    try {
+      const configSnap = await db.collection('systemConfig').doc('email').get();
+      if (configSnap.exists) smtpConfig = configSnap.data();
+    } catch (err) {
+      logger.error('systemConfig/email 조회 실패', err);
+    }
+    if (!smtpConfig || !smtpConfig.user || !smtpConfig.pass) {
+      logger.warn('SMTP 설정 없음 → 주간 통계 메일 발송 불가');
+      return;
+    }
+
+    // 통계 문서 전체 로드 (하루 1문서라 규모 작음)
+    const docsById = {};
+    const snap = await db.collection('stats').get();
+    snap.forEach((s) => { docsById[s.id] = s.data() || {}; });
+
+    const to = nzDayKey(0);        // 오늘(토요일)
+    const from = nzDayKey(-6);     // 6일 전 → 최근 7일
+    const prevTo = nzDayKey(-7);
+    const prevFrom = nzDayKey(-13);
+    const cur = sumStatsRange(docsById, from, to);
+    const prev = sumStatsRange(docsById, prevFrom, prevTo);
+
+    const totalViews = Object.values(cur.views).reduce((s, v) => s + v, 0);
+    const totalClicks = Object.values(cur.clicks).reduce((s, v) => s + v, 0);
+    const prevViews = Object.values(prev.views).reduce((s, v) => s + v, 0);
+    const prevClicks = Object.values(prev.clicks).reduce((s, v) => s + v, 0);
+
+    const mailSubject = `[빅토리처치 주간 통계] ${from} ~ ${to} 방문 ${totalViews.toLocaleString()}회 · 클릭 ${totalClicks.toLocaleString()}회`;
+    const mailHtml = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e9eaee; border-radius: 12px; background-color: #ffffff;">
+      <h2 style="color: #16265c; border-bottom: 2px solid #21428d; padding-bottom: 10px; margin-top: 0;">📊 주간 방문·클릭 통계</h2>
+      <p style="font-size: 14px; color: #666666; margin: 6px 0 18px;">기간: <b>${from} ~ ${to}</b> (뉴질랜드 시간, 최근 7일) · 증감은 이전 7일 대비</p>
+
+      <table style="width:100%; border-collapse:collapse; margin:0 0 20px; font-size:14px;">
+        <tr>
+          <td style="padding:14px; background:#f8fafc; border-radius:8px; text-align:center;">
+            <div style="font-size:12px; color:#666666;">화면 방문</div>
+            <div style="font-size:22px; font-weight:bold; color:#16265c;">${totalViews.toLocaleString()}회</div>
+            ${deltaBadge(totalViews, prevViews)}
+          </td>
+          <td style="width:12px;"></td>
+          <td style="padding:14px; background:#f8fafc; border-radius:8px; text-align:center;">
+            <div style="font-size:12px; color:#666666;">버튼 클릭</div>
+            <div style="font-size:22px; font-weight:bold; color:#16265c;">${totalClicks.toLocaleString()}회</div>
+            ${deltaBadge(totalClicks, prevClicks)}
+          </td>
+        </tr>
+      </table>
+
+      <h3 style="color:#475569; font-size:15px; margin:20px 0 6px;">📱 화면 방문 수</h3>
+      <table style="width:100%; border-collapse:collapse; font-size:14px;">
+        ${statsTableRows(cur.views, prev.views, STATS_PAGE_NAMES)}
+      </table>
+
+      <h3 style="color:#475569; font-size:15px; margin:22px 0 6px;">👆 버튼 클릭 수 (많이 누른 순)</h3>
+      <table style="width:100%; border-collapse:collapse; font-size:14px;">
+        ${statsTableRows(cur.clicks, prev.clicks, STATS_MENU_NAMES)}
+      </table>
+
+      <div style="margin-top:26px; text-align:center;">
+        <a href="https://analytics.google.com/analytics/web/#/p540435332/reports/intelligenthome"
+           style="display:inline-block; padding:10px 18px; background:#21428d; color:#ffffff; text-decoration:none; border-radius:8px; font-size:14px; margin:0 4px;">Google Analytics 열기</a>
+        <a href="https://victorychurch-665a9.web.app/admin"
+           style="display:inline-block; padding:10px 18px; background:#f8fafc; color:#16265c; text-decoration:none; border-radius:8px; font-size:14px; border:1px solid #e9eaee; margin:0 4px;">관리자 통계 탭</a>
+      </div>
+
+      <div style="margin-top: 26px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e9eaee; padding-top: 15px;">
+        본 메일은 매주 토요일 오후 6시(뉴질랜드 시간)에 자동 발송됩니다.<br>
+        방문자 수(고유 사용자)·유입 경로 등 자세한 지표는 Google Analytics에서 확인하세요.
+      </div>
+    </div>`;
+
+    const finalTo = smtpConfig.statsTo || 'gt1984korea@gmail.com';
+    const transporter = nodemailer.createTransport({
+      host: smtpConfig.host || 'smtp.naver.com',
+      port: smtpConfig.port || 465,
+      secure: smtpConfig.secure !== false,
+      auth: { user: smtpConfig.user, pass: smtpConfig.pass }
+    });
+
+    try {
+      const info = await transporter.sendMail({
+        from: `"${smtpConfig.senderName || '빅토리처치 통계'}" <${smtpConfig.user}>`,
+        to: finalTo,
+        subject: mailSubject,
+        html: mailHtml
+      });
+      logger.info(`주간 통계 메일 발송 성공: ${info.messageId} -> ${finalTo}`);
+    } catch (err) {
+      logger.error('주간 통계 메일 발송 오류', err);
+    }
+  }
+);
