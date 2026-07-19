@@ -374,13 +374,11 @@
     import { getFirestore, collection, onSnapshot, doc, setDoc, writeBatch, increment, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import { firebaseConfig, PRAYER_COLLECTION, PRAYER_CONTENT_COLLECTION } from "./firebase-config.js?v=2";
-    import { trackView } from "./stats.js?v=1";
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 방문 집계: 자체 통계(/stats/{오늘}) + GA(page_view 자동 수집)
-    trackView(db, 'prayer');
+    // 방문 집계는 GA(Firebase Analytics)의 자동 page_view 수집에 맡긴다.
     import("https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js")
       .then(({ getAnalytics }) => { try { getAnalytics(app); } catch (e) { console.warn('[analytics] init failed', e); } })
       .catch((e) => console.warn('[analytics] load failed', e));

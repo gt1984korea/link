@@ -6,6 +6,7 @@
   },
   "main": "index.js",
   "dependencies": {
+    "@google-analytics/data": "^6.1.0",
     "firebase-admin": "^12.6.0",
     "firebase-functions": "^5.1.1",
     "nodemailer": "^9.0.3"

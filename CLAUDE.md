@@ -107,16 +107,24 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   `prayCount` +1 bump (title/content can't be tampered); `/prayerContents` `create`-validated, `update` denied;
   both `read`/`delete` open (관례적 비공개 — 완전 비공개는 관리자 Auth 필요). See `PRAYER_SETUP.md`.
   Rules changes need **manual** `firebase deploy --only firestore:rules`.
-- **방문/클릭 통계 (자체 + GA 이중 기록).** `stats.js`(공용 ES 모듈)가 Firestore
-  `/stats/{YYYY-MM-DD}`(방문자 로컬 날짜) 문서에 `{ clicks: {버튼id: n}, views: {home|prayer: n} }`를
-  `increment()`로 일자별 집계한다. `index.html`은 트래킹 버튼 목록(`menuItems`)의 클릭 +
-  `views.home`, `prayer.html`은 `views.prayer`를 기록하고, 동시에 GA(Firebase Analytics,
-  지연 로드)로 `menu_click` 이벤트/자동 `page_view`도 보낸다. `admin.html` 통계 탭은
-  `/stats` 컬렉션 전체를 `onSnapshot`으로 구독해 기간(오늘/7일/30일/전체/직접 입력)별로
-  클라이언트에서 합산·정렬해 바 차트로 보여준다. 구버전 누적 문서 `/site/menuClicks`는 더
-  이상 쓰지 않지만 "전체" 기간 조회 때만 합산 표시한다(초기화 버튼이 둘 다 삭제).
-  `/stats` 규칙은 verseStats와 같은 개방형 — **rules 변경은 수동 배포 필요**
-  (`firebase deploy --only firestore:rules`).
+- **방문/클릭 통계는 Google Analytics(GA4)가 단일 소스다 (Firestore 미사용).**
+  `index.html`은 트래킹 버튼 목록(`menuItems`)의 클릭마다 GA(Firebase Analytics, 지연 로드)에
+  `menu_click` 이벤트를 `{ menu_id, menu_name }` 파라미터와 함께 보내고, `page_view`는 GA가
+  자동 수집한다(`prayer.html`도 GA 초기화만 해 자동 `page_view`를 받는다). GA4 속성(ID
+  `540435332`, 측정 ID `G-5FHZJHRSQF`)에는 이벤트 파라미터 `menu_name`/`menu_id`가 맞춤
+  측정기준으로 등록되어 있어야 리포트에서 버튼별로 구분된다(GA4 관리 > 맞춤 정의, 1회 등록).
+  **`admin.html`의 "방문 · 클릭 통계" 탭과 주간 통계 메일은 둘 다 GA4 Data API로 직접
+  조회한다** (`functions/index.js`의 `fetchGaStats()` 공용 헬퍼) — Firestore에는 아무것도
+  쓰지 않는다. `admin.html`은 `/api/ga-stats`(호스팅 rewrite → Cloud Function `gaStats`)를
+  기간(오늘/7일/30일/전체/직접 입력)별로 호출해 화면 방문 수(`pagePath` 기준, `/`→홈·
+  `/prayer`→중보기도)와 버튼 클릭 수(`menu_click`의 `menu_name` 값을 그대로 이름으로 사용)를
+  막대 그래프로 보여준다. **GA4 Data API 조회에는 반드시 사전 설정이 필요하다**: Cloud
+  Functions 런타임 서비스 계정(`{project-number}-compute@developer.gserviceaccount.com`)을
+  GA4 관리 > 속성 액세스 관리에서 "뷰어"로 1회 추가해야 한다 — 이건 GCP IAM이 아니라 GA
+  자체 ACL이라 `gcloud`로 대신 부여할 수 없다. 매주 **토요일 18:00(뉴질랜드 시간)**에는
+  `weeklyStatsEmail`(`onSchedule`, Cloud Scheduler)이 최근 7일과 그 이전 7일의 GA4 통계를
+  비교해 `systemConfig/email`(SMTP 설정, `sendPrayerEmail`과 공유)로 요약 메일을 보낸다 —
+  수신자 기본값은 `gt1984korea@gmail.com`이고 `systemConfig/email.statsTo`로 덮어쓸 수 있다.
 - **`firebase-config.js` is intentionally public** (client config + apiKey). Security relies on
   Firestore rules, not on hiding these values.
 - **`a2hs.js`** is a standalone "Add to Home Screen" widget (documented in `README.md`),

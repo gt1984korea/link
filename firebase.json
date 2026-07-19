@@ -38,6 +38,10 @@
       {
         "source": "/api/tts",
         "function": { "functionId": "ttsProxy", "region": "us-central1" }
+      },
+      {
+        "source": "/api/ga-stats",
+        "function": { "functionId": "gaStats", "region": "us-central1" }
       }
     ],
     "headers": [

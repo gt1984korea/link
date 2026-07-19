@@ -2526,7 +2526,6 @@
     import { getFirestore, doc, onSnapshot, setDoc, increment }
       from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import { firebaseConfig, VERSE_DOC_PATH } from "./firebase-config.js?v=2";
-    import { trackClick as bumpClickStat, trackView as bumpViewStat } from "./stats.js?v=1";
 
     const card = document.getElementById('verseCard');
     const elText = document.getElementById('verseText');
@@ -3617,7 +3616,6 @@
         })
         .catch((e) => console.warn('[analytics] load failed', e));
       db = getFirestore(app);
-      bumpViewStat(db, 'home'); // 홈 화면 방문 집계
       const ref = doc(db, VERSE_DOC_PATH.collection, VERSE_DOC_PATH.id);
 
       onSnapshot(ref, (snap) => {
@@ -3690,8 +3688,6 @@
             console.warn('[analytics] logEvent failed', e);
           }
         }
-        // 자체 통계: /stats/{오늘} 문서에 일자별 카운트 (admin 기간별 조회용)
-        bumpClickStat(db, menuId);
       }
 
       menuItems.forEach(({ id, name }) => {

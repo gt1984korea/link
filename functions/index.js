@@ -14,8 +14,56 @@ const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 const nodemailer = require('nodemailer');
+const { BetaAnalyticsDataClient } = require('@google-analytics/data');
 
 initializeApp();
+
+/* ── GA4(Google Analytics) 조회 공통 헬퍼 ──
+ * admin.html 통계 탭(gaStats)과 주간 통계 메일(weeklyStatsEmail)이 함께 사용.
+ * 함수 런타임 서비스 계정(Cloud Console에서 확인 가능, 보통 {project-number}-compute@developer.gserviceaccount.com)에
+ * GA4 속성 "뷰어" 권한을 미리 부여해야 합니다 — GA4 관리 > 속성 액세스 관리 > 사용자 추가 (1회, 수동).
+ */
+const GA4_PROPERTY_ID = '540435332'; // victorychurch-665a9 GA4 속성 ID
+const PAGE_NAME_BY_PATH = { '/': '홈 (메인 화면)', '/prayer': '중보기도 게시판' };
+const analyticsDataClient = new BetaAnalyticsDataClient();
+
+// 화면 방문 수(pagePath 기준) + 버튼 클릭 수(menu_click 이벤트의 menu_name 파라미터) 동시 조회
+async function fetchGaStats(startDate, endDate) {
+  const [viewsResp] = await analyticsDataClient.runReport({
+    property: `properties/${GA4_PROPERTY_ID}`,
+    dateRanges: [{ startDate, endDate }],
+    dimensions: [{ name: 'pagePath' }],
+    metrics: [{ name: 'screenPageViews' }],
+    limit: 20
+  });
+  const [clicksResp] = await analyticsDataClient.runReport({
+    property: `properties/${GA4_PROPERTY_ID}`,
+    dateRanges: [{ startDate, endDate }],
+    dimensions: [{ name: 'customEvent:menu_name' }],
+    metrics: [{ name: 'eventCount' }],
+    dimensionFilter: {
+      filter: { fieldName: 'eventName', stringFilter: { value: 'menu_click' } }
+    },
+    limit: 30
+  });
+
+  const views = {};
+  (viewsResp.rows || []).forEach((r) => {
+    const path = r.dimensionValues[0].value;
+    const name = PAGE_NAME_BY_PATH[path];
+    if (!name) return; // 관리자 화면 등 알 수 없는 경로는 방문자 통계에서 제외
+    views[name] = (views[name] || 0) + Number(r.metricValues[0].value || 0);
+  });
+
+  const clicks = {};
+  (clicksResp.rows || []).forEach((r) => {
+    const name = r.dimensionValues[0].value;
+    if (!name) return;
+    clicks[name] = (clicks[name] || 0) + Number(r.metricValues[0].value || 0);
+  });
+
+  return { views, clicks };
+}
 
 // 구절을 고유 식별 (클라이언트 verseKeyOf와 동일한 규칙)
 function keyOf(v) {
@@ -136,6 +184,36 @@ exports.pushTokenCount = onRequest({ cors: true, region: 'us-central1' }, async 
   } catch (e) {
     logger.error('pushTokenCount 실패', e);
     res.status(500).json({ error: 'failed' });
+  }
+});
+
+/* GA4 방문·클릭 통계 조회 (admin.html 통계 탭에서 호출)
+ * 쿼리: ?range=today|7|30|all  또는  ?from=YYYY-MM-DD&to=YYYY-MM-DD
+ * 호스팅 rewrite를 통해 /api/ga-stats 로 같은 출처에서 호출됩니다.
+ */
+exports.gaStats = onRequest({ cors: true, region: 'us-central1' }, async (req, res) => {
+  try {
+    const range = String(req.query.range || '');
+    let startDate, endDate;
+    if (req.query.from || req.query.to) {
+      startDate = /^\d{4}-\d{2}-\d{2}$/.test(req.query.from) ? req.query.from : '2020-01-01';
+      endDate = /^\d{4}-\d{2}-\d{2}$/.test(req.query.to) ? req.query.to : 'today';
+    } else if (range === 'today') {
+      startDate = 'today'; endDate = 'today';
+    } else if (range === '30') {
+      startDate = '29daysAgo'; endDate = 'today';
+    } else if (range === 'all') {
+      startDate = '2020-01-01'; endDate = 'today';
+    } else {
+      startDate = '6daysAgo'; endDate = 'today'; // 기본: 최근 7일
+    }
+
+    const { views, clicks } = await fetchGaStats(startDate, endDate);
+    res.set('Cache-Control', 'no-store');
+    res.json({ from: startDate, to: endDate, views, clicks });
+  } catch (e) {
+    logger.error('gaStats 실패', e);
+    res.status(500).json({ error: 'failed', message: e.message || String(e) });
   }
 });
 
@@ -338,48 +416,15 @@ ${content || '(내용이 없습니다)'}
 });
 
 /* ── 주간 방문·클릭 통계 이메일 ──
- * 매주 토요일 18:00 (뉴질랜드 시간), /stats/{YYYY-MM-DD} 일자별 집계를 최근 7일로 합산해
- * 이전 7일과 비교한 리포트를 메일로 보냅니다. SMTP 설정은 sendPrayerEmail과 동일하게
+ * 매주 토요일 18:00 (뉴질랜드 시간), GA4(fetchGaStats)에서 최근 7일 / 이전 7일 데이터를
+ * 각각 조회해 비교 리포트를 메일로 보냅니다. SMTP 설정은 sendPrayerEmail과 동일하게
  * Firestore systemConfig/email 문서를 사용하며, 수신자는 statsTo 필드로 덮어쓸 수 있습니다.
  */
-const STATS_MENU_NAMES = {
-  btnInstall: '바로가기 설치',
-  btnLive: '실시간 라이브',
-  btnHome: '교회 홈페이지',
-  btnYoutube: '유튜브 채널',
-  btnFacebook: '페이스북',
-  btnInstagram: '인스타그램',
-  btnGive: '헌금하기',
-  btnPhone: '전화 연락',
-  btnEmail: '이메일 연락',
-  btnMapSunday: '주일예배 위치',
-  btnMapWeekday: '주중모임 위치',
-  btnPrayer: '중보기도',
-  btnNotify: '새 구절 알림 받기',
-  btnReceipt: '기부금 영수증',
-  ttsBtn: '읽어주기',
-  likeBtn: '구절 좋아요',
-  shareBtn: '이미지로 공유'
-};
-const STATS_PAGE_NAMES = { home: '홈 (메인 화면)', prayer: '중보기도 게시판' };
 
-// 뉴질랜드 시간대 기준 YYYY-MM-DD (offsetDays일 전/후)
+// 뉴질랜드 시간대 기준 YYYY-MM-DD (offsetDays일 전/후) — GA4 dateRanges에 절대 날짜로 사용
 function nzDayKey(offsetDays = 0) {
   const d = new Date(Date.now() + offsetDays * 86400000);
   return d.toLocaleDateString('en-CA', { timeZone: 'Pacific/Auckland' });
-}
-
-// [from, to] 범위의 일자별 문서를 clicks/views 합계로 접기
-function sumStatsRange(docsById, from, to) {
-  const clicks = {};
-  const views = {};
-  Object.keys(docsById).forEach((day) => {
-    if (day < from || day > to) return;
-    const d = docsById[day] || {};
-    Object.entries(d.clicks || {}).forEach(([k, v]) => { clicks[k] = (clicks[k] || 0) + (Number(v) || 0); });
-    Object.entries(d.views || {}).forEach(([k, v]) => { views[k] = (views[k] || 0) + (Number(v) || 0); });
-  });
-  return { clicks, views };
 }
 
 // 지난주 대비 증감 뱃지
@@ -390,10 +435,10 @@ function deltaBadge(cur, prev) {
   return '<span style="color:#9ca3af; font-size:12px;">—</span>';
 }
 
-// {키: 수} 맵을 이름 매핑 + 내림차순 정렬된 HTML 표 행으로
-function statsTableRows(curMap, prevMap, nameMap) {
+// {이름: 수} 맵을 내림차순 정렬된 HTML 표 행으로 (이름은 GA4가 반환한 값을 그대로 사용)
+function statsTableRows(curMap, prevMap) {
   const rows = Object.entries(curMap)
-    .map(([id, count]) => ({ id, name: nameMap[id] || id, count }))
+    .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
   if (rows.length === 0) {
     return '<tr><td colspan="3" style="padding:10px 0; color:#9ca3af;">기록이 없습니다.</td></tr>';
@@ -402,7 +447,7 @@ function statsTableRows(curMap, prevMap, nameMap) {
     <tr style="border-bottom:1px solid #e9eaee;">
       <td style="padding:8px 0; color:#1e293b;">${i + 1}. ${r.name}</td>
       <td style="padding:8px 0; text-align:right; font-weight:bold; color:#16265c;">${r.count.toLocaleString()}회</td>
-      <td style="padding:8px 0 8px 12px; text-align:right; width:70px;">${deltaBadge(r.count, prevMap[r.id] || 0)}</td>
+      <td style="padding:8px 0 8px 12px; text-align:right; width:70px;">${deltaBadge(r.count, prevMap[r.name] || 0)}</td>
     </tr>`).join('');
 }
 
@@ -424,17 +469,14 @@ exports.weeklyStatsEmail = onSchedule(
       return;
     }
 
-    // 통계 문서 전체 로드 (하루 1문서라 규모 작음)
-    const docsById = {};
-    const snap = await db.collection('stats').get();
-    snap.forEach((s) => { docsById[s.id] = s.data() || {}; });
-
     const to = nzDayKey(0);        // 오늘(토요일)
     const from = nzDayKey(-6);     // 6일 전 → 최근 7일
     const prevTo = nzDayKey(-7);
     const prevFrom = nzDayKey(-13);
-    const cur = sumStatsRange(docsById, from, to);
-    const prev = sumStatsRange(docsById, prevFrom, prevTo);
+    const [cur, prev] = await Promise.all([
+      fetchGaStats(from, to),
+      fetchGaStats(prevFrom, prevTo)
+    ]);
 
     const totalViews = Object.values(cur.views).reduce((s, v) => s + v, 0);
     const totalClicks = Object.values(cur.clicks).reduce((s, v) => s + v, 0);
@@ -465,12 +507,12 @@ exports.weeklyStatsEmail = onSchedule(
 
       <h3 style="color:#475569; font-size:15px; margin:20px 0 6px;">📱 화면 방문 수</h3>
       <table style="width:100%; border-collapse:collapse; font-size:14px;">
-        ${statsTableRows(cur.views, prev.views, STATS_PAGE_NAMES)}
+        ${statsTableRows(cur.views, prev.views)}
       </table>
 
       <h3 style="color:#475569; font-size:15px; margin:22px 0 6px;">👆 버튼 클릭 수 (많이 누른 순)</h3>
       <table style="width:100%; border-collapse:collapse; font-size:14px;">
-        ${statsTableRows(cur.clicks, prev.clicks, STATS_MENU_NAMES)}
+        ${statsTableRows(cur.clicks, prev.clicks)}
       </table>
 
       <div style="margin-top:26px; text-align:center;">
