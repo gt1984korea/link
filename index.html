@@ -803,7 +803,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
+      row-gap: 10px;
       gap: 8px;
       position: relative;
     }
@@ -821,6 +822,8 @@
       padding: 10px 16px;
       cursor: pointer;
       letter-spacing: -0.01em;
+      white-space: nowrap;
+      flex: 0 0 auto;
       transition: background .15s ease, border-color .15s ease, transform .08s ease;
     }
     .tts-btn:hover { background: #dde6f6; border-color: #9db1dc; }
@@ -851,6 +854,8 @@
       padding: 9px 12px;
       cursor: pointer;
       letter-spacing: -0.01em;
+      white-space: nowrap;
+      flex: 0 0 auto;
       transition: background .15s ease, border-color .15s ease, color .15s ease, transform .08s ease;
     }
     .va-btn:hover { background: #ebedf0; border-color: #d4d6dc; color: var(--text); }
