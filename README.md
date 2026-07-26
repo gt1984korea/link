@@ -1,3 +1,5 @@
+구절ㅇㅇ
+
 ㅜ
 
 # 뉴질랜드 빅토리처치 링크 허브 (Victory Church Link Hub)
@@ -12,7 +14,7 @@ Firestore에서 실시간으로 구절을 가져오는 이번 주 암송 구절,
 
 빌드 프로세스가 없는 정적 웹사이트이므로, 정적 파일을 호스팅할 수 있는 도구를 통해 로컬에서 실행할 수 있습니다.
 
-### 방법 1. `npx serve` 사용 (가장 간단한 방법)
+### 방법 1. `npx servn` 사용 (가장 간단한 방법)
 
 Node.js가 설치되어 있다면 프로젝트 루트 디렉터리에서 아래 명령어를 실행합니다.
 
@@ -36,6 +38,7 @@ firebase emulators:start --only hosting
 
 - **VS Code Live Server**: VS Code를 사용하는 경우 `index.html` 우클릭 -> **Open with Live Server**를 선택하여 실행할 수 있습니다.
 - **Python**:
+
   ```bash
   python -m http.server 8000
   ```

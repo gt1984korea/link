@@ -537,6 +537,9 @@
       <label for="verseText">구절 본문</label>
       <textarea id="verseText" placeholder="예) 하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니…"></textarea>
 
+      <label for="verseDesc">구절 설명 (선택)</label>
+      <textarea id="verseDesc" placeholder="이 구절에 대한 설명을 입력하세요. 입력하면 메인 화면에 &quot;설명&quot; 버튼이 나타나고, 누르면 본문 아래 펼쳐집니다."></textarea>
+
       <label>표시 기간 (이 기간에만 메인 화면에 표시됩니다)</label>
       <div class="date-row">
         <div>
@@ -886,7 +889,7 @@
     const $ = (id) => document.getElementById(id);
     const gate = $('gate'), editor = $('editor'), previewCard = $('previewCard');
     const passInput = $('passInput'), gateStatus = $('gateStatus');
-    const txt = $('verseText'), refIn = $('verseRef');
+    const txt = $('verseText'), refIn = $('verseRef'), descIn = $('verseDesc');
     const startIn = $('verseStart'), endIn = $('verseEnd');
     const voiceSel = $('voiceSelect'), editorTitle = $('editorTitle');
     const listCard = $('listCard'), vlist = $('vlist');
@@ -1155,7 +1158,7 @@
     // 새 구절 작성 모드로 초기화
     function newVerse() {
       editingId = null;
-      txt.value = ''; refIn.value = '';
+      txt.value = ''; refIn.value = ''; descIn.value = '';
       startIn.value = todayStr();
       endIn.value = todayStr(6);
       voiceSel.value = DEFAULT_VOICE;
@@ -1171,6 +1174,7 @@
       editingId = id;
       txt.value = v.text || '';
       refIn.value = v.reference || '';
+      descIn.value = v.description || '';
       startIn.value = v.startDate || '';
       endIn.value = v.endDate || '';
       voiceSel.value = v.voiceId || DEFAULT_VOICE;
@@ -1239,6 +1243,7 @@
           newVerse();
           txt.value = d.text || '';
           refIn.value = d.reference || '';
+          descIn.value = d.description || '';
           voiceSel.value = d.voiceId || DEFAULT_VOICE;
           syncPreview();
           saveStatus.textContent = '기존 구절을 불러왔습니다. 표시 기간을 확인하고 저장하세요.';
@@ -1255,6 +1260,7 @@
     async function save() {
       const text = txt.value.trim();
       const reference = refIn.value.trim();
+      const description = descIn.value.trim();
       const voiceId = voiceSel.value;
       const startDate = startIn.value;
       const endDate = endIn.value;
@@ -1277,10 +1283,10 @@
       try {
         if (editingId) {
           const i = versesData.findIndex(x => x.id === editingId);
-          if (i >= 0) versesData[i] = { ...versesData[i], text, reference, voiceId, startDate, endDate };
-          else versesData.push({ id: editingId, text, reference, voiceId, startDate, endDate, createdAt: Date.now() });
+          if (i >= 0) versesData[i] = { ...versesData[i], text, reference, description, voiceId, startDate, endDate };
+          else versesData.push({ id: editingId, text, reference, description, voiceId, startDate, endDate, createdAt: Date.now() });
         } else {
-          versesData.push({ id: genId(), text, reference, voiceId, startDate, endDate, createdAt: Date.now() });
+          versesData.push({ id: genId(), text, reference, description, voiceId, startDate, endDate, createdAt: Date.now() });
         }
         await persistVerses();
         renderList();

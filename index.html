@@ -881,6 +881,36 @@
       .va-btn.pop .va-ic { animation: none; }
     }
 
+    /* 구절 설명 (본문 아래, "설명" 버튼으로 펼침/접힘) */
+    #descBtn {
+      color: #4a679f;
+      background: #eef2fa;
+      border-color: #d3ddf0;
+    }
+    #descBtn:hover { background: #e1e9f6; border-color: #b9c8e6; color: var(--brand); }
+    #descBtn .va-ic { stroke: #4a679f; stroke-width: 2.5; }
+    .va-btn.desc-open {
+      color: #fff;
+      background: var(--brand);
+      border-color: var(--brand);
+    }
+    .va-btn.desc-open .va-ic { stroke: #fff; }
+    .va-btn.desc-open:hover { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .verse-desc {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+    .verse-desc.hidden { display: none; }
+    .verse-desc-text {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: keep-all;
+      text-align: left;
+    }
 
 
     /* Footer */
@@ -1657,6 +1687,16 @@
           </svg>
           <span class="va-label">공유</span>
         </button>
+        <button class="va-btn hidden" id="descBtn" type="button" aria-expanded="false" aria-controls="verseDescBox">
+          <svg class="va-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+          <span class="va-label" id="descBtnLabel">설명</span>
+        </button>
+      </div>
+      <div class="verse-desc hidden" id="verseDescBox">
+        <p class="verse-desc-text" id="verseDescText"></p>
       </div>
     </section>
     <script>
@@ -1675,9 +1715,14 @@
               window.lastRenderedRef = cached.reference || '';
               window.currentFullVerseText = cached.text;
               window.currentFullVerseRef = cached.reference || '';
+              window.currentVerseDescription = cached.description || '';
               if (cached.voiceId) window.lastCachedVoiceId = cached.voiceId;
               if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
               if (Array.isArray(cached.audioUrls)) window.lastCachedAudioUrls = cached.audioUrls;
+              var descBtn = document.getElementById('descBtn');
+              var descText = document.getElementById('verseDescText');
+              if (descText) descText.textContent = cached.description || '';
+              if (descBtn) descBtn.classList.toggle('hidden', !cached.description);
             }
           }
         } catch(e) {}
@@ -2531,6 +2576,10 @@
     const elText = document.getElementById('verseText');
     const elRef  = document.getElementById('verseRef');
     const newBadge = document.getElementById('verseNewBadge');
+    const descBtn = document.getElementById('descBtn');
+    const descBtnLabel = document.getElementById('descBtnLabel');
+    const descBox = document.getElementById('verseDescBox');
+    const descText = document.getElementById('verseDescText');
     const pastPanel  = document.getElementById('pastVerses');
     const pastListEl = document.getElementById('pastList');
     const pastToggle = document.getElementById('pastToggle');
@@ -2747,6 +2796,7 @@
       }
       const text = (active.text || '').trim();
       const reference = (active.reference || '').trim();
+      const description = (active.description || '').trim();
       const voiceId = active.voiceId || DEFAULT_VOICE;
       // 공유 녹음 목록 (있으면 TTS 대신 순서대로 재생). 문자열 단일 값도 허용.
       const audioUrls = (Array.isArray(sharedAudioUrls)
@@ -2779,9 +2829,36 @@
         displayVerse(text, reference);
       }
 
+      window.currentVerseDescription = description;
+      if (isChanged) {
+        collapseDesc();
+        if (descText) descText.textContent = description;
+      }
+      if (descBtn) descBtn.classList.toggle('hidden', !description);
+
       try {
-        localStorage.setItem('verseCache', JSON.stringify({ text, reference, voiceId, audioUrl, audioUrls }));
+        localStorage.setItem('verseCache', JSON.stringify({ text, reference, description, voiceId, audioUrl, audioUrls }));
       } catch (e) {}
+    }
+
+    function collapseDesc() {
+      if (descBox) descBox.classList.add('hidden');
+      if (descBtn) { descBtn.setAttribute('aria-expanded', 'false'); descBtn.classList.remove('desc-open'); }
+      if (descBtnLabel) descBtnLabel.textContent = '설명';
+    }
+
+    if (descBtn) {
+      descBtn.addEventListener('click', () => {
+        const open = descBox && !descBox.classList.contains('hidden');
+        if (open) {
+          collapseDesc();
+        } else {
+          if (descBox) descBox.classList.remove('hidden');
+          descBtn.setAttribute('aria-expanded', 'true');
+          descBtn.classList.add('desc-open');
+          if (descBtnLabel) descBtnLabel.textContent = '설명 접기';
+        }
+      });
     }
 
     /* ───────── 좋아요 · 공유 ───────── */
