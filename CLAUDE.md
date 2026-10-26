@@ -63,15 +63,25 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   toggle (`classify()` in `index.html`). `admin.html` manages the list with native `<input
   type="date">` From~To pickers. Back-compat: a legacy doc with only a top-level `text` field is
   treated as an always-active verse, and admin pre-fills it for one-click migration into `verses`.
-- **Read-aloud audio source priority:** if `audioUrl` is set (an admin-uploaded recording in
-  Firebase Storage at `audio/memoryVerse`, rules in `storage.rules`), the "읽어주기" button plays
-  that recording instead of ElevenLabs TTS. TTS calls go through the **`/api/tts` hosting rewrite
-  → `ttsProxy` Cloud Function** (`functions/index.js`); the ElevenLabs API key lives only in
-  Secret Manager (`firebase functions:secrets:set ELEVENLABS_KEY`) — never put it in client code. The recording is played via a plain `Audio` element
-  (NOT routed through the Web Audio chain) deliberately — routing cross-origin Storage media
-  through `createMediaElementSource` causes silent playback without CORS config, and a human
-  recording shouldn't get the synthetic-voice reverb/EQ. BGM (same-origin `bgm.mp3`) still plays
-  underneath. See `playRecording()` in `index.html` and `MEMORY_VERSE_SETUP.md`.
+  The verse tab also has a **bulk-register card** (`#bulkCard`): pasted text is split by `verse-bulk.js`
+  (`parseBulk`, tested in `tests/verse-bulk.test.cjs`) into date/reference/text rows, edited in a preview,
+  then appended to `verses` in a transaction (refused while a legacy top-level `text` is unmigrated);
+  narration audio is pre-generated one by one afterwards.
+- **Read-aloud audio:** each verse has `audioMode` (`voxcpm2` or `recording`) and `ttsStyle`
+  (`calm`, `warm`, `clear`). New verses default to automatic narration (the `voxcpm2` mode value is
+  kept for stored-data compatibility); legacy verses retain shared-recording
+  priority. Admin save requests speech by saved `verseId`; `tts-client.js` is shared by admin and
+  main. `/api/tts` → `ttsProxy` reads canonical text/style from Firestore, calls **Google Cloud
+  Text-to-Speech** with a fixed Korean **male** Chirp3-HD voice per style (`VOICES` in
+  `functions/tts.js`: Charon / Algieba / Alnilam), and caches WAV in private Storage `tts-cache/`.
+  Auth is the Functions runtime service account (ADC) — no API key; the
+  `texttospeech.googleapis.com` API must be enabled on the project. Server-generated audio means
+  every device hears the same male voice (browser `speechSynthesis` is not used — most devices
+  only ship female Korean voices). `services/voxcpm2` is the old, unused GPU worker
+  (excluded from Hosting). No secret is shipped to the browser. Errors are shown instead
+  of silently switching to browser speech. Uploaded recording playback still uses plain `Audio`
+  to avoid cross-origin Web Audio silence, with the existing BGM. Shared recordings are retained
+  when a verse switches to automatic narration.
 - **`admin.html` (served at `/admin` via `cleanUrls`)** is gated only by `ADMIN_PASSCODE` in
   `firebase-config.js` — this is screen-level UX, NOT security. Real write protection must come
   from `firestore.rules`. Currently the rules `allow write: if true` on `/site/{docId}`; the file
@@ -88,7 +98,9 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   sub-paths. The old `firebase-messaging-sw.js` was dead (never registered) and has been deleted.
   iOS only delivers push to the **installed PWA** (home-screen app), not Safari tabs. `functions/index.js` (Node 22, deployed separately, needs
   the **Blaze** plan) holds `notifyNewVerse` (an `onDocumentUpdated('site/memoryVerse')` trigger
-  that diffs the `verses`/`news` arrays and multicasts to all tokens, pruning invalid ones) and
+  that diffs the `verses`/`news` arrays and multicasts to all tokens, pruning invalid ones — verse pushes skip
+  future-dated verses (`startDate` > today NZ); `verseStartPush` (`onSchedule`, daily 07:00 NZ) announces
+  verses starting today, and `systemConfig/verseNotify.ids` dedupes so each verse is pushed once) and
   `pushTokenCount` (an `onRequest` HTTP fn exposed at `/api/push-count` via a hosting rewrite, so
   `admin.html` can show the subscriber count without `list` access). Setup steps in `PUSH_SETUP.md`.
 - **중보기도(intercessory prayer)** lives on a **separate page `prayer.html`** (served at `/prayer`

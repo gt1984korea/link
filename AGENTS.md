@@ -1,0 +1,159 @@
+# AGENTS.md
+
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+
+## Rules
+
+- **절대 사용자 허락 없이 `git commit` 하지 말 것.** 커밋은 사용자가 명시적으로 요청할 때만 수행한다. (push도 동일)
+
+## Overview
+
+A single-page PWA "link hub" for **Victory Church (뉴질랜드 빅토리처치)**. It shows the weekly
+memory verse (live from Firestore), shortcut buttons to church links, an "Add to Home Screen"
+installer, a TTS "읽어주기" (read-aloud) feature, and background music. UI text is Korean.
+
+There is **no build step and no framework** — plain HTML/CSS/vanilla JS. Firebase SDK is loaded
+via ESM CDN imports inside `<script type="module">`. The bulk of the app lives inline in `index.html`.
+
+## Commands
+
+```bash
+# Local preview (any static server works)
+firebase emulators:start --only hosting     # or: npx serve .
+
+# Deploy hosting (manual)
+firebase deploy --only hosting              # project: victorychurch-665a9
+
+# Deploy push backend (Cloud Functions + rules) — Blaze plan required
+cd functions && npm install && cd ..        # first time only
+firebase deploy --only firestore:rules,functions,hosting
+
+# Playwright checks (from tests/)
+cd tests && npm run test:ios                # iOS screenshots (node ios-screenshots.js)
+cd tests && npm run test:banks              # bank-button smoke (node bank-buttons.test.js)
+cd tests && npm run test:image-share        # image-share smoke (node image-share.test.js)
+cd tests && npm run install:browsers        # first-time: install webkit + chromium
+```
+
+Tests are plain Node scripts driving Playwright (no test runner) — run one directly with
+`node tests/<file>.js`. Functions/Firestore-rules changes are **not** covered by the
+auto-deploy workflow; deploy them manually (see commands above and `PUSH_SETUP.md`).
+
+Deployment is normally automatic: pushing to `main` triggers `.github/workflows/deploy.yml`
+(`FirebaseExtended/action-hosting-deploy`, channel `live`).
+
+## Architecture & gotchas
+
+- **`firebase.json` hosts the repo root (`"public": "."`)**, not the `public/` directory. The
+  `ignore` list excludes `tests/`, `docs/`, `functions/`, `*.md`, `*.rules`,
+  `_*` scratch files, and `*.bak.*`. The legacy `public/` folder has been deleted.
+
+- **Firestore + Storage are the backend.** `index.html` subscribes (`onSnapshot`) to
+  `site/memoryVerse` for real-time verse updates; `admin.html` writes to it (`setDoc ... merge`).
+  The doc holds a **`verses` array** — each entry `{ id, text, reference, voiceId, startDate,
+  endDate ("YYYY-MM-DD"), createdAt }` — plus shared recording fields `audioUrl` / `audioPath` /
+  `audioName` and `updatedAt` at the top level. Path is defined once in `firebase-config.js` as
+  `VERSE_DOC_PATH`. The same doc also carries a **`news` array** (church news, `{ id, imageUrl,
+  startDate, … }`). Everything stays in this **single doc** (no subcollection) so the existing
+  `/site/{docId}` rules suffice. Note: array entries use `Date.now()` for `createdAt` because
+  Firestore rejects `serverTimestamp()` inside arrays.
+- **Date-gated verse display.** `index.html` shows the verse whose `startDate ≤ today ≤ endDate`
+  (inclusive, local date; newest `startDate` wins) as "이번 주 암송 구절", and **hides the card** if
+  none match. Verses whose `endDate < today` are listed (text only) under the "지난 암송 구절"
+  toggle (`classify()` in `index.html`). `admin.html` manages the list with native `<input
+  type="date">` From~To pickers. Back-compat: a legacy doc with only a top-level `text` field is
+  treated as an always-active verse, and admin pre-fills it for one-click migration into `verses`.
+- **Read-aloud audio:** each verse has `audioMode` (`voxcpm2` or `recording`) and `ttsStyle`
+  (`calm`, `warm`, `clear`). New verses default to automatic narration (the `voxcpm2` mode value is
+  kept for stored-data compatibility); legacy verses retain shared-recording
+  priority. Admin save requests speech by saved `verseId`; `tts-client.js` is shared by admin and
+  main. `/api/tts` → `ttsProxy` reads canonical text/style from Firestore, calls **Google Cloud
+  Text-to-Speech** with a fixed Korean **male** Chirp3-HD voice per style (`VOICES` in
+  `functions/tts.js`: Charon / Algieba / Alnilam), and caches WAV in private Storage `tts-cache/`.
+  Auth is the Functions runtime service account (ADC) — no API key; the
+  `texttospeech.googleapis.com` API must be enabled on the project. Server-generated audio means
+  every device hears the same male voice (browser `speechSynthesis` is not used — most devices
+  only ship female Korean voices). `services/voxcpm2` is the old, unused GPU worker
+  (excluded from Hosting). No secret is shipped to the browser. Errors are shown instead
+  of silently switching to browser speech. Uploaded recording playback still uses plain `Audio`
+  to avoid cross-origin Web Audio silence, with the existing BGM. Shared recordings are retained
+  when a verse switches to automatic narration.
+- **`admin.html` (served at `/admin` via `cleanUrls`)** is gated only by `ADMIN_PASSCODE` in
+  `firebase-config.js` — this is screen-level UX, NOT security. Real write protection must come
+  from `firestore.rules`. Currently the rules `allow write: if true` on `/site/{docId}`; the file
+  contains commented options to lock it down with Firebase Auth. See `MEMORY_VERSE_SETUP.md`.
+  The same rules file also opens `/verseStats/{verseId}` (verse like-counter, `increment`'d by
+  visitors) read+write, and `/pushTokens/{token}` create/update-only — clients may register their
+  own token but cannot `list`/`delete` (sending and cleanup are done server-side by the Cloud
+  Function via Admin SDK, which bypasses rules). Everything else is denied.
+- **Web push (FCM) + Cloud Functions backend.** `push.js` drives the "새 구절 알림 받기"
+  (`#btnNotify`) button: it requests notification permission, fetches an FCM token (VAPID public
+  key inline in `push.js`), and stores it at `pushTokens/{token}`. The messaging service worker
+  is **`sw.js`** (the single SW — it also handles caching and `push`/`notificationclick`),
+  registered by **relative** path so it works under both Firebase Hosting root and GitHub-Pages
+  sub-paths. The old `firebase-messaging-sw.js` was dead (never registered) and has been deleted.
+  iOS only delivers push to the **installed PWA** (home-screen app), not Safari tabs. `functions/index.js` (Node 22, deployed separately, needs
+  the **Blaze** plan) holds `notifyNewVerse` (an `onDocumentUpdated('site/memoryVerse')` trigger
+  that diffs the `verses`/`news` arrays and multicasts to all tokens, pruning invalid ones) and
+  `pushTokenCount` (an `onRequest` HTTP fn exposed at `/api/push-count` via a hosting rewrite, so
+  `admin.html` can show the subscriber count without `list` access). Setup steps in `PUSH_SETUP.md`.
+- **중보기도(intercessory prayer)** lives on a **separate page `prayer.html`** (served at `/prayer`
+  via `cleanUrls`), reached from an `#btnPrayer` shortcut in `index.html`'s `.menu`. Unlike verses/news,
+  prayers are user-generated so they go in a **dedicated top-level collection `/prayers/{id}`** (path in
+  `firebase-config.js` as `PRAYER_COLLECTION`), NOT the `/site/memoryVerse` doc. Each doc: `{ id, name,
+  title, content, visibility('public'|'private'), prayCount, status('active'|'hidden'), createdAt }`.
+  **`title`(기도 제목) is shown on the board for BOTH public and private posts**; `content`(내용) is only
+  stored here for public posts (private → `content:''`). A private post's real 내용 lives in a **separate
+  `/prayerContents/{id}` collection** (`PRAYER_CONTENT_COLLECTION`, `{ text }`) that **`prayer.html` never
+  reads** — so private content is never shipped to board visitors; only `admin.html` joins it. There is **no
+  login** — the author types their own `name`. `prayer.html` subscribes to the whole `/prayers` collection,
+  filters `status=='active'` and sorts client-side (no composite index), and renders a "🙏 함께 기도" counter
+  reusing the `increment()` + `localStorage['vc_prayed_{id}']` idiom (one-way +1, device-deduped). Firestore
+  rules: `/prayers` `create` is field-validated (private must have `content==''`), `update` allows only a
+  `prayCount` +1 bump (title/content can't be tampered); `/prayerContents` `create`-validated, `update` denied;
+  both `read`/`delete` open (관례적 비공개 — 완전 비공개는 관리자 Auth 필요). See `PRAYER_SETUP.md`.
+  Rules changes need **manual** `firebase deploy --only firestore:rules`.
+- **방문/클릭 통계는 Google Analytics(GA4)가 단일 소스다 (Firestore 미사용).**
+  `index.html`은 트래킹 버튼 목록(`menuItems`)의 클릭마다 GA(Firebase Analytics, 지연 로드)에
+  `menu_click` 이벤트를 `{ menu_id, menu_name }` 파라미터와 함께 보내고, `page_view`는 GA가
+  자동 수집한다(`prayer.html`도 GA 초기화만 해 자동 `page_view`를 받는다). GA4 속성(ID
+  `540435332`, 측정 ID `G-5FHZJHRSQF`)에는 이벤트 파라미터 `menu_name`/`menu_id`가 맞춤
+  측정기준으로 등록되어 있어야 리포트에서 버튼별로 구분된다(GA4 관리 > 맞춤 정의, 1회 등록).
+  **`admin.html`의 "방문 · 클릭 통계" 탭과 주간 통계 메일은 둘 다 GA4 Data API로 직접
+  조회한다** (`functions/index.js`의 `fetchGaStats()` 공용 헬퍼) — Firestore에는 아무것도
+  쓰지 않는다. `admin.html`은 `/api/ga-stats`(호스팅 rewrite → Cloud Function `gaStats`)를
+  기간(오늘/7일/30일/전체/직접 입력)별로 호출해 화면 방문 수(`pagePath` 기준, `/`→홈·
+  `/prayer`→중보기도)와 버튼 클릭 수(`menu_click`의 `menu_name` 값을 그대로 이름으로 사용)를
+  막대 그래프로 보여준다. **GA4 Data API 조회에는 반드시 사전 설정이 필요하다**: Cloud
+  Functions 런타임 서비스 계정(`{project-number}-compute@developer.gserviceaccount.com`)을
+  GA4 관리 > 속성 액세스 관리에서 "뷰어"로 1회 추가해야 한다 — 이건 GCP IAM이 아니라 GA
+  자체 ACL이라 `gcloud`로 대신 부여할 수 없다. 매주 **토요일 18:00(뉴질랜드 시간)**에는
+  `weeklyStatsEmail`(`onSchedule`, Cloud Scheduler)이 최근 7일과 그 이전 7일의 GA4 통계를
+  비교해 `systemConfig/email`(SMTP 설정, `sendPrayerEmail`과 공유)로 요약 메일을 보낸다 —
+  수신자 기본값은 `gt1984korea@gmail.com`이고 `systemConfig/email.statsTo`로 덮어쓸 수 있다.
+- **`firebase-config.js` is intentionally public** (client config + apiKey). Security relies on
+  Firestore rules, not on hiding these values.
+- **`a2hs.js`** is a standalone "Add to Home Screen" widget (documented in `README.md`),
+  configured via `data-*` attributes on its `<script>` tag. It handles native install prompts
+  (Android), iOS Safari share-sheet instructions, and in-app-browser (KakaoTalk/Instagram/etc.)
+  "open in external browser" guidance. `index.html` coordinates install button loading state via
+  the `appinstalled` and custom `a2hs:result` events.
+- **`sw.js` is the single service worker**: precache + network-first HTML navigations +
+  stale-while-revalidate for same-origin assets, **plus** the web-push `push`/`notificationclick`
+  handlers (no Firebase SDK inside — plain standard APIs). It is served with `no-store` headers so
+  updates roll out immediately. Because same-origin JS is cached stale-while-revalidate, bump the
+  `?v=N` query on `firebase-config.js`/`push.js` references when changing them.
+- **Audio is built with the Web Audio API** inside `index.html`: TTS uses an EQ/convolver chain
+  for a deeper, cathedral-reverb voice, and BGM (`bgm.mp3`) plays through a gain node with
+  fade-in/out, starting at the 48s highlight. AudioContext must be resumed inside a user-gesture
+  handler (browser autoplay policy) — note the click-to-resume fallbacks.
+- **"이미지로 공유" (구절 카드 이미지 생성)**: `#shareBtn` 클릭 시 이미지 공유 모달
+  (`#imageShareModal`)이 바로 열린다. 이미지 생성은 1080×1920
+  `<canvas id="shareCanvas">`에 배경(그라디언트 4종 또는 사용자 업로드 사진 +
+  하단 스크림)과 구절 텍스트를 그려서 만든다. 텍스트는 `verse.text`의 `\n`
+  줄바꿈을 그대로 사용하고, 'Gowun Dodum' 폰트는 `document.fonts.ready` 이후에
+  그려야 폴백 폰트로 깨지지 않는다.
+  출력은 `canvas.toBlob('image/png')` → `navigator.canShare({ files })`가
+  true면 "공유하기"(파일 공유), 아니면 "공유하기" 버튼을 숨기고 "저장"
+  (다운로드)만 노출한다. 전부 클라이언트 로컬 처리이며 Firestore/Storage에는
+  아무것도 쓰지 않는다.

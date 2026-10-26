@@ -11,7 +11,7 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
 const { initializeApp } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 const nodemailer = require('nodemailer');
 const { BetaAnalyticsDataClient } = require('@google-analytics/data');
@@ -132,7 +132,10 @@ exports.notifyNewVerse = onDocumentUpdated('site/memoryVerse', async (event) => 
     (Array.isArray(before.verses) ? before.verses : []).map(keyOf)
   );
   const afterVerses = Array.isArray(after.verses) ? after.verses : [];
-  const newVerses = afterVerses.filter((v) => v && (v.text || '').trim() && !beforeKeys.has(keyOf(v)));
+  // 미리 등록한(시작일이 미래인) 구절은 지금 알리지 않고, 시작일 아침 verseStartPush가 알립니다.
+  const today = nzDayKey();
+  const newVerses = afterVerses.filter((v) => v && (v.text || '').trim() && !beforeKeys.has(keyOf(v)))
+    .filter((v) => !v.startDate || v.startDate <= today);
 
   // 2) 새소식 감지
   const beforeNewsKeys = new Set(
@@ -149,18 +152,49 @@ exports.notifyNewVerse = onDocumentUpdated('site/memoryVerse', async (event) => 
   const db = getFirestore();
 
   // 새 구절 푸시
-  if (newVerses.length > 0) {
-    const latest = newVerses[newVerses.length - 1];
-    const ref = (latest.reference || '').trim();
-    const body = ref ? `${ref} — 새 암송 구절이 등록되었어요.` : '새 암송 구절이 등록되었어요.';
-    await pushToAll(db, body, '/');
-  }
+  if (newVerses.length > 0) await pushVerses(db, newVerses);
 
   // 새소식 푸시
   if (newNews.length > 0) {
     await pushToAll(db, '교회에 새소식이 올라왔어요.', '/');
   }
 });
+
+/* 구절 알림은 구절마다 한 번만 보냅니다. 보낸 id는 systemConfig/verseNotify.ids에 기록해
+ * 등록 즉시 알림(notifyNewVerse)과 시작일 알림(verseStartPush)이 겹치지 않게 합니다. */
+const VERSE_NOTIFY_DOC = 'systemConfig/verseNotify';
+async function pushVerses(db, verses) {
+  const stateRef = db.doc(VERSE_NOTIFY_DOC);
+  const sent = new Set(((await stateRef.get()).get('ids')) || []);
+  const pending = verses.filter((v) => !sent.has(keyOf(v)));
+  if (pending.length === 0) {
+    logger.info('이미 알린 구절 → 푸시 생략');
+    return;
+  }
+  const latest = pending[pending.length - 1];
+  const ref = (latest.reference || '').trim();
+  const body = ref ? `${ref} — 이번 주 암송 구절이 올라왔어요.` : '이번 주 암송 구절이 올라왔어요.';
+  await pushToAll(db, body, '/');
+  await stateRef.set({ ids: FieldValue.arrayUnion(...pending.map(keyOf)) }, { merge: true });
+}
+
+/* 시작일 알림: 매일 07:00(뉴질랜드 시간)에 오늘 시작하는 구절이 있으면 알립니다.
+ * 대량 등록으로 미리 올려 둔 구절이 해당 주에 맞춰 알림되도록 합니다. */
+exports.verseStartPush = onSchedule(
+  { schedule: 'every day 07:00', timeZone: 'Pacific/Auckland', region: 'us-central1' },
+  async () => {
+    const db = getFirestore();
+    const snap = await db.doc('site/memoryVerse').get();
+    const verses = (snap.exists && Array.isArray(snap.get('verses'))) ? snap.get('verses') : [];
+    const today = nzDayKey();
+    const starting = verses.filter((v) => v && (v.text || '').trim() && v.startDate === today);
+    if (starting.length === 0) {
+      logger.info('오늘 시작하는 구절 없음 → 푸시 생략');
+      return;
+    }
+    await pushVerses(db, starting);
+  }
+);
 
 /* 알림 구독 기기 수 집계 (admin 화면에서 호출)
  * pushTokens는 보안 규칙상 클라이언트가 목록 조회 불가 → Admin SDK로 집계해 숫자만 반환.
@@ -217,69 +251,31 @@ exports.gaStats = onRequest({ cors: true, region: 'us-central1' }, async (req, r
   }
 });
 
-/* ElevenLabs TTS 프록시 (index.html "읽어주기"에서 /api/tts 로 호출)
- * API 키를 클라이언트에 노출하지 않기 위해 서버에서 대신 호출합니다.
- * 키 등록(1회): firebase functions:secrets:set ELEVENLABS_KEY
- * 호스팅 rewrite: /api/tts → ttsProxy (firebase.json)
- */
-// TEMP: ttsProxy 시크릿 미등록으로 인한 배포 차단 회피 (weeklyStatsEmail만 우선 실행)
-// 나중에 firebase functions:secrets:set ELEVENLABS_KEY 후 복구 필요
-const ELEVENLABS_KEY = null; // defineSecret('ELEVENLABS_KEY');
-
-// ttsProxy는 일시 비활성화 — ELEVENLABS_KEY 등록 후 복구
-const _ttsProxyDisabled = onRequest ? null : onRequest(
-  { cors: true, region: 'us-central1' },
-  async (req, res) => {
-    if (req.method !== 'POST') {
-      res.status(405).json({ error: 'method not allowed' });
-      return;
-    }
-    const body = req.body || {};
-    const text = typeof body.text === 'string' ? body.text.trim() : '';
-    const voiceId = typeof body.voiceId === 'string' ? body.voiceId.trim() : '';
-    // 남용 방지: 구절 낭독 용도에 맞는 길이/형식만 허용
-    if (!text || text.length > 1200) {
-      res.status(400).json({ error: 'invalid text' });
-      return;
-    }
-    if (!/^[A-Za-z0-9]{8,64}$/.test(voiceId)) {
-      res.status(400).json({ error: 'invalid voiceId' });
-      return;
-    }
+/* Google Cloud TTS: 저장된 구절만 남성 음성으로 생성하고 비공개 Storage 경로에 캐시합니다.
+ * 인증은 함수 런타임 서비스 계정(ADC)을 사용하므로 별도 API 키가 없습니다. */
+const { getStorage } = require('firebase-admin/storage');
+const { getApp } = require('firebase-admin/app');
+const { createTtsHandler } = require('./tts');
+exports.ttsProxy = onRequest({
+  region: 'us-central1', timeoutSeconds: 60, memory: '512MiB',
+  maxInstances: 2, concurrency: 4,
+}, createTtsHandler({
+  readDocument: async () => {
+    const snap = await getFirestore().doc('site/memoryVerse').get();
+    return snap.exists ? snap.data() : {};
+  },
+  readCache: async key => {
     try {
-      const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': ELEVENLABS_KEY.value()
-        },
-        body: JSON.stringify({
-          text,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.78,          // 안정성 높임 (중후하고 신뢰감 있는 억양 유지)
-            similarity_boost: 0.85,   // 선명도 높임
-            style: 0.0,               // 감정 기복을 최소화하여 정중하고 경건하게 낭독
-            use_speaker_boost: true   // 기본 음질 강화 활성화
-          }
-        })
-      });
-      if (!r.ok) {
-        logger.warn(`ttsProxy 업스트림 오류: ${r.status}`);
-        res.status(502).json({ error: 'upstream ' + r.status });
-        return;
-      }
-      const buf = Buffer.from(await r.arrayBuffer());
-      res.set('Content-Type', 'audio/mpeg');
-      res.set('Cache-Control', 'no-store');
-      res.send(buf);
-    } catch (e) {
-      logger.error('ttsProxy 실패', e);
-      res.status(500).json({ error: 'failed' });
-    }
-  }
-);
+      const [audio] = await getStorage().bucket().file(`tts-cache/${key}.wav`).download();
+      return audio;
+    } catch (err) { if (Number(err.code) === 404) return null; throw err; }
+  },
+  writeCache: (key, audio) => getStorage().bucket().file(`tts-cache/${key}.wav`).save(audio, {
+    resumable: false, metadata: { contentType: 'audio/wav', cacheControl: 'private, max-age=31536000' },
+  }),
+  getAccessToken: async () => (await getApp().options.credential.getAccessToken()).access_token,
+  log: (message, detail) => logger.warn(message, detail),
+}));
 
 /* 중보기도 등록 시 이메일 알림 발송 */
 exports.sendPrayerEmail = onDocumentCreated('prayers/{id}', async (event) => {

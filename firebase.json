@@ -26,7 +26,8 @@
       "functions/**",
       "_*.png",
       "_if.mjs",
-      "*.bak.*"
+      "*.bak.*",
+      "services/**"
     ],
     "cleanUrls": true,
     "trailingSlash": false,

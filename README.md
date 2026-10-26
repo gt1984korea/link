@@ -4,7 +4,7 @@
 
 # 뉴질랜드 빅토리처치 링크 허브 (Victory Church Link Hub)
 
-Firestore에서 실시간으로 구절을 가져오는 이번 주 암송 구절, 교회 주요 링크 바로가기, 성경 구절 TTS 읽어주기(ElevenLabs/녹음 오디오), 배경 음악 재생, 그리고 홈 화면 바로가기(PWA) 기능을 제공하는 단일 페이지 웹 애플리케이션입니다.
+Firestore에서 실시간으로 구절을 가져오는 이번 주 암송 구절, 교회 주요 링크 바로가기, 성경 구절 TTS 읽어주기(Google Cloud TTS 남성 음성/녹음 오디오), 배경 음악 재생, 그리고 홈 화면 바로가기(PWA) 기능을 제공하는 단일 페이지 웹 애플리케이션입니다.
 
 이 프로젝트는 별도의 빌드 단계가 없으며, 순수 HTML, CSS, Vanilla JS로 작성되어 있습니다. Firebase SDK는 ESM CDN 방식을 통해 로드됩니다.
 
@@ -93,3 +93,21 @@ firebase emulators:start --only hosting
 - `a2hs.js` — 핵심 위젯 (이것만 있으면 됨)
 - `demo.html` — 테스트/적용 예시
 - `manifest.webmanifest`, `sw.js`, `icon-*.png` — (선택) 안드로이드 진짜 설치용 PWA 구성
+
+## 자동 낭독
+
+관리자에서 입력한 구절을 Google Cloud Text-to-Speech의 한국어 남성 음성(Chirp3-HD)으로 생성하는 자동 낭독과
+기존 음성 파일 업로드를 함께 지원합니다. 서버에서 만든 음성 파일을 재생하므로 모든 기기에서 같은 남성 목소리로 들립니다.
+사용하려면 프로젝트에서 `texttospeech.googleapis.com` API를 켜고 `ttsProxy` 함수를 배포합니다
+(`firebase deploy --only functions:ttsProxy`). 함수 서비스 계정으로 인증하므로 API 키는 필요 없습니다.
+
+### 로컬 화면 테스트
+
+Firebase나 TTS 서버 없이 관리자 화면의 저장·자동 낭독 UI를 확인하려면 다음 명령을 실행합니다.
+
+```sh
+node tests/tts-preview-server.cjs
+```
+
+그 다음 브라우저에서 `http://127.0.0.1:4179/admin`을 엽니다. 테스트 서버는 저장 내용을 메모리에만 보관하고
+실제 음성 대신 테스트 WAV를 반환하므로 Firebase 데이터와 비용에 영향을 주지 않습니다.

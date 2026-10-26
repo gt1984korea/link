@@ -10,3 +10,7 @@ docs/.bkit-memory.json
 docs/.pdca-status.json
 .firebase/
 *debug.log
+.gstack/
+.bkit/
+.venv*/
+__pycache__/

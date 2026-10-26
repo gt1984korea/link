@@ -1601,6 +1601,7 @@
       .item, .toast { transition: none; }
     }
   </style>
+  <script src="./tts-client.js?v=1"></script>
 </head>
 <body>
 
@@ -1700,6 +1701,7 @@
           <span class="va-label" id="descBtnLabel">설명</span>
         </button>
       </div>
+      <p id="ttsMessage" role="status" aria-live="polite" style="font-size:13px; color:#8b3e32; margin:8px 0 0;"></p>
       <div class="verse-desc hidden" id="verseDescBox">
         <p class="verse-desc-text" id="verseDescText"></p>
       </div>
@@ -1721,6 +1723,9 @@
               window.currentFullVerseText = cached.text;
               window.currentFullVerseRef = cached.reference || '';
               window.currentVerseDescription = cached.description || '';
+              window.currentTtsVerseId = cached.ttsVerseId || 'legacy';
+              window.currentTtsStyle = cached.ttsStyle || 'calm';
+              window.currentVerseAudioUrls = VerseSpeech.audioUrlsForVerse(cached, cached.audioUrls || cached.audioUrl);
               if (cached.voiceId) window.lastCachedVoiceId = cached.voiceId;
               if (cached.audioUrl) window.lastCachedAudioUrl = cached.audioUrl;
               if (Array.isArray(cached.audioUrls)) window.lastCachedAudioUrls = cached.audioUrls;
@@ -2795,6 +2800,9 @@
     function renderActive(active, sharedAudioUrls) {
       if (!active) {
         card.classList.add('hidden');
+        window.currentTtsVerseId = null;
+        window.currentVerseAudioUrls = [];
+        window.dispatchEvent(new CustomEvent('vc:versechange'));
         if (newBadge) newBadge.classList.add('hidden');
         try { localStorage.removeItem('verseCache'); } catch (e) {}
         return;
@@ -2804,19 +2812,23 @@
       const description = (active.description || '').trim();
       const voiceId = active.voiceId || DEFAULT_VOICE;
       // 공유 녹음 목록 (있으면 TTS 대신 순서대로 재생). 문자열 단일 값도 허용.
-      const audioUrls = (Array.isArray(sharedAudioUrls)
-        ? sharedAudioUrls
-        : (sharedAudioUrls ? [sharedAudioUrls] : []))
-        .map(u => (u || '').trim()).filter(Boolean);
+      const audioUrls = VerseSpeech.audioUrlsForVerse(active, sharedAudioUrls);
+      const ttsVerseId = active.id != null ? String(active.id) : 'legacy';
+      const ttsStyle = active.ttsStyle || 'calm';
+      const audioMode = active.audioMode || 'recording';
+      const oldSpeech = JSON.stringify([window.currentTtsVerseId, window.currentFullVerseText, window.currentFullVerseRef, window.currentTtsStyle]);
       const audioUrl = audioUrls[0] || null; // 캐시/하위호환용 대표 URL
 
       // 전역 상태 업데이트 및 이벤트 트리거 (TTS 스크립트가 구독)
+      window.currentTtsVerseId = ttsVerseId;
+      window.currentTtsStyle = ttsStyle;
       window.currentFullVerseText = text;
       window.currentFullVerseRef = reference;
       window.currentTtsVoiceId = voiceId;
       window.currentVerseAudioUrl = audioUrl;
       window.currentVerseAudioUrls = audioUrls;
       try {
+        if (oldSpeech !== JSON.stringify([ttsVerseId, text, reference, ttsStyle])) window.dispatchEvent(new CustomEvent('vc:versechange'));
         window.dispatchEvent(new CustomEvent('vc:voicechange', { detail: { voiceId } }));
         window.dispatchEvent(new CustomEvent('vc:audiochange', { detail: { audioUrl, audioUrls } }));
       } catch (e) {}
@@ -2842,7 +2854,7 @@
       if (descBtn) descBtn.classList.toggle('hidden', !description);
 
       try {
-        localStorage.setItem('verseCache', JSON.stringify({ text, reference, description, voiceId, audioUrl, audioUrls }));
+        localStorage.setItem('verseCache', JSON.stringify({ text, reference, description, voiceId, audioUrl, audioUrls, ttsVerseId, ttsStyle, audioMode }));
       } catch (e) {}
     }
 
@@ -3797,23 +3809,23 @@
   <!-- 웹 푸시 알림 (새 구절 알림 받기 버튼 제어) -->
   <script type="module" src="push.js?v=3"></script>
 
-  <!-- TTS (ElevenLabs) -->
+  <!-- TTS (Google Cloud TTS 남성 음성 / 업로드 녹음) -->
   <script>
     (function () {
       const btn   = document.getElementById('ttsBtn');
       const label = document.getElementById('ttsBtnLabel');
       const icon  = document.getElementById('ttsIcon');
+      const message = document.getElementById('ttsMessage');
+      let speechRequest = null;
       if (!btn) return;
 
       /* TTS는 Cloud Function 프록시(/api/tts, functions/index.js의 ttsProxy)를 경유한다.
-         ElevenLabs API 키는 서버(Secret Manager)에만 보관 — 클라이언트에 노출 금지. */
+         Google Cloud TTS 인증은 서버 서비스 계정으로만 처리합니다. */
 
-      // Firestore에서 받아온 전역 설정 목소리 또는 캐시된 목소리 사용 (기본값: Brian)
-      let VOICE_ID = window.currentTtsVoiceId || window.lastCachedVoiceId || 'nPczCjzI2devNBz1zQrb';
 
       // 관리자가 올린 녹음 파일 목록 — 있으면 TTS 대신 순서대로 재생
       function pickRecordingUrls() {
-        if (Array.isArray(window.currentVerseAudioUrls) && window.currentVerseAudioUrls.length) {
+        if (Array.isArray(window.currentVerseAudioUrls)) {
           return window.currentVerseAudioUrls.slice();
         }
         if (Array.isArray(window.lastCachedAudioUrls) && window.lastCachedAudioUrls.length) {
@@ -3825,22 +3837,12 @@
       let recordingUrls = pickRecordingUrls();
       let recErrors = 0; // 이번 사이클에서 재생 실패한 녹음 트랙 수 (전곡 실패 시 무한 재시도 방지)
 
-      // 실시간으로 목사님 목소리 설정이 변경되는 이벤트를 구독
-      window.addEventListener('vc:voicechange', function (e) {
-        const newVoiceId = e.detail.voiceId;
-        if (VOICE_ID !== newVoiceId) {
-          VOICE_ID = newVoiceId;
-
-          // 목소리가 변경되면 캐시를 무효화하고 재생 중인 소리를 멈춤
-          if (cachedUrl) {
-            URL.revokeObjectURL(cachedUrl);
-            cachedUrl = null;
-            cachedText = '';
-          }
-          if (active) {
-            stopTTS();
-          }
-        }
+      window.addEventListener('vc:versechange', function () {
+        if (active) stopTTS();
+        if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+        cachedUrl = null; cachedText = '';
+        recordingUrls = pickRecordingUrls();
+        message.textContent = '';
       });
 
       // 녹음 파일 등록/삭제가 실시간 반영되면 소스를 교체 (재생 중이면 멈춤)
@@ -4048,17 +4050,13 @@
       }
 
       /* TTS 음성 요청 — 같은 출처의 Cloud Function 프록시 경유 (톤 튜닝은 서버에서 적용) */
-      async function fetchSpeech(text) {
-        const res = await fetch('/api/tts', {
-          method: 'POST',
-          headers: {
-            'Accept': 'audio/mpeg',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ text, voiceId: VOICE_ID })
-        });
-        if (!res.ok) throw new Error('TTS proxy ' + res.status);
-        return res.blob();
+      async function fetchSpeech() {
+        const controller = new AbortController(); speechRequest = controller;
+        try {
+          return await VerseSpeech.requestSpeech(window.currentTtsVerseId, { signal: controller.signal });
+        } finally {
+          if (speechRequest === controller) speechRequest = null;
+        }
       }
 
       /* 관리자가 올린 녹음 파일 재생 (TTS 대체) — Web Audio 체인을 거치지 않고
@@ -4125,14 +4123,14 @@
         }
 
         const text = getFullText();
-        if (!text) return;
+        if (!text) { stopTTS(); return; }
 
         label.textContent = '불러오는 중...';
 
         try {
           // 같은 구절이면 캐시 사용 (API 호출 절약)
           if (text !== cachedText || !cachedUrl) {
-            const blob = await fetchSpeech(text);
+            const blob = await fetchSpeech();
             if (!active || sessionId !== playSessionId) return;
             if (cachedUrl) URL.revokeObjectURL(cachedUrl);
             cachedUrl  = URL.createObjectURL(blob);
@@ -4158,60 +4156,28 @@
           };
           curAudio.onerror = function () {
             if (active && sessionId === playSessionId) {
-              setTimeout(() => {
-                if (active && sessionId === playSessionId) {
-                  play(sessionId);
-                }
-              }, 3000);
+              stopTTS();
+              message.textContent = '음성을 재생하지 못했습니다. 읽어주기를 다시 눌러 주세요.';
             }
           };
 
           // 인트로 딜레이 없이 음성을 바로 재생 (배경음악이 먼저 깔리지 않도록)
           label.textContent = '멈추기';
           scheduleBgmStart(sessionId); // 내레이션 시작 후 잠시 뒤에 배경음악을 은은하게 시작
-          curAudio.play();
+          await curAudio.play();
 
         } catch (e) {
-          console.warn('[TTS] ElevenLabs 실패, 기본 음성으로 전환:', e);
-          label.textContent = '멈추기';
-          
-          // 인트로 딜레이 없이 fallback 음성을 바로 실행
-          fallback(text, sessionId);
+          if (!active || sessionId !== playSessionId) return;
+          stopTTS();
+          message.textContent = e.name === 'NotAllowedError'
+            ? '음성이 준비되었습니다. 읽어주기를 다시 눌러 주세요.'
+            : (e.message || '음성을 준비하지 못했습니다. 잠시 후 다시 시도하세요.');
         }
-      }
-
-      /* Web Speech API 폴백 (브라우저 기본 남성 목소리 우선 매칭) */
-      function fallback(text, sessionId) {
-        if (!window.speechSynthesis || !active || sessionId !== playSessionId) return;
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.lang  = 'ko-KR';
-        utt.rate  = 0.92;
-        utt.pitch = 0.78; // 기본 음성도 더욱 중후하고 엄숙하게 목소리 톤 다운
-        
-        const voices = window.speechSynthesis.getVoices();
-        const koVoices = voices.filter(v => v.lang.startsWith('ko'));
-        
-        // 브라우저 기본 한국어 목소리 중 남성(Injoon, Kangkang 등) 우선 검색, 없으면 첫 번째 한국어 목소리 사용
-        const maleVoice = koVoices.find(v => /male|남성|남자|injoon|kangkang/i.test(v.name));
-        const v = maleVoice || koVoices[0];
-        
-        if (v) utt.voice = v;
-        scheduleBgmStart(sessionId); // 내레이션 시작 후 잠시 뒤에 배경음악을 은은하게 시작
-        utt.onend = () => {
-          if (active && sessionId === playSessionId) {
-            // 완독 후 3.0초 쉬고 반복 (배경음악 3초 단독 재생)
-            setTimeout(() => {
-              if (active && sessionId === playSessionId) {
-                fallback(text, sessionId);
-              }
-            }, 3000);
-          }
-        };
-        window.speechSynthesis.speak(utt);
       }
 
       /* 시작 / 멈춤 */
       function startTTS() {
+        message.textContent = '';
         active = true;
         playSessionId++;
         recErrors = 0;
@@ -4230,6 +4196,7 @@
       }
 
       function stopTTS() {
+        if (speechRequest) { speechRequest.abort(); speechRequest = null; }
         active = false;
         playSessionId++; // 세션 ID 증가시켜 대기 중인 모든 setTimeout 동작 무효화
         if (curAudio) { curAudio.pause(); curAudio = null; }
