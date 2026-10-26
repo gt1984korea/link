@@ -32,7 +32,10 @@ test('등록한 구절만 낭독하고 본문/스타일 변경 시 캐시를 분
   const speech = resolveSpeech(data, 'verse1');
   assert.equal(speech.text, '하나님은 사랑이시라.\n\n요한일서 4:8');
   assert.throws(() => resolveSpeech(data, 'missing'), /등록/);
-  assert.throws(() => resolveSpeech({ verses: [{ id: 'v', text: '가'.repeat(1201) }] }, 'v'), /1200/);
+  assert.throws(() => resolveSpeech({ verses: [{ id: 'v', text: '가'.repeat(1501) }] }, 'v'), /1500/);
+  assert.equal(resolveSpeech({ verses: [{ id: 'v', text: '본문', reference: '요 1:1', description: ' 설명입니다. ' }] }, 'v').text,
+    '본문\n\n요 1:1\n\n구절 설명:\n설명입니다.');
+  assert.throws(() => resolveSpeech({ verses: [{ id: 'v', text: '가'.repeat(1000), description: '나'.repeat(600) }] }, 'v'), /1500/);
   assert.notEqual(cacheKey(speech), cacheKey({ ...speech, style: 'warm' }));
   assert.notEqual(cacheKey(speech), cacheKey({ ...speech, text: '다른 구절' }));
   assert.equal(resolveSpeech({ text: '옛 구절' }, 'legacy').text, '옛 구절');

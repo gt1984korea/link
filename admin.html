@@ -1353,7 +1353,7 @@
     }
     audioMode.addEventListener('change', syncTtsOptions);
     // 수정 중에는 이전 본문 음성을 새 음성으로 오인하지 않도록 미리듣기를 비웁니다.
-    for (const input of [txt, refIn, voiceSel, audioMode]) {
+    for (const input of [txt, refIn, descIn, voiceSel, audioMode]) {
       input.addEventListener('input', () => {
         clearTtsPreview(); lastSavedVerseId = null; btnPreviewTts.disabled = true;
         ttsStatus.textContent = '변경한 내용을 저장하면 새 음성이 준비됩니다.';
@@ -1369,8 +1369,8 @@
         saveStatus.textContent = !text ? '구절 본문을 입력하세요.' : '올바른 표시 기간(시작일·종료일)을 선택하세요.';
         saveStatus.className = 'status err'; return;
       }
-      if (mode === 'voxcpm2' && (text + (reference ? '\n\n' + reference : '')).length > 1200) {
-        saveStatus.textContent = '자동 낭독은 본문과 출처를 합쳐 1200자까지 지원합니다.';
+      if (mode === 'voxcpm2' && (text + (reference ? '\n\n' + reference : '') + (description ? '\n\n구절 설명:\n' + description : '')).length > 1500) {
+        saveStatus.textContent = '자동 낭독은 본문·출처·설명을 합쳐 1500자까지 지원합니다.';
         saveStatus.className = 'status err'; return;
       }
       clearTtsPreview();
@@ -1517,8 +1517,8 @@
       if (bad >= 0) { bulkStatus.className = 'status err'; bulkStatus.textContent = `${bad + 1}번 구절의 본문이나 기간을 확인하세요.`; return; }
       const mode = $('bulkMode').value, ttsStyle = $('bulkVoice').value;
       if (mode === 'voxcpm2') {
-        const long = bulkRows.findIndex(r => (r.text.trim() + (r.reference.trim() ? '\n\n' + r.reference.trim() : '')).length > 1200);
-        if (long >= 0) { bulkStatus.className = 'status err'; bulkStatus.textContent = `${long + 1}번 구절이 자동 낭독 한도(1200자)를 넘습니다.`; return; }
+        const long = bulkRows.findIndex(r => (r.text.trim() + (r.reference.trim() ? '\n\n' + r.reference.trim() : '')).length > 1500);
+        if (long >= 0) { bulkStatus.className = 'status err'; bulkStatus.textContent = `${long + 1}번 구절이 자동 낭독 한도(1500자)를 넘습니다.`; return; }
       }
       const warnCount = bulkRows.filter((r, i) => bulkWarnings(r, i).length).length;
       if (warnCount && !confirm(`${warnCount}개 구절에 경고가 있습니다(기간 겹침·긴 기간). 기간이 겹치면 시작일이 늦은 구절이 표시됩니다.\n그래도 등록할까요?`)) return;

@@ -18,8 +18,11 @@ function resolveSpeech(document, verseId) {
     throw failure(404, '등록된 구절을 찾을 수 없습니다. 새로고침 후 다시 시도하세요.');
   }
   const reference = typeof verse.reference === 'string' ? verse.reference.trim() : '';
-  const text = verse.text.trim() + (reference ? '\n\n' + reference : '');
-  if (text.length > 1200) throw failure(400, '자동 낭독은 본문과 출처를 합쳐 1200자까지 지원합니다.');
+  const description = typeof verse.description === 'string' ? verse.description.trim() : '';
+  // 메인 화면 getFullText()와 같은 순서: 본문 → 출처 → 구절 설명
+  const text = verse.text.trim() + (reference ? '\n\n' + reference : '')
+    + (description ? '\n\n구절 설명:\n' + description : '');
+  if (text.length > 1500) throw failure(400, '자동 낭독은 본문·출처·설명을 합쳐 1500자까지 지원합니다.');
   return { text, style: Object.hasOwn(VOICES, verse.ttsStyle) ? verse.ttsStyle : 'calm' };
 }
 function cacheKey(speech) {
