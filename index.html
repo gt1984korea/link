@@ -4046,7 +4046,10 @@
       function getFullText() {
         const text = (window.currentFullVerseText || document.getElementById('verseText').textContent || '').trim();
         const ref  = (window.currentFullVerseRef || document.getElementById('verseRef').textContent  || '').trim();
-        return text + (ref ? '\n\n' + ref : '');
+        const description = (window.currentVerseDescription || '').trim();
+        return text
+          + (ref ? '\n\n' + ref : '')
+          + (description ? '\n\n구절 설명:\n' + description : '');
       }
 
       /* TTS 음성 요청 — 같은 출처의 Cloud Function 프록시 경유 (톤 튜닝은 서버에서 적용) */
