@@ -76,3 +76,39 @@ test('미설정·과부하·시간초과·잘못된 오디오를 구분해 알�
     assert.ok(!JSON.stringify(res.body).includes('server-secret'));
   }
 });
+test('ElevenLabs 설정 시 PCM을 WAV로 감싸 반환하고 캐시한다', async () => {
+  const { pcmToWav } = require('../functions/tts.js');
+  const pcm = Buffer.alloc(4800, 1); let calls = 0;
+  const { handler } = setup({
+    getElevenConfig: async () => ({ apiKey: 'eleven-secret', voiceId: 'voiceX' }),
+    fetchImpl: async (url, options) => {
+      calls++;
+      assert.equal(url, 'https://api.elevenlabs.io/v1/text-to-speech/voiceX?output_format=pcm_24000');
+      assert.equal(options.headers['xi-api-key'], 'eleven-secret');
+      const body = JSON.parse(options.body);
+      assert.equal(body.model_id, 'eleven_multilingual_v2');
+      assert.equal(body.text, '하나님은 사랑이시라.\n\n요한일서 4:8');
+      return new Response(pcm);
+    },
+  });
+  const res = response(); await handler({ method: 'POST', body: { verseId: 'verse1' } }, res);
+  assert.equal(res.statusCode, 200); assert.deepEqual(res.body, pcmToWav(pcm));
+  assert.equal(res.body.readUInt32LE(24), 24000); assert.equal(res.body.length, 44 + pcm.length);
+  const again = response(); await handler({ method: 'POST', body: { verseId: 'verse1' } }, again);
+  assert.equal(calls, 1);
+});
+test('ElevenLabs가 실패하면 Google TTS로 폴백하고, 폴백 결과는 ElevenLabs 키로 캐시하지 않는다', async () => {
+  let eleven = 0, google = 0;
+  const { handler } = setup({
+    getElevenConfig: async () => ({ apiKey: 'k', voiceId: 'v' }),
+    fetchImpl: async url => {
+      if (url.startsWith('https://api.elevenlabs.io')) { eleven++; return new Response('', { status: 401 }); }
+      google++; return ttsResponse(wav);
+    },
+  });
+  for (let i = 0; i < 2; i++) {
+    const res = response(); await handler({ method: 'POST', body: { verseId: 'verse1' } }, res);
+    assert.equal(res.statusCode, 200); assert.deepEqual(res.body, wav);
+  }
+  assert.equal(eleven, 2); assert.equal(google, 1);
+});

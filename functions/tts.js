@@ -9,6 +9,15 @@ const VOICES = {
   clear: 'ko-KR-Chirp3-HD-Alnilam',
 };
 const AUDIO_CONFIG = { audioEncoding: 'LINEAR16', speakingRate: 0.9 };
+// ElevenLabs(1순위 엔진). 실패하거나 키가 없으면 위 Google Cloud TTS로 폴백합니다.
+// 톤별 voice_settings: stability↓ = 억양 풍부, style↑ = 감정 과장. 들어보고 조정하세요.
+const ELEVEN_MODEL = 'eleven_multilingual_v2';
+const ELEVEN_SAMPLE_RATE = 24000;
+const ELEVEN_SETTINGS = {
+  calm:  { stability: 0.55, similarity_boost: 0.75, style: 0.15, speed: 0.92, use_speaker_boost: true },
+  warm:  { stability: 0.42, similarity_boost: 0.75, style: 0.35, speed: 0.92, use_speaker_boost: true },
+  clear: { stability: 0.65, similarity_boost: 0.75, style: 0.05, speed: 0.95, use_speaker_boost: true },
+};
 function failure(status, message) { return Object.assign(new Error(message), { status }); }
 function resolveSpeech(document, verseId) {
   const verses = Array.isArray(document.verses) ? document.verses : [];
@@ -25,8 +34,20 @@ function resolveSpeech(document, verseId) {
   if (text.length > 1500) throw failure(400, '자동 낭독은 본문·출처·설명을 합쳐 1500자까지 지원합니다.');
   return { text, style: Object.hasOwn(VOICES, verse.ttsStyle) ? verse.ttsStyle : 'calm' };
 }
-function cacheKey(speech) {
-  return createHash('sha256').update(JSON.stringify(['gcloud-tts-v1', speech.text, VOICES[speech.style], AUDIO_CONFIG])).digest('hex');
+function cacheKey(speech, eleven) {
+  const parts = eleven
+    ? ['elevenlabs-v1', speech.text, eleven.voiceId, ELEVEN_MODEL, ELEVEN_SETTINGS[speech.style]]
+    : ['gcloud-tts-v1', speech.text, VOICES[speech.style], AUDIO_CONFIG];
+  return createHash('sha256').update(JSON.stringify(parts)).digest('hex');
+}
+// ElevenLabs pcm_24000(16-bit mono little-endian)에 WAV 헤더를 붙여 기존 WAV 파이프라인에 맞춥니다.
+function pcmToWav(pcm, sampleRate = ELEVEN_SAMPLE_RATE) {
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0, 'ascii'); header.writeUInt32LE(36 + pcm.length, 4); header.write('WAVE', 8, 'ascii');
+  header.write('fmt ', 12, 'ascii'); header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(1, 22); header.writeUInt32LE(sampleRate, 24); header.writeUInt32LE(sampleRate * 2, 28);
+  header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34); header.write('data', 36, 'ascii'); header.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([header, pcm]);
 }
 function isWav(buffer) {
   return buffer.length >= 44 && buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WAVE';
@@ -38,9 +59,35 @@ async function readAudio(response) {
   if (!isWav(audio)) throw failure(502, '음성 파일을 확인할 수 없습니다. 다시 시도하세요.');
   return audio;
 }
-function createTtsHandler({ readDocument, readCache, writeCache, getAccessToken, fetchImpl = fetch, log = () => {} }) {
+function createTtsHandler({ readDocument, readCache, writeCache, getAccessToken, getElevenConfig = async () => null, fetchImpl = fetch, log = () => {} }) {
   const pending = new Map();
+  async function generateEleven(speech, eleven) {
+    const key = cacheKey(speech, eleven);
+    const cached = await readCache(key);
+    if (cached && isWav(cached)) return cached;
+    const upstream = await fetchImpl(
+      `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(eleven.voiceId)}?output_format=pcm_${ELEVEN_SAMPLE_RATE}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'xi-api-key': eleven.apiKey },
+      body: JSON.stringify({ text: speech.text, model_id: ELEVEN_MODEL, voice_settings: ELEVEN_SETTINGS[speech.style] }),
+      signal: AbortSignal.timeout(45000), redirect: 'error',
+    });
+    if (!upstream.ok) throw failure(502, 'ElevenLabs 음성 생성 실패 (' + upstream.status + ')');
+    const pcm = Buffer.from(await upstream.arrayBuffer());
+    if (!pcm.length || pcm.length > MAX_AUDIO_BYTES) throw failure(502, 'ElevenLabs 음성 크기가 올바르지 않습니다.');
+    const audio = pcmToWav(pcm);
+    await writeCache(key, audio);
+    return audio;
+  }
   async function generate(speech, key) {
+    let eleven = null;
+    try { eleven = await getElevenConfig(); } catch (_) { eleven = null; }
+    if (eleven && eleven.apiKey && eleven.voiceId) {
+      try { return await generateEleven(speech, eleven); }
+      catch (err) { log('ElevenLabs 실패, Google TTS로 폴백', { status: err.status, name: err.name }); }
+    }
+    return generateGoogle(speech, key);
+  }
+  async function generateGoogle(speech, key) {
     const cached = await readCache(key);
     if (cached && isWav(cached)) return cached;
     let token;
@@ -94,4 +141,4 @@ function createTtsHandler({ readDocument, readCache, writeCache, getAccessToken,
     }
   };
 }
-module.exports = { VOICES, resolveSpeech, cacheKey, createTtsHandler };
+module.exports = { VOICES, ELEVEN_SETTINGS, resolveSpeech, cacheKey, pcmToWav, createTtsHandler };

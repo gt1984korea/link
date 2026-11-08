@@ -8,7 +8,7 @@
 const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onRequest } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const { defineSecret } = require('firebase-functions/params');
+const { defineSecret, defineString } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
@@ -256,10 +256,15 @@ exports.gaStats = onRequest({ cors: true, region: 'us-central1' }, async (req, r
 const { getStorage } = require('firebase-admin/storage');
 const { getApp } = require('firebase-admin/app');
 const { createTtsHandler } = require('./tts');
+// ElevenLabs(1순위): functions/.env 의 ELEVENLABS_API_KEY / ELEVENLABS_VOICE_ID (git 제외 파일, 배포 시 함께 올라감).
+// 둘 중 하나라도 비면 Google TTS만 씁니다.
+const ELEVENLABS_API_KEY = defineString('ELEVENLABS_API_KEY', { default: '' });
+const ELEVENLABS_VOICE_ID = defineString('ELEVENLABS_VOICE_ID', { default: '' });
 exports.ttsProxy = onRequest({
   region: 'us-central1', timeoutSeconds: 60, memory: '512MiB',
   maxInstances: 2, concurrency: 4,
 }, createTtsHandler({
+  getElevenConfig: async () => ({ apiKey: ELEVENLABS_API_KEY.value(), voiceId: ELEVENLABS_VOICE_ID.value() }),
   readDocument: async () => {
     const snap = await getFirestore().doc('site/memoryVerse').get();
     return snap.exists ? snap.data() : {};
