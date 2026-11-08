@@ -2,7 +2,9 @@
  * 한 구절 = 날짜 머리줄(선택) + 출처(선택) + 본문.
  * 날짜 머리줄이 하나라도 있으면 머리줄에서만 나누고(본문 속 빈 줄은 유지), 없으면 빈 줄에서 나눕니다.
  * 출처와 본문이 이미 있는 구절에서 출처로 시작하는 줄이 나오면 다음 구절로 넘어갑니다.
- * 날짜가 없으면 앞 구절 다음 날부터 7일, 종료일이 없으면 시작일 + 6일로 채웁니다. */
+ * 날짜가 없으면 앞 구절 다음 날부터 7일, 종료일이 없으면 시작일 + 6일로 채웁니다.
+ * "설명:"(또는 "이 구절의 의미는…" · "이렇게 적용해…")으로 시작하는 줄부터 그 구절이 끝날 때까지는 구절 설명으로 모읍니다.
+ * dateOnly(파일 업로드): 날짜 머리줄에서만 나누고, 첫 날짜 앞의 제목 등은 버립니다. */
 (function (root) {
   const pad = (n) => String(n).padStart(2, '0');
   const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -36,6 +38,10 @@
   // 줄 앞 표시: "1주차" · "암송 구절:" · 번호 목록("1." "2)" "(3)" "①")
   const LABEL_RE = /^\s*(?:\d+\s*주\s*차?|제?\s*\d+\s*주|암송\s*(?:구절|말씀)?|이번\s*주|week\s*\d*|\d{1,2}\s*[.)](?=\s)|\(\d{1,2}\)|[①-⑳])\s*[:：.)\]-]?\s*/i;
   const MAX_SPAN_DAYS = 31;
+  // "설명: …" · "구절 설명:" · "해설 -" (줄 맨 앞)
+  const DESC_RE = /^(?:구절\s*)?(?:설명|해설)\s*[:：\-]\s*/;
+  // 표시 없이 바로 설명이 시작되는 흔한 문장: "이 구절의 의미는…" · "이렇게 적용해 보십시오." · "적용: …" (줄은 그대로 둡니다)
+  const DESC_START_RE = /^(?:이\s*(?:구절|말씀)의\s*(?:의미|뜻|핵심)|이렇게\s*적용|(?:의미|적용|묵상|해석|교훈)\s*[:：])/;
   function stripLabels(s) {
     let prev;
     do { prev = s; s = s.replace(LABEL_RE, ''); } while (s !== prev);
@@ -114,30 +120,45 @@
     return { range, ref, refAtStart, text: rest };
   }
 
-  function parseBulk(input, { today, nextStart } = {}) {
+  function parseBulk(input, { today, nextStart, dateOnly } = {}) {
     today = today || ymd(new Date());
     const lines = String(input || '').replace(/\r\n?/g, '\n').split('\n').map(l => l.trim());
-    const info = lines.map(l => (l ? analyzeLine(l, today) : null));
+    const info = lines.map(l => (!l ? null : DESC_RE.test(l) ? { desc: l.replace(DESC_RE, '') }
+      : DESC_START_RE.test(l) ? { desc: l } : analyzeLine(l, today)));
     const headerMode = info.some(x => x && x.range);
+    if (dateOnly && !headerMode) return [];
+    let started = !dateOnly;
 
     const blocks = [];
     let cur = null;
     const flush = () => {
       if (cur) {
         while (cur.lines.length && !cur.lines[cur.lines.length - 1]) cur.lines.pop();
+        while (cur.desc.length && !cur.desc[cur.desc.length - 1]) cur.desc.pop();
         if (cur.lines.length || cur.ref) blocks.push(cur);
       }
       cur = null;
     };
     info.forEach((x, i) => {
+      if (!started) { if (!x || !x.range) return; started = true; }
       if (!x) {
         if (!headerMode) flush();
+        else if (cur && cur.inDesc) { if (cur.desc.length) cur.desc.push(''); }
         else if (cur && cur.lines.length) cur.lines.push('');
         return;
       }
+      if (x.desc != null) {
+        cur = cur || { lines: [], ref: '', range: null, desc: [] };
+        cur.inDesc = true;
+        if (x.desc) cur.desc.push(x.desc);
+        return;
+      }
       if (x.range) flush();
-      else if (x.ref && x.refAtStart && cur && cur.ref && cur.lines.some(Boolean)) flush();
-      cur = cur || { lines: [], ref: '', range: null };
+      // 설명 속 출처 줄(예: "요 3:17 말씀과 함께…")은, 날짜 머리줄이 있는 형식이면 다음 구절로 보지 않습니다.
+      else if (!dateOnly && x.ref && x.refAtStart && cur && cur.ref && (cur.inDesc ? !headerMode : cur.lines.some(Boolean))) flush();
+      cur = cur || { lines: [], ref: '', range: null, desc: [] };
+      // 설명 줄 뒤의 줄은 다음 구절이 시작될 때까지 원문 그대로 설명에 붙입니다.
+      if (cur.inDesc) { cur.desc.push(lines[i]); return; }
       if (x.range) cur.range = x.range;
       let text = x.text;
       // 한 구절 안의 두 번째 출처는 본문에 원문 그대로 둡니다.
@@ -151,7 +172,8 @@
       const range = b.range || { start: cursor, end: addDays(cursor, 6), guessed: true };
       cursor = addDays(range.end, 1);
       const text = b.lines.join('\n').replace(/\n{3,}/g, '\n\n').replace(/^["“'‘]+|["”'’]+$/g, '').trim();
-      return { text, reference: b.ref, startDate: range.start, endDate: range.end, dateGuessed: !!range.guessed };
+      const description = b.desc.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+      return { text, reference: b.ref, description, startDate: range.start, endDate: range.end, dateGuessed: !!range.guessed };
     }).filter(v => v.text || v.reference);
   }
 
@@ -160,7 +182,30 @@
     return !!(a.startDate && a.endDate && b.startDate && b.endDate && a.startDate <= b.endDate && b.startDate <= a.endDate);
   }
 
-  const api = { parseBulk, overlaps, addDays };
+  // 엑셀·CSV 행(문자열 배열의 배열)을 parseBulk가 읽는 텍스트로 바꿉니다.
+  // 머리행(날짜·출처·본문·설명 열 이름)이 있으면 열을 맞춰 "날짜 출처 / 본문 / 설명:" 블록을 만들고,
+  // 없으면 칸마다 한 줄로 이어 붙입니다(날짜 칸이 머리줄이 됩니다).
+  const COLS = { date: /날짜|기간|일자|시작|종료|주차|date/i, ref: /출처|장절|성경|reference/i, text: /본문|말씀|내용|text/i, desc: /설명|해설|묵상|description/i };
+  function rowsToText(rows) {
+    rows = rows.map(r => (r || []).map(c => String(c ?? '').trim())).filter(r => r.some(Boolean));
+    const hi = rows.slice(0, 5).findIndex(r => r.some(c => c && c.length <= 12 && COLS.date.test(c)) &&
+      r.some(c => c && c.length <= 12 && (COLS.text.test(c) || /구절/.test(c))));
+    if (hi < 0) return rows.map(r => r.filter(Boolean).join('\n')).join('\n');
+    const head = rows[hi], pick = (re) => head.map((c, j) => (c.length <= 12 && re.test(c) ? j : -1)).filter(j => j >= 0);
+    const dateCols = pick(COLS.date), descCols = pick(COLS.desc);
+    let refCols = pick(COLS.ref).filter(j => !dateCols.includes(j));
+    let textCols = pick(COLS.text).filter(j => !dateCols.includes(j) && !refCols.includes(j) && !descCols.includes(j));
+    // "암송 구절"처럼 '구절'만 있는 열은 본문 열이 없을 때 본문으로 봅니다.
+    if (!textCols.length) textCols = pick(/구절/).filter(j => !dateCols.includes(j) && !refCols.includes(j) && !descCols.includes(j));
+    const get = (r, cols) => cols.map(j => r[j] || '').filter(Boolean);
+    return rows.slice(hi + 1).map(r => {
+      const head1 = [get(r, dateCols).join(' ~ '), get(r, refCols).join(' ')].filter(Boolean).join(' ');
+      const desc = get(r, descCols).join('\n');
+      return [head1, get(r, textCols).join('\n'), desc ? '설명: ' + desc : ''].filter(Boolean).join('\n');
+    }).filter(Boolean).join('\n\n');
+  }
+
+  const api = { parseBulk, rowsToText, overlaps, addDays };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.VerseBulk = api;
 })(typeof window !== 'undefined' ? window : globalThis);

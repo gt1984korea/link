@@ -2625,13 +2625,14 @@
       // 유효(본문 있음)한 항목만
       list = list.filter(v => v && (v.text || '').trim());
 
-      // active: 시작일<=오늘<=종료일 (날짜 없으면 항상 활성). 여러 개면 startDate 최신 1개
+      // active: 시작일<=오늘<=종료일 (날짜 없으면 항상 활성). 기간이 겹치면 나중에 올린(createdAt 최신) 1개
       const actives = list.filter(v => {
         const okStart = !v.startDate || v.startDate <= today;
         const okEnd   = !v.endDate   || today <= v.endDate;
         return okStart && okEnd;
       });
-      actives.sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
+      actives.sort((a, b) => ((b.createdAt || 0) - (a.createdAt || 0)) ||
+        (b.startDate || '').localeCompare(a.startDate || ''));
       const active = actives[0] || null;
 
       // past: 종료일이 오늘보다 과거. 종료일 내림차순

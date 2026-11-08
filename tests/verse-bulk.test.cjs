@@ -1,6 +1,6 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {parseBulk, overlaps}=require('../verse-bulk.js');
+const {parseBulk, rowsToText, overlaps}=require('../verse-bulk.js');
 const today='2026-10-26';
 test('날짜 줄·출처·본문 블록을 구절별로 나눈다',()=>{
   const r=parseBulk(`11월 2일 ~ 11월 8일
@@ -11,7 +11,7 @@ test('날짜 줄·출처·본문 블록을 구절별로 나눈다',()=>{
 11/9~11/15 (시편 23:1)
 여호와는 나의 목자시니 내게 부족함이 없으리로다`,{today});
   assert.equal(r.length,2);
-  assert.deepEqual(r[0],{text:'하나님이 세상을 이처럼 사랑하사\n독생자를 주셨으니',reference:'요한복음 3:16',startDate:'2026-11-02',endDate:'2026-11-08',dateGuessed:false});
+  assert.deepEqual(r[0],{text:'하나님이 세상을 이처럼 사랑하사\n독생자를 주셨으니',reference:'요한복음 3:16',description:'',startDate:'2026-11-02',endDate:'2026-11-08',dateGuessed:false});
   assert.equal(r[1].reference,'시편 23:1'); assert.equal(r[1].startDate,'2026-11-09'); assert.equal(r[1].endDate,'2026-11-15');
   assert.equal(r[1].text,'여호와는 나의 목자시니 내게 부족함이 없으리로다');
 });
@@ -96,4 +96,63 @@ test('6개월 이내로 지난 날짜는 올해로 본다',()=>{
 test('장만 있는 출처도 분리한다',()=>{
   const r=parseBulk('11/2~11/8 시편 23편\n여호와는 나의 목자시니',{today})[0];
   assert.deepEqual([r.reference,r.text],['시편 23편','여호와는 나의 목자시니']);
+});
+test('"설명:" 줄부터는 구절 설명으로 모은다',()=>{
+  const r=parseBulk(`11/2~11/8 요한복음 3:16
+하나님이 세상을 이처럼 사랑하사
+설명: 하나님의 사랑은 조건이 없습니다.
+요 3:17 말씀과 함께 읽으면 좋습니다.
+
+11/9~11/15 시편 23:1
+여호와는 나의 목자시니
+구절 설명 - 목자는 양을 끝까지 돌봅니다.`,{today});
+  assert.equal(r.length,2);
+  assert.equal(r[0].text,'하나님이 세상을 이처럼 사랑하사');
+  assert.equal(r[0].description,'하나님의 사랑은 조건이 없습니다.\n요 3:17 말씀과 함께 읽으면 좋습니다.');
+  assert.equal(r[1].description,'목자는 양을 끝까지 돌봅니다.');
+  assert.equal(r[1].reference,'시편 23:1');
+});
+test('날짜 없는 형식에서도 설명 뒤 출처 줄은 다음 구절이다',()=>{
+  const r=parseBulk(`요 3:16
+하나님이 세상을
+설명: 사랑 이야기
+시 23:1
+여호와는 나의 목자시니`,{today});
+  assert.deepEqual(r.map(v=>[v.reference,v.text,v.description]),[['요 3:16','하나님이 세상을','사랑 이야기'],['시 23:1','여호와는 나의 목자시니','']]);
+});
+test('dateOnly: 날짜 줄에서만 나누고 첫 날짜 앞 제목은 버린다',()=>{
+  const r=parseBulk(`11월 암송 구절표
+11/2~11/8 로마서 8:28
+우리가 알거니와
+시편 23편 1절은 다음 주에
+11/9~11/15 시 23:1
+여호와는`,{today,dateOnly:true});
+  assert.equal(r.length,2);
+  assert.equal(r[0].reference,'로마서 8:28');
+  assert.equal(r[0].text,'우리가 알거니와\n시편 23편 1절은 다음 주에');
+  assert.deepEqual([r[1].startDate,r[1].reference],['2026-11-09','시 23:1']);
+  assert.deepEqual(parseBulk('요 3:16\n본문',{today,dateOnly:true}),[]);
+});
+test('엑셀 행: 머리행이 있으면 열을 맞춘다',()=>{
+  const t=rowsToText([['11월 암송표'],['시작일','종료일','출처','본문','설명'],['2026-11-02','2026-11-08','요 3:16','하나님이 세상을','조건 없는 사랑'],['2026-11-09','2026-11-15','시 23:1','여호와는 나의 목자시니','']]);
+  const r=parseBulk(t,{today,dateOnly:true});
+  assert.deepEqual(r.map(v=>[v.startDate,v.endDate,v.reference,v.text,v.description]),
+    [['2026-11-02','2026-11-08','요 3:16','하나님이 세상을','조건 없는 사랑'],['2026-11-09','2026-11-15','시 23:1','여호와는 나의 목자시니','']]);
+});
+test('엑셀 행: 머리행이 없으면 칸을 줄로 잇는다',()=>{
+  const r=parseBulk(rowsToText([['11/2~11/8','요 3:16','본문1'],['11/9~11/15','시 23:1','본문2']]),{today,dateOnly:true});
+  assert.deepEqual(r.map(v=>[v.startDate,v.reference,v.text]),[['2026-11-02','요 3:16','본문1'],['2026-11-09','시 23:1','본문2']]);
+});
+test('"이 구절의 의미는…" · "이렇게 적용해…" 줄은 표시 없이도 설명이다',()=>{
+  const r=parseBulk(`11/23~11/29 마태복음 28장 19-20절 그러므로 너희는 가서 모든 민족을 제자로 삼아
+이 구절의 의미는 이러합니다. 지상 대위임령입니다.
+이렇게 적용해 보십시오. 지체를 격려해 보세요. 이번 한 주간도 믿음으로 승리하십시오.
+12/28~1/3 베드로전서 2장 9절 그러나 너희는 택하신 족속이요
+이 구절의 의미는 이러합니다. 참된 정체성입니다.
+이렇게 적용해 보십시오. 기도해 보세요.`,{today:'2026-11-08'});
+  assert.equal(r.length,2);
+  assert.deepEqual([r[0].startDate,r[0].endDate,r[0].reference,r[0].text],['2026-11-23','2026-11-29','마태복음 28장 19-20절','그러므로 너희는 가서 모든 민족을 제자로 삼아']);
+  assert.equal(r[0].description,'이 구절의 의미는 이러합니다. 지상 대위임령입니다.\n이렇게 적용해 보십시오. 지체를 격려해 보세요. 이번 한 주간도 믿음으로 승리하십시오.');
+  assert.deepEqual([r[1].startDate,r[1].endDate,r[1].reference,r[1].text],['2026-12-28','2027-01-03','베드로전서 2장 9절','그러나 너희는 택하신 족속이요']);
+  assert.equal(r[1].description,'이 구절의 의미는 이러합니다. 참된 정체성입니다.\n이렇게 적용해 보십시오. 기도해 보세요.');
 });

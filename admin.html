@@ -223,6 +223,31 @@
     .badge.range { color: var(--brand); background: var(--brand-dim); }
     .badge.now   { color: #fff; background: var(--brand); }
     .badge.dirty { color: #92660b; background: #fdeccb; }
+    .badge.plan  { color: #1d5fd1; background: #e6efff; }
+    .badge.past  { color: var(--text-3); background: #f1f2f4; }
+    .vrow.past { background: #fafbfc; }
+    .vrow.past .vrow-text, .vrow.past .vrow-ref { color: var(--text-3); }
+    .vgroup-title {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 700; color: var(--text-2); margin: 6px 0 -2px;
+    }
+    .vgroup-title:first-child { margin-top: 0; }
+    .vgroup-title .cnt { color: var(--text-3); font-weight: 600; }
+    details.vgroup-past > summary {
+      list-style: none; cursor: pointer; padding: 10px 12px; border-radius: 10px;
+      font-size: 13px; font-weight: 700; color: var(--text-2); background: #f7f8fa;
+    }
+    details.vgroup-past > summary::-webkit-details-marker { display: none; }
+    details.vgroup-past > summary::before { content: '▸ '; color: var(--text-3); }
+    details.vgroup-past[open] > summary::before { content: '▾ '; }
+    details.vgroup-past > .vlist { margin-top: 10px; }
+    .vsummary {
+      margin: 0 0 14px; padding: 12px 14px; border-radius: 12px;
+      background: #f7f8fa; font-size: 13px; line-height: 1.6; color: var(--text);
+    }
+    .vsummary b { font-weight: 700; }
+    .vsummary .muted { color: var(--text-2); }
+    .vsummary .warn { color: #92660b; font-weight: 700; }
     .vrow-text {
       font-size: 14px; line-height: 1.55; color: var(--text);
       font-weight: 500; white-space: pre-wrap; word-break: keep-all;
@@ -247,20 +272,101 @@
       width: 22px; height: 22px; border-radius: 50%;
       font-size: 12px; color: #fff; background: var(--brand);
     }
+    .bulk-drop {
+      display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
+      margin: 0; padding: 20px 16px; cursor: pointer;
+      border: 1.5px dashed #cfd3da; border-radius: 12px; background: #fafbfc;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .bulk-drop:hover, .bulk-drop.over { border-color: var(--brand); background: var(--brand-dim); }
+    .bulk-drop:focus-within { border-color: var(--brand); }
+    .bulk-drop.busy { pointer-events: none; opacity: .6; }
+    .bulk-drop-icon { font-size: 22px; line-height: 1; }
+    .bulk-drop-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: 0; }
+    .bulk-drop-title u { color: var(--brand); text-underline-offset: 3px; }
+    .bulk-drop-sub { font-size: 12px; font-weight: 500; color: var(--text-2); line-height: 1.5; letter-spacing: 0; }
+    .bulk-sample { margin: 8px 0 0; font-size: 12px; color: var(--text-2); text-align: center; }
+    .bulk-sample button {
+      font-family: inherit; font-size: 12px; font-weight: 700; color: var(--brand);
+      background: none; border: 0; padding: 2px; cursor: pointer;
+      text-decoration: underline; text-underline-offset: 3px;
+    }
+    .bulk-sample button:disabled { opacity: .5; cursor: default; }
+    .bulk-file {
+      display: flex; align-items: center; gap: 8px; margin-top: 8px;
+      padding: 6px 6px 6px 12px; border-radius: 10px; background: var(--brand-dim);
+      font-size: 13px; font-weight: 600; color: var(--text);
+    }
+    .bulk-file span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bulk-file .bulk-del { margin: 0; }
+    .bulk-or {
+      display: flex; align-items: center; gap: 10px; margin: 16px 0 8px;
+      font-size: 12px; font-weight: 600; color: var(--text-3);
+    }
+    .bulk-or::before, .bulk-or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
     .bulk-summary { font-size: 13px; color: var(--text-2); margin: 0 0 10px; line-height: 1.5; }
     .bulk-summary .warn { color: #92660b; font-weight: 700; }
-    .bulk-row { padding: 12px; }
-    .bulk-row .vrow-top { margin-bottom: 10px; }
-    .bulk-del {
-      margin-left: auto;
-      font-family: inherit; font-size: 12px; font-weight: 700;
-      color: var(--danger); background: none; border: 0; border-radius: 6px;
-      padding: 4px 6px; cursor: pointer;
+    /* 나눈 결과 표: 칸은 평소 글자처럼 보이고, 마우스를 올리거나 누르면 입력칸이 드러납니다 */
+    .bulk-table-wrap { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .bulk-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+    .bulk-table .c-no { width: 34px; }
+    .bulk-table .c-date { width: 132px; }
+    .bulk-table .c-ref { width: 26%; }
+    .bulk-table .c-del { width: 36px; }
+    .bulk-table thead th {
+      text-align: left; font-size: 11px; font-weight: 700; color: var(--text-2);
+      background: #f7f8fa; padding: 9px 8px; border-bottom: 1px solid var(--line);
     }
-    .bulk-del:hover { background: #fff5f5; }
-    .bulk-row .date-row { gap: 6px; }
-    .bulk-row input[type="date"] { padding: 9px 8px; font-size: 14px; }
-    .bulk-row .date-sep { padding-bottom: 9px; }
+    .bulk-table td { padding: 6px 4px; vertical-align: top; border-top: 1px solid var(--line); }
+    .bulk-table tbody tr:first-child td { border-top: 0; }
+    .bulk-table td.bulk-no {
+      text-align: center; padding-top: 13px;
+      font-size: 12px; font-weight: 700; color: var(--text-3);
+    }
+    .bulk-table tr.warn > td { background: #fffaf0; }
+    .bulk-table tr.err > td { background: #fff6f6; }
+    .bulk-table tr.warn td.bulk-no { color: #92660b; }
+    .bulk-table tr.err td.bulk-no { color: var(--danger); }
+    .bulk-table tr.bulk-msg > td {
+      border-top: 0; padding: 0 10px 9px 38px;
+      font-size: 12px; line-height: 1.45; color: #92660b;
+    }
+    .bulk-table tr.bulk-msg.err > td { color: var(--danger); }
+    .bulk-cell,
+    .bulk-table input[type="text"].bulk-cell,
+    .bulk-table input[type="date"].bulk-cell,
+    .bulk-table textarea.bulk-cell {
+      display: block; width: 100%; min-height: 0;
+      font: inherit; font-size: 13px; line-height: 1.5; color: var(--text);
+      background: transparent; border: 1px solid transparent; border-radius: 6px;
+      padding: 6px; letter-spacing: 0;
+    }
+    .bulk-table textarea.bulk-cell { resize: none; overflow: hidden; }
+    .bulk-table textarea.bulk-cell.ref { font-weight: 700; word-break: keep-all; }
+    .bulk-cell:hover { border-color: var(--line); background: #fff; }
+    .bulk-cell:focus { border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px var(--brand-dim); outline: none; }
+    .bulk-desc-add {
+      margin: 0 0 2px 6px; padding: 2px 0;
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      color: var(--brand); background: none; border: 0; cursor: pointer;
+    }
+    .bulk-desc-add:hover { text-decoration: underline; }
+    .bulk-desc { margin-top: 2px; border-top: 1px dashed var(--line); padding-top: 2px; }
+    .bulk-desc-label { display: block; margin: 4px 0 0 7px; font-size: 11px; font-weight: 700; color: var(--text-3); }
+    .bulk-table textarea.bulk-cell.desc { color: var(--text-2); }
+    .bulk-dates { display: flex; flex-direction: column; gap: 2px; }
+    .bulk-dates .date-sep { display: none; }
+    .bulk-guess {
+      align-self: flex-start; margin: 2px 0 0 6px;
+      font-size: 10px; font-weight: 700; color: #92660b; background: #fdeccb;
+      border-radius: 4px; padding: 1px 5px;
+    }
+    .bulk-del {
+      width: 28px; height: 28px; margin-top: 3px;
+      font-family: inherit; font-size: 14px; line-height: 1;
+      color: var(--text-3); background: none; border: 0; border-radius: 6px; cursor: pointer;
+    }
+    .bulk-del:hover { color: var(--danger); background: #fff5f5; }
     .bulk-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .bulk-settings select {
       width: 100%; padding: 12px; font: inherit;
@@ -268,7 +374,30 @@
     }
     @media (max-width: 480px) {
       .bulk-settings { grid-template-columns: 1fr; }
-      .bulk-row input[type="date"] { font-size: 13px; padding: 9px 6px; }
+      /* 좁은 화면: 표 한 줄을 [번호 · 기간 · 빼기] / 출처 / 본문 세 줄로 접습니다 */
+      .bulk-table, .bulk-table tbody { display: block; }
+      .bulk-table colgroup, .bulk-table thead { display: none; }
+      .bulk-table tr.bulk-tr {
+        display: grid; grid-template-columns: 30px 1fr 32px;
+        grid-template-areas: "no date del" "ref ref ref" "text text text";
+        padding: 6px 6px 8px; border-top: 1px solid var(--line);
+      }
+      .bulk-table tbody tr.bulk-tr:first-child { border-top: 0; }
+      .bulk-table tr.bulk-tr.warn { background: #fffaf0; }
+      .bulk-table tr.bulk-tr.err { background: #fff6f6; }
+      .bulk-table tr.bulk-tr > td { display: block; border: 0; padding: 0; background: none; }
+      .bulk-table td.bulk-no { grid-area: no; padding-top: 7px; }
+      .bulk-table td.bulk-date { grid-area: date; }
+      .bulk-table td.bulk-ref { grid-area: ref; }
+      .bulk-table td.bulk-text { grid-area: text; }
+      .bulk-table td.bulk-x { grid-area: del; }
+      .bulk-dates { flex-direction: row; flex-wrap: wrap; align-items: center; }
+      .bulk-dates .date-sep { display: inline; padding: 0; }
+      .bulk-dates input[type="date"] { flex: 1; min-width: 0; }
+      .bulk-guess { order: 9; margin: 2px 0 0 6px; }
+      .bulk-dates::after { content: ''; order: 8; flex-basis: 100%; }
+      .bulk-table tr.bulk-msg { display: block; }
+      .bulk-table tr.bulk-msg > td { display: block; padding: 0 12px 10px; }
     }
 
     /* 배경 관리 목록 아이템 */
@@ -621,12 +750,28 @@
     <section class="card hidden" id="bulkCard">
       <h2>여러 주 구절 한 번에 등록</h2>
 
-      <h3 class="bulk-step"><span class="bulk-step-no">1</span>받은 텍스트 붙여넣기</h3>
+      <h3 class="bulk-step"><span class="bulk-step-no">1</span>파일 올리기 또는 텍스트 붙여넣기</h3>
+      <label class="bulk-drop" id="bulkDrop" for="bulkFile">
+        <input type="file" id="bulkFile" accept=".txt,.md,.csv,.xlsx,.xls,.docx" hidden>
+        <span class="bulk-drop-icon" aria-hidden="true">📄</span>
+        <span class="bulk-drop-title">파일을 끌어다 놓거나 <u>눌러서 선택</u></span>
+        <span class="bulk-drop-sub">텍스트(txt) · Word(docx) · 엑셀(xlsx·csv) — 날짜(11/2~11/8)가 있는 줄을 기준으로 구절을 나눕니다</span>
+      </label>
+      <p class="bulk-sample">
+        양식이 필요하면 샘플을 받아 채워 보세요:
+        <button type="button" id="btnSampleTxt">텍스트(txt)</button> ·
+        <button type="button" id="btnSampleXlsx">엑셀(xlsx)</button>
+      </p>
+      <div class="bulk-file hidden" id="bulkFileChip">
+        <span id="bulkFileName"></span>
+        <button type="button" class="bulk-del" id="btnBulkFileClear" aria-label="불러온 파일 지우기" title="불러온 파일 지우기">✕</button>
+      </div>
+      <div class="bulk-or"><span>또는 직접 붙여넣기</span></div>
       <p class="hint" style="margin-top:0">
         날짜(11/2~11/8, 11월 2일)가 있는 줄이나 빈 줄에서 구절을 나눕니다. 출처(요한복음 3:16, 시편 23편 1절)는 자동으로 분리되고,
-        날짜가 없으면 앞 구절 다음 주로 채웁니다.
+        날짜가 없으면 앞 구절 다음 주로 채웁니다. <b>설명:</b> · <b>이 구절의 의미는…</b> · <b>이렇게 적용해…</b>로 시작하는 줄부터는 구절 설명으로 들어갑니다.
       </p>
-      <textarea id="bulkInput" aria-label="받은 텍스트" placeholder="11/2~11/8 요한복음 3:16&#10;하나님이 세상을 이처럼 사랑하사…&#10;&#10;11/9~11/15 시편 23:1&#10;여호와는 나의 목자시니…"></textarea>
+      <textarea id="bulkInput" aria-label="받은 텍스트" placeholder="11/2~11/8 요한복음 3:16&#10;하나님이 세상을 이처럼 사랑하사…&#10;설명: 하나님의 사랑은 조건이 없습니다…&#10;&#10;11/9~11/15 시편 23:1&#10;여호와는 나의 목자시니…"></textarea>
       <div class="row">
         <button class="btn btn-ghost" id="btnBulkParse" type="button">나눠 보기</button>
       </div>
@@ -634,7 +779,7 @@
       <div id="bulkReview" class="hidden">
         <h3 class="bulk-step"><span class="bulk-step-no">2</span>나눈 결과 확인·수정</h3>
         <p class="bulk-summary" id="bulkSummary"></p>
-        <div id="bulkPreview" class="vlist"></div>
+        <div id="bulkPreview" class="bulk-table-wrap"></div>
 
         <h3 class="bulk-step"><span class="bulk-step-no">3</span>등록</h3>
         <div class="bulk-settings">
@@ -963,9 +1108,10 @@
     <!-- 등록된 구절 목록 -->
     <section class="card hidden" id="listCard">
       <h2>등록된 암송 구절</h2>
+      <div class="vsummary hidden" id="vSummary"></div>
       <div class="vlist" id="vlist"></div>
       <p class="hint" id="listHint" style="margin-top:14px">
-        편집하려면 항목의 <b>편집</b>을 누르세요. 오늘 날짜가 포함된 구절이 메인 화면에 표시됩니다.
+        편집하려면 항목의 <b>편집</b>을 누르세요. 오늘 날짜가 포함된 구절이 메인 화면에 표시되고, 기간이 겹치면 나중에 올린 구절이 표시됩니다.
       </p>
     </section>
 
@@ -976,7 +1122,7 @@
   </div>
 
   <script src="./tts-client.js?v=1"></script>
-  <script src="./verse-bulk.js?v=1"></script>
+  <script src="./verse-bulk.js?v=2"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp, deleteField, collection, deleteDoc, runTransaction }
@@ -1055,13 +1201,78 @@
     }
 
     // 오늘 날짜를 기준으로 등록된 구절 중 "이번 주" 활성 구절을 계산해 미리보기에 반영
-    // (index.html의 classify() active 로직과 동일: 시작<=오늘<=종료, 여러 개면 startDate 최신 1개)
-    function syncPreview() {
-      const today = todayStr();
-      const actives = versesData
+    // (index.html의 classify() active 로직과 동일: 시작<=오늘<=종료, 기간이 겹치면 나중에 올린(createdAt 최신) 1개)
+    function shownVerse(today) {
+      return versesData
         .filter(v => v && (v.text || '').trim() && isActive(v, today))
-        .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
-      const active = actives[0] || null;
+        .sort((a, b) => ((b.createdAt || 0) - (a.createdAt || 0)) ||
+          (b.startDate || '').localeCompare(a.startDate || ''))[0] || null;
+    }
+    // 목록 상태 표시용 날짜 도우미: "11/9(월)" · 두 날짜 사이 일수
+    const WEEKDAYS = '일월화수목금토';
+    function mdw(d) {
+      const [y, m, dd] = d.split('-').map(Number);
+      return `${m}/${dd}(${WEEKDAYS[new Date(y, m - 1, dd).getDay()]})`;
+    }
+    function daysBetween(a, b) {
+      const t = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+      return Math.round((t(b) - t(a)) / 864e5);
+    }
+    function relLabel(days) {
+      if (days === 1) return '내일부터';
+      if (days < 14) return `${days}일 후`;
+      return `${Math.floor(days / 7)}주 후`;
+    }
+    // 구절 v가 from~종료일 중 실제로 메인에 보이는 첫날과 일수(겹치면 나중에 올린 구절이 이깁니다)
+    function visibleDays(v, from) {
+      let first = null, count = 0, d = from;
+      for (let n = 0; n < 120 && v.endDate && d <= v.endDate; n++, d = VerseBulk.addDays(d, 1)) {
+        if (shownVerse(d) === v) { count++; first = first || d; }
+      }
+      return { first, count };
+    }
+    // 목록 위 요약: 다음에 바뀌는 날 · 예약 개수 · 언제까지 채워져 있는지(빈 기간 경고)
+    function renderSummary(today, futureCount) {
+      const box = $('vSummary');
+      box.textContent = '';
+      box.classList.toggle('hidden', versesData.length === 0);
+      if (!versesData.length) return;
+      const cur = shownVerse(today);
+      const lastEnd = versesData.map(v => v.endDate || '').sort().pop() || today;
+      const line = (...parts) => {
+        const div = document.createElement('div');
+        parts.forEach(([text, cls]) => {
+          const sp = document.createElement(cls ? 'span' : 'b');
+          if (cls) sp.className = cls;
+          sp.textContent = text;
+          div.appendChild(sp);
+        });
+        box.appendChild(div);
+      };
+      line(['지금 ', 'muted'], [cur ? `${(cur.reference || '').trim() || '구절'}` : '메인에 표시되는 구절 없음'],
+        [cur && cur.endDate ? ` · ${mdw(cur.endDate)}까지` : '', 'muted']);
+      // 다음 변경일: 내일부터 하루씩 보며 표시 구절이 바뀌는 첫날
+      let next = null;
+      for (let d = VerseBulk.addDays(today, 1), n = 0; d <= VerseBulk.addDays(lastEnd, 1) && n < 400; d = VerseBulk.addDays(d, 1), n++) {
+        if (shownVerse(d) !== cur) { next = d; break; }
+      }
+      if (next) {
+        const nv = shownVerse(next);
+        if (nv) line(['다음 ', 'muted'], [`${mdw(next)}부터 ${(nv.reference || '').trim() || '새 구절'}`]);
+        else line(['다음 ', 'muted'], [`${mdw(next)}부터 구절 카드가 숨겨집니다`, 'warn'], [' — 새 구절을 등록하세요', 'muted']);
+      }
+      // 오늘부터 빈 날 없이 이어지는 마지막 날
+      let covered = null;
+      for (let d = today, n = 0; shownVerse(d) && n < 400; d = VerseBulk.addDays(d, 1), n++) covered = d;
+      const parts = [[`예약 ${futureCount}개`]];
+      if (covered) parts.push([` · ${covered.replace(/-/g, '.')}(${mdw(covered).slice(-2, -1)})까지 채워짐`, 'muted']);
+      const gapStart = covered ? VerseBulk.addDays(covered, 1) : today;
+      const after = versesData.map(v => v.startDate || '').filter(s => s > gapStart).sort()[0];
+      if (after) parts.push([` · ⚠ ${mdw(gapStart)}~${mdw(VerseBulk.addDays(after, -1))} 빈 기간`, 'warn']);
+      line(...parts);
+    }
+    function syncPreview() {
+      const active = shownVerse(todayStr());
       pvText.textContent = active ? ((active.text || '').trim() || '—') : '—';
       pvRef.textContent  = active ? (active.reference || '').trim() : '';
     }
@@ -1200,22 +1411,43 @@
       vlist.textContent = '';
       const today = todayStr();
       syncPreview();
-      const sorted = versesData.slice().sort((a, b) =>
-        (b.startDate || '').localeCompare(a.startDate || '') ||
-        ((b.createdAt || 0) - (a.createdAt || 0)));
-
-      if (sorted.length === 0) {
+      if (versesData.length === 0) {
         const p = document.createElement('p');
         p.className = 'vlist-empty';
         p.textContent = '아직 등록된 구절이 없습니다. 위 양식에서 새 구절을 추가하세요.';
         vlist.appendChild(p);
+        renderSummary(today, 0);
         return;
       }
 
-      sorted.forEach((v) => {
-        const active = isActive(v, today);
+      // 상태별로 묶습니다: 진행 중(메인 표시 구절 먼저) → 예약(시작 빠른 순) → 지난 구절(접힘, 최근 순)
+      const shown = shownVerse(today);
+      const current = versesData.filter(v => isActive(v, today))
+        .sort((a, b) => (b === shown) - (a === shown) || ((b.createdAt || 0) - (a.createdAt || 0)));
+      const future = versesData.filter(v => v.startDate && v.startDate > today)
+        .sort((a, b) => a.startDate.localeCompare(b.startDate) || ((a.createdAt || 0) - (b.createdAt || 0)));
+      const past = versesData.filter(v => v.endDate && v.endDate < today)
+        .sort((a, b) => b.endDate.localeCompare(a.endDate));
+      renderSummary(today, future.length);
+
+      const badge = (top, cls, text) => {
+        const b = document.createElement('span');
+        b.className = 'badge ' + cls; b.textContent = text;
+        top.appendChild(b);
+      };
+      const groupTitle = (parent, text, count) => {
+        const h = document.createElement('div');
+        h.className = 'vgroup-title';
+        h.textContent = text;
+        const c = document.createElement('span');
+        c.className = 'cnt'; c.textContent = count;
+        h.appendChild(c);
+        parent.appendChild(h);
+      };
+
+      const renderRow = (v, state, parent) => {
         const row = document.createElement('div');
-        row.className = 'vrow' + (active ? ' active' : '');
+        row.className = 'vrow' + (state === 'shown' ? ' active' : state === 'past' ? ' past' : '');
 
         const top = document.createElement('div');
         top.className = 'vrow-top';
@@ -1223,12 +1455,18 @@
         rb.className = 'badge range';
         rb.textContent = fmtRange(v.startDate, v.endDate);
         top.appendChild(rb);
-        if (active) {
-          const nb = document.createElement('span');
-          nb.className = 'badge now';
-          nb.textContent = '진행 중';
-          top.appendChild(nb);
-        }
+        if (state === 'shown') badge(top, 'now', '진행 중');
+        else if (state === 'hidden') {
+          // 기간이 겹치면 나중에 올린 구절만 메인에 보이므로, 나머지는 "가려짐"으로 표시합니다.
+          const vis = visibleDays(v, VerseBulk.addDays(today, 1));
+          badge(top, 'dirty', vis.first ? `가려짐 · ${mdw(vis.first)}부터 표시` : '가려짐 · 나중에 올린 구절이 표시됨');
+        } else if (state === 'future') {
+          badge(top, 'plan', `예약 · ${relLabel(daysBetween(today, v.startDate))}`);
+          const vis = visibleDays(v, v.startDate);
+          const total = daysBetween(v.startDate, v.endDate) + 1;
+          if (vis.count === 0) badge(top, 'dirty', '가려짐 · 표시되지 않음');
+          else if (vis.count < total) badge(top, 'dirty', `일부 가려짐 · ${vis.count}일만 표시`);
+        } else if (state === 'past') badge(top, 'past', '지난 구절');
         row.appendChild(top);
 
         if ((v.reference || '').trim()) {
@@ -1254,8 +1492,28 @@
         act.appendChild(eb); act.appendChild(db2);
         row.appendChild(act);
 
-        vlist.appendChild(row);
-      });
+        parent.appendChild(row);
+      };
+
+      if (current.length) {
+        groupTitle(vlist, '진행 중 ', current.length);
+        current.forEach(v => renderRow(v, v === shown ? 'shown' : 'hidden', vlist));
+      }
+      if (future.length) {
+        groupTitle(vlist, '예약 ', future.length);
+        future.forEach(v => renderRow(v, 'future', vlist));
+      }
+      if (past.length) {
+        const det = document.createElement('details');
+        det.className = 'vgroup-past';
+        const sum = document.createElement('summary');
+        sum.textContent = `지난 구절 ${past.length}개`;
+        const inner = document.createElement('div');
+        inner.className = 'vlist';
+        det.append(sum, inner);
+        past.forEach(v => renderRow(v, 'past', inner));
+        vlist.appendChild(det);
+      }
     }
 
     // 새 구절 작성 모드로 초기화
@@ -1461,11 +1719,18 @@
       if (!row.startDate || !row.endDate || row.startDate > row.endDate) msgs.push('기간이 올바르지 않습니다');
       return msgs;
     }
+    // 서버(functions/tts.js)가 읽는 글과 같은 방식으로 길이를 셉니다: 본문 + 출처 + 구절 설명
+    function speechLength(row) {
+      const ref = row.reference.trim(), desc = (row.description || '').trim();
+      return (row.text.trim() + (ref ? '\n\n' + ref : '') + (desc ? '\n\n구절 설명:\n' + desc : '')).length;
+    }
     function bulkWarnings(row, i) {
       const msgs = [];
-      versesData.forEach(v => { if (VerseBulk.overlaps(row, v)) msgs.push(`기존 구절(${fmtRange(v.startDate, v.endDate)} ${(v.reference || '').trim()})과 기간이 겹칩니다`); });
-      bulkRows.forEach((o, j) => { if (j !== i && VerseBulk.overlaps(row, o)) msgs.push(`${j + 1}번과 기간이 겹칩니다`); });
+      // 겹쳐도 등록할 수 있습니다: 겹치는 날에는 나중에 올린 구절(이번 등록분, 그중 아래 번호)이 표시됩니다.
+      versesData.forEach(v => { if (VerseBulk.overlaps(row, v)) msgs.push(`기존 구절(${fmtRange(v.startDate, v.endDate)} ${(v.reference || '').trim()})과 겹침 — 겹치는 날엔 이 구절이 표시됩니다`); });
+      bulkRows.forEach((o, j) => { if (j !== i && VerseBulk.overlaps(row, o)) msgs.push(`${j + 1}번과 겹침 — 겹치는 날엔 ${Math.max(i, j) + 1}번이 표시됩니다`); });
       if (row.startDate && row.endDate && VerseBulk.addDays(row.startDate, 13) < row.endDate) msgs.push('표시 기간이 2주를 넘습니다');
+      if ($('bulkMode').value === 'voxcpm2' && speechLength(row) > 1500) msgs.push(`자동 낭독 한도 1500자를 넘습니다(${speechLength(row)}자)`);
       return msgs;
     }
 
@@ -1473,13 +1738,18 @@
     let bulkRowEls = [];
     function refreshBulkWarnings() {
       let flagged = 0;
-      bulkRowEls.forEach(({ box, warnEl }, i) => {
+      bulkRowEls.forEach(({ tr, msgTr, msgTd }, i) => {
         const r = bulkRows[i];
-        const msgs = bulkErrors(r).concat(bulkWarnings(r, i));
+        const errs = bulkErrors(r);
+        const msgs = errs.concat(bulkWarnings(r, i));
         if (msgs.length) flagged++;
-        box.classList.toggle('dirty', msgs.length > 0);
-        warnEl.hidden = !msgs.length;
-        warnEl.textContent = msgs.length ? '⚠ ' + msgs.join(' · ') : '';
+        const level = errs.length ? 'err' : msgs.length ? 'warn' : '';
+        for (const el of [tr, msgTr]) {
+          el.classList.toggle('err', level === 'err');
+          el.classList.toggle('warn', level === 'warn');
+        }
+        msgTr.hidden = !msgs.length;
+        msgTd.textContent = msgs.length ? '⚠ ' + msgs.join(' · ') : '';
       });
       // 요약: 개수 · 전체 기간 · 확인이 필요한 구절 수
       const starts = bulkRows.map(r => r.startDate).filter(Boolean).sort();
@@ -1497,81 +1767,255 @@
       bulkRowEls = [];
       bulkReview.classList.toggle('hidden', bulkRows.length === 0);
       btnBulkSave.textContent = `${bulkRows.length}개 등록`;
-      bulkRows.forEach((r, i) => {
-        const box = document.createElement('div');
-        box.className = 'vrow bulk-row';
-        const top = document.createElement('div');
-        top.className = 'vrow-top';
-        const no = document.createElement('span');
-        no.className = 'badge range'; no.textContent = `${i + 1}`;
-        top.appendChild(no);
-        let guessBadge = null;
-        if (r.dateGuessed) {
-          guessBadge = document.createElement('span');
-          guessBadge.className = 'badge dirty'; guessBadge.textContent = '날짜 자동 채움';
-          top.appendChild(guessBadge);
-        }
-        const del = document.createElement('button');
-        del.className = 'bulk-del'; del.type = 'button'; del.textContent = '✕ 빼기';
-        del.setAttribute('aria-label', `${i + 1}번 구절 빼기`);
-        del.addEventListener('click', () => { bulkRows.splice(i, 1); renderBulk(); });
-        top.appendChild(del);
-        box.appendChild(top);
+      if (!bulkRows.length) return;
+      const el = (tag, cls, text) => {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (text != null) e.textContent = text;
+        return e;
+      };
+      // 본문 칸은 내용 길이에 맞춰 높이를 늘립니다(표 안에서 스크롤 없이 전체를 확인).
+      const fit = (ta) => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+      const table = el('table', 'bulk-table');
+      const cols = el('colgroup');
+      for (const c of ['c-no', 'c-date', 'c-ref', 'c-text', 'c-del']) cols.appendChild(el('col', c));
+      const head = el('thead'), hr = el('tr');
+      for (const h of ['#', '기간', '출처', '본문', '']) hr.appendChild(el('th', null, h));
+      head.appendChild(hr);
+      const body = el('tbody');
+      table.append(cols, head, body);
+      const fits = [];
 
-        const dates = document.createElement('div');
-        dates.className = 'date-row';
-        const mk = (key) => {
-          const wrap = document.createElement('div');
-          const inp = document.createElement('input');
+      bulkRows.forEach((r, i) => {
+        const tr = el('tr', 'bulk-tr');
+        const tdNo = el('td', 'bulk-no', `${i + 1}`);
+
+        const tdDate = el('td', 'bulk-date');
+        const dates = el('div', 'bulk-dates');
+        let guessBadge = null;
+        const mk = (key, label) => {
+          const inp = el('input', 'bulk-cell');
           inp.type = 'date'; inp.value = r[key];
+          inp.setAttribute('aria-label', `${i + 1}번 ${label}`);
           inp.addEventListener('change', () => {
             r[key] = inp.value; r.dateGuessed = false;
             if (guessBadge) { guessBadge.remove(); guessBadge = null; }
             refreshBulkWarnings();
           });
-          wrap.appendChild(inp); return wrap;
+          return inp;
         };
-        const sep = document.createElement('span');
-        sep.className = 'date-sep'; sep.textContent = '~';
-        dates.append(mk('startDate'), sep, mk('endDate'));
-        box.appendChild(dates);
+        dates.append(mk('startDate', '시작일'), el('span', 'date-sep', '~'), mk('endDate', '종료일'));
+        if (r.dateGuessed) {
+          guessBadge = el('span', 'bulk-guess', '날짜 자동 채움');
+          dates.appendChild(guessBadge);
+        }
+        tdDate.appendChild(dates);
 
-        const refEl = document.createElement('input');
-        refEl.type = 'text'; refEl.value = r.reference; refEl.placeholder = '출처';
-        refEl.style.marginTop = '8px';
-        refEl.addEventListener('input', () => { r.reference = refEl.value; });
-        const txEl = document.createElement('textarea');
-        txEl.value = r.text; txEl.placeholder = '구절 본문';
-        txEl.style.marginTop = '8px'; txEl.style.minHeight = '90px';
-        txEl.addEventListener('input', () => { r.text = txEl.value; refreshBulkWarnings(); });
-        box.append(refEl, txEl);
+        const tdRef = el('td', 'bulk-ref');
+        // 긴 출처("마태복음 28장 19-20절")가 잘리지 않게 줄바꿈되는 한 줄 칸으로 둡니다(Enter 입력은 막음).
+        const refEl = el('textarea', 'bulk-cell ref');
+        refEl.rows = 1; refEl.value = r.reference; refEl.placeholder = '출처 없음';
+        refEl.setAttribute('aria-label', `${i + 1}번 출처`);
+        refEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+        refEl.addEventListener('input', () => { refEl.value = refEl.value.replace(/\n/g, ' '); r.reference = refEl.value; fit(refEl); });
+        tdRef.appendChild(refEl);
+        fits.push(refEl);
 
-        const warnEl = document.createElement('p');
-        warnEl.className = 'hint'; warnEl.style.color = 'var(--danger)';
-        box.appendChild(warnEl);
+        const tdText = el('td', 'bulk-text');
+        const txEl = el('textarea', 'bulk-cell');
+        txEl.rows = 1; txEl.value = r.text; txEl.placeholder = '본문을 입력하세요';
+        txEl.setAttribute('aria-label', `${i + 1}번 본문`);
+        txEl.addEventListener('input', () => { r.text = txEl.value; fit(txEl); refreshBulkWarnings(); });
+        tdText.appendChild(txEl);
+        fits.push(txEl);
 
-        bulkPreview.appendChild(box);
-        bulkRowEls.push({ box, warnEl });
+        // 구절 설명: 받은 텍스트에 있으면 펼쳐 두고, 없으면 "+ 설명 추가"로 엽니다.
+        const descBox = el('div', 'bulk-desc');
+        descBox.appendChild(el('span', 'bulk-desc-label', '구절 설명'));
+        const dsEl = el('textarea', 'bulk-cell desc');
+        dsEl.rows = 1; dsEl.value = r.description || ''; dsEl.placeholder = '설명을 입력하세요 (선택)';
+        dsEl.setAttribute('aria-label', `${i + 1}번 구절 설명`);
+        dsEl.addEventListener('input', () => { r.description = dsEl.value; fit(dsEl); refreshBulkWarnings(); });
+        descBox.appendChild(dsEl);
+        if (r.description) {
+          tdText.appendChild(descBox); fits.push(dsEl);
+        } else {
+          const add = el('button', 'bulk-desc-add', '+ 설명 추가');
+          add.type = 'button';
+          add.addEventListener('click', () => { add.replaceWith(descBox); fit(dsEl); dsEl.focus(); });
+          tdText.appendChild(add);
+        }
+
+        const tdDel = el('td', 'bulk-x');
+        const del = el('button', 'bulk-del', '✕');
+        del.type = 'button'; del.title = '이 구절 빼기';
+        del.setAttribute('aria-label', `${i + 1}번 구절 빼기`);
+        del.addEventListener('click', () => { bulkRows.splice(i, 1); renderBulk(); });
+        tdDel.appendChild(del);
+
+        tr.append(tdNo, tdDate, tdRef, tdText, tdDel);
+        const msgTr = el('tr', 'bulk-msg');
+        const msgTd = el('td');
+        msgTd.colSpan = 5;
+        msgTr.appendChild(msgTd);
+        body.append(tr, msgTr);
+        bulkRowEls.push({ tr, msgTr, msgTd });
       });
+      bulkPreview.appendChild(table);
+      fits.forEach(fit);
       refreshBulkWarnings();
     }
 
-    $('btnBulkParse').addEventListener('click', () => {
+    // 화면 폭이 바뀌면(회전 등) 본문 칸 높이를 다시 맞춥니다.
+    window.addEventListener('resize', () => {
+      bulkPreview.querySelectorAll('textarea').forEach(ta => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
+    });
+
+    // 파일에서 불러온 글은 날짜 줄로만 나눕니다(dateOnly). 붙여넣기 칸을 비우거나 파일을 지우면 일반 방식으로 돌아갑니다.
+    let bulkFileName = '';
+    function parseBulkInput() {
       // 날짜 없는 구절은 등록된 구절 중 가장 늦은 종료일 다음 날부터 이어 붙입니다.
       const lastEnd = versesData.map(v => v.endDate || '').sort().pop();
       const nextStart = lastEnd && lastEnd >= todayStr() ? VerseBulk.addDays(lastEnd, 1) : todayStr();
-      bulkRows = VerseBulk.parseBulk(bulkInput.value, { today: todayStr(), nextStart });
+      const dateOnly = !!bulkFileName;
+      bulkRows = VerseBulk.parseBulk(bulkInput.value, { today: todayStr(), nextStart, dateOnly });
       bulkStatus.className = bulkRows.length ? 'status' : 'status err';
       bulkStatus.textContent = bulkRows.length
-        ? `${bulkRows.length}개 구절로 나눴습니다. 날짜·출처·본문을 확인하고 등록하세요.`
-        : '구절을 찾지 못했습니다. 텍스트를 확인하세요.';
+        ? `${dateOnly ? bulkFileName + '에서 날짜 기준으로 ' : ''}${bulkRows.length}개 구절로 나눴습니다. 날짜·출처·본문을 확인하고 등록하세요.`
+        : dateOnly
+          ? '파일에서 날짜를 찾지 못했습니다. 각 구절 앞 줄에 11/2~11/8 같은 날짜를 적어 주세요.'
+          : '구절을 찾지 못했습니다. 텍스트를 확인하세요.';
       renderBulk();
       if (bulkRows.length) bulkReview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    $('btnBulkParse').addEventListener('click', parseBulkInput);
+
+    /* 파일 업로드: 글을 뽑아 붙여넣기 칸에 채운 뒤 바로 나눠 보여 줍니다. Word·엑셀 해석기는 처음 쓸 때만 받습니다. */
+    const libCache = {};
+    function loadLib(url, name) {
+      if (window[name]) return Promise.resolve(window[name]);
+      return libCache[url] || (libCache[url] = new Promise((resolve, reject) => {
+        const sc = document.createElement('script');
+        sc.src = url;
+        sc.onload = () => (window[name] ? resolve(window[name]) : reject(new Error('해석기를 불러오지 못했습니다')));
+        sc.onerror = () => { delete libCache[url]; reject(new Error('해석기를 불러오지 못했습니다. 인터넷 연결을 확인하세요')); };
+        document.head.appendChild(sc);
+      }));
+    }
+    // 윈도우 메모장의 옛 한글 인코딩(EUC-KR)도 읽습니다.
+    function decodeText(buf) {
+      try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+      catch { return new TextDecoder('euc-kr').decode(buf); }
+    }
+    async function fileToText(file) {
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const buf = await file.arrayBuffer();
+      if (ext === 'txt' || ext === 'md') return decodeText(buf).replace(/^\uFEFF/, '');
+      if (ext === 'docx') {
+        const mammoth = await loadLib('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js', 'mammoth');
+        const { value } = await mammoth.extractRawText({ arrayBuffer: buf });
+        // Word는 문단마다 빈 줄이 붙으므로 한 줄로 줄입니다.
+        return value.replace(/\n\n/g, '\n');
+      }
+      if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
+        const XLSX = await loadLib('https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js', 'XLSX');
+        const wb = ext === 'csv' ? XLSX.read(decodeText(buf), { type: 'string' }) : XLSX.read(buf, { type: 'array', cellNF: true });
+        const two = (n) => String(n).padStart(2, '0');
+        return wb.SheetNames.map(n => {
+          const ws = wb.Sheets[n];
+          // 엑셀 날짜 칸은 "1/4/27"처럼 보이므로 시간대 영향 없는 날짜 코드로 YYYY-MM-DD를 만듭니다.
+          for (const addr in ws) {
+            const c = ws[addr];
+            if (addr[0] !== '!' && c.t === 'n' && c.z && XLSX.SSF.is_date(c.z)) {
+              const d = XLSX.SSF.parse_date_code(c.v);
+              if (d) c.w = `${d.y}-${two(d.m)}-${two(d.d)}`;
+            }
+          }
+          return VerseBulk.rowsToText(XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' }));
+        }).filter(Boolean).join('\n\n');
+      }
+      if (ext === 'hwp' || ext === 'hwpx' || ext === 'pdf') throw new Error('한글(HWP)·PDF는 바로 읽을 수 없습니다. Word(docx)나 텍스트(txt)로 저장해서 올려 주세요');
+      throw new Error('txt, docx, xlsx, csv 파일만 올릴 수 있습니다');
+    }
+    const bulkDrop = $('bulkDrop'), bulkFile = $('bulkFile');
+    function setBulkFile(name) {
+      bulkFileName = name;
+      $('bulkFileChip').classList.toggle('hidden', !name);
+      $('bulkFileName').textContent = name ? `📄 ${name} — 날짜 기준으로 나눔` : '';
+    }
+    async function handleBulkFile(file) {
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { bulkStatus.className = 'status err'; bulkStatus.textContent = '5MB 이하 파일만 올릴 수 있습니다.'; return; }
+      bulkDrop.classList.add('busy');
+      bulkStatus.className = 'status'; bulkStatus.textContent = `${file.name} 읽는 중…`;
+      try {
+        const text = (await fileToText(file)).trim();
+        if (!text) throw new Error('파일에 글이 없습니다');
+        bulkInput.value = text;
+        setBulkFile(file.name);
+        parseBulkInput();
+      } catch (e) {
+        bulkStatus.className = 'status err'; bulkStatus.textContent = `${file.name}: ${e.message || e}`;
+      } finally {
+        bulkDrop.classList.remove('busy');
+        bulkFile.value = '';
+      }
+    }
+    bulkFile.addEventListener('change', () => handleBulkFile(bulkFile.files[0]));
+
+    /* 샘플 파일: 등록된 구절 다음 주부터 3주치 예시를 만들어 내려받게 합니다(올리면 그대로 나눠집니다). */
+    function sampleVerses() {
+      const lastEnd = versesData.map(v => v.endDate || '').sort().pop();
+      let start = lastEnd && lastEnd >= todayStr() ? VerseBulk.addDays(lastEnd, 1) : todayStr();
+      return [
+        ['요한복음 3:16', '하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니\n이는 그를 믿는 자마다 멸망하지 않고 영생을 얻게 하려 하심이라', '하나님의 사랑은 조건이 없습니다. 그 사랑을 믿음으로 받습니다.'],
+        ['시편 23:1', '여호와는 나의 목자시니 내게 부족함이 없으리로다', ''],
+        ['빌립보서 4:13', '내게 능력 주시는 자 안에서 내가 모든 것을 할 수 있느니라', '내 힘이 아니라 주님이 주시는 힘으로 살아갑니다.'],
+      ].map(([reference, text, description]) => {
+        const v = { startDate: start, endDate: VerseBulk.addDays(start, 6), reference, text, description };
+        start = VerseBulk.addDays(start, 7);
+        return v;
+      });
+    }
+    function downloadBlob(blob, name) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    $('btnSampleTxt').addEventListener('click', () => {
+      const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
+      const body = sampleVerses().map(v => `${md(v.startDate)}~${md(v.endDate)} ${v.reference}\n${v.text}` + (v.description ? `\n설명: ${v.description}` : '')).join('\n\n');
+      const guide = '# 한 구절 = 날짜 줄(11/2~11/8 + 출처) → 본문 → "설명:" 줄(선택). 날짜 줄을 기준으로 나눕니다.\n# 이 안내 줄처럼 첫 날짜 앞의 글은 등록되지 않습니다.\n\n';
+      downloadBlob(new Blob(['\uFEFF' + guide + body + '\n'], { type: 'text/plain;charset=utf-8' }), '암송구절_샘플.txt');
     });
+    $('btnSampleXlsx').addEventListener('click', async () => {
+      const btn = $('btnSampleXlsx');
+      btn.disabled = true;
+      try {
+        const XLSX = await loadLib('https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js', 'XLSX');
+        const rows = [['시작일', '종료일', '출처', '본문', '설명']]
+          .concat(sampleVerses().map(v => [v.startDate, v.endDate, v.reference, v.text, v.description]));
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 60 }, { wch: 40 }];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '암송구절');
+        XLSX.writeFile(wb, '암송구절_샘플.xlsx');
+      } catch (e) {
+        bulkStatus.className = 'status err'; bulkStatus.textContent = '샘플을 만들지 못했습니다: ' + (e.message || e);
+      } finally { btn.disabled = false; }
+    });
+    ['dragenter', 'dragover'].forEach(t => bulkDrop.addEventListener(t, (e) => { e.preventDefault(); bulkDrop.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach(t => bulkDrop.addEventListener(t, (e) => { e.preventDefault(); bulkDrop.classList.remove('over'); }));
+    bulkDrop.addEventListener('drop', (e) => handleBulkFile(e.dataTransfer.files[0]));
+    $('btnBulkFileClear').addEventListener('click', () => {
+      setBulkFile(''); bulkRows = []; bulkInput.value = ''; bulkStatus.textContent = ''; renderBulk();
+    });
+    bulkInput.addEventListener('input', () => { if (!bulkInput.value.trim()) setBulkFile(''); });
     // 업로드한 녹음 방식에서는 낭독 톤이 쓰이지 않으므로 숨깁니다.
-    $('bulkMode').addEventListener('change', () => { $('bulkVoiceWrap').hidden = $('bulkMode').value !== 'voxcpm2'; });
+    $('bulkMode').addEventListener('change', () => { $('bulkVoiceWrap').hidden = $('bulkMode').value !== 'voxcpm2'; refreshBulkWarnings(); });
     $('btnBulkClear').addEventListener('click', () => {
-      bulkRows = []; bulkInput.value = ''; bulkStatus.textContent = ''; renderBulk();
+      setBulkFile(''); bulkRows = []; bulkInput.value = ''; bulkStatus.textContent = ''; renderBulk();
     });
 
     btnBulkSave.addEventListener('click', async () => {
@@ -1579,15 +2023,15 @@
       if (bad >= 0) { bulkStatus.className = 'status err'; bulkStatus.textContent = `${bad + 1}번 구절의 본문이나 기간을 확인하세요.`; return; }
       const mode = $('bulkMode').value, ttsStyle = $('bulkVoice').value;
       if (mode === 'voxcpm2') {
-        const long = bulkRows.findIndex(r => (r.text.trim() + (r.reference.trim() ? '\n\n' + r.reference.trim() : '')).length > 1500);
+        const long = bulkRows.findIndex(r => speechLength(r) > 1500);
         if (long >= 0) { bulkStatus.className = 'status err'; bulkStatus.textContent = `${long + 1}번 구절이 자동 낭독 한도(1500자)를 넘습니다.`; return; }
       }
       const warnCount = bulkRows.filter((r, i) => bulkWarnings(r, i).length).length;
-      if (warnCount && !confirm(`${warnCount}개 구절에 경고가 있습니다(기간 겹침·긴 기간). 기간이 겹치면 시작일이 늦은 구절이 표시됩니다.\n그래도 등록할까요?`)) return;
+      if (warnCount && !confirm(`${warnCount}개 구절에 경고가 있습니다(기간 겹침·긴 기간). 겹치는 날에는 나중에 올린 구절(이번 등록분)이 표시됩니다.\n그래도 등록할까요?`)) return;
 
       const now = Date.now();
       const entries = bulkRows.map((r, i) => ({
-        id: genId(), text: r.text.trim(), reference: r.reference.trim(), description: '',
+        id: genId(), text: r.text.trim(), reference: r.reference.trim(), description: (r.description || '').trim(),
         ttsStyle, audioMode: mode, startDate: r.startDate, endDate: r.endDate, createdAt: now + i,
       }));
       btnBulkSave.disabled = true;
@@ -1611,7 +2055,7 @@
         btnBulkSave.disabled = false; return;
       }
       versesData = updated; renderList();
-      bulkRows = []; bulkInput.value = ''; renderBulk();
+      setBulkFile(''); bulkRows = []; bulkInput.value = ''; renderBulk();
       btnBulkSave.disabled = false;
       if (mode !== 'voxcpm2') {
         bulkStatus.className = 'status ok'; bulkStatus.textContent = `${entries.length}개 구절을 등록했습니다.`; return;

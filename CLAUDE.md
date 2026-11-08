@@ -58,13 +58,13 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   `/site/{docId}` rules suffice. Note: array entries use `Date.now()` for `createdAt` because
   Firestore rejects `serverTimestamp()` inside arrays.
 - **Date-gated verse display.** `index.html` shows the verse whose `startDate ≤ today ≤ endDate`
-  (inclusive, local date; newest `startDate` wins) as "이번 주 암송 구절", and **hides the card** if
+  (inclusive, local date; on overlap the most recently uploaded — newest `createdAt` — wins; `syncPreview`/`shownVerse` in `admin.html` mirror this) as "이번 주 암송 구절", and **hides the card** if
   none match. Verses whose `endDate < today` are listed (text only) under the "지난 암송 구절"
   toggle (`classify()` in `index.html`). `admin.html` manages the list with native `<input
   type="date">` From~To pickers. Back-compat: a legacy doc with only a top-level `text` field is
   treated as an always-active verse, and admin pre-fills it for one-click migration into `verses`.
   The verse tab also has a **bulk-register card** (`#bulkCard`): pasted text is split by `verse-bulk.js`
-  (`parseBulk`, tested in `tests/verse-bulk.test.cjs`) into date/reference/text rows, edited in a preview,
+  (`parseBulk`, tested in `tests/verse-bulk.test.cjs`) into date/reference/text/description rows (a line starting with `설명:` begins the description), edited in a table preview (or a txt/docx/xlsx/csv file is uploaded: text is extracted in the browser — mammoth/SheetJS lazy-loaded from CDN, spreadsheet rows via `rowsToText` — and split with `dateOnly`, i.e. only on date header lines),
   then appended to `verses` in a transaction (refused while a legacy top-level `text` is unmigrated);
   narration audio is pre-generated one by one afterwards.
 - **Read-aloud audio:** each verse has `audioMode` (`voxcpm2` or `recording`) and `ttsStyle`
