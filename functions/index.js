@@ -132,10 +132,11 @@ exports.notifyNewVerse = onDocumentUpdated('site/memoryVerse', async (event) => 
     (Array.isArray(before.verses) ? before.verses : []).map(keyOf)
   );
   const afterVerses = Array.isArray(after.verses) ? after.verses : [];
-  // 미리 등록한(시작일이 미래인) 구절은 지금 알리지 않고, 시작일 아침 verseStartPush가 알립니다.
+  // 지금 진행 중인 구절만 바로 알립니다. 미리 등록한(시작일이 미래인) 구절은 월요일 아침 verseStartPush가,
+  // 이미 끝난 구절은 알리지 않습니다.
   const today = nzDayKey();
   const newVerses = afterVerses.filter((v) => v && (v.text || '').trim() && !beforeKeys.has(keyOf(v)))
-    .filter((v) => !v.startDate || v.startDate <= today);
+    .filter((v) => isActiveOn(v, today));
 
   // 2) 새소식 감지
   const beforeNewsKeys = new Set(
@@ -160,6 +161,15 @@ exports.notifyNewVerse = onDocumentUpdated('site/memoryVerse', async (event) => 
   }
 });
 
+/* 오늘(뉴질랜드 날짜) 표시 기간 안에 있는 구절인지 — 메인 화면 classify()와 같은 기준 */
+function isActiveOn(v, day) {
+  return (!v.startDate || v.startDate <= day) && (!v.endDate || day <= v.endDate);
+}
+/* 기간이 겹치면 나중에 올린(createdAt 최신) 구절이 메인에 표시됩니다(index.html classify()와 동일). */
+function newestFirst(a, b) {
+  return ((b.createdAt || 0) - (a.createdAt || 0)) || String(b.startDate || '').localeCompare(String(a.startDate || ''));
+}
+
 /* 구절 알림은 구절마다 한 번만 보냅니다. 보낸 id는 systemConfig/verseNotify.ids에 기록해
  * 등록 즉시 알림(notifyNewVerse)과 시작일 알림(verseStartPush)이 겹치지 않게 합니다. */
 const VERSE_NOTIFY_DOC = 'systemConfig/verseNotify';
@@ -171,28 +181,28 @@ async function pushVerses(db, verses) {
     logger.info('이미 알린 구절 → 푸시 생략');
     return;
   }
-  const latest = pending[pending.length - 1];
+  const latest = pending.slice().sort(newestFirst)[0];
   const ref = (latest.reference || '').trim();
   const body = ref ? `${ref} — 이번 주 암송 구절이 올라왔어요.` : '이번 주 암송 구절이 올라왔어요.';
   await pushToAll(db, body, '/');
   await stateRef.set({ ids: FieldValue.arrayUnion(...pending.map(keyOf)) }, { merge: true });
 }
 
-/* 시작일 알림: 매일 07:00(뉴질랜드 시간)에 오늘 시작하는 구절이 있으면 알립니다.
- * 대량 등록으로 미리 올려 둔 구절이 해당 주에 맞춰 알림되도록 합니다. */
+/* 주간 구절 알림: 매주 월요일 07:00(뉴질랜드 시간)에 이번 주 메인에 표시되는 구절을 알립니다.
+ * 대량 등록으로 미리 올려 둔 구절이 그 주 월요일에 맞춰 알림됩니다. 이미 알린 구절이면 보내지 않습니다. */
 exports.verseStartPush = onSchedule(
-  { schedule: 'every day 07:00', timeZone: 'Pacific/Auckland', region: 'us-central1' },
+  { schedule: 'every monday 07:00', timeZone: 'Pacific/Auckland', region: 'us-central1' },
   async () => {
     const db = getFirestore();
     const snap = await db.doc('site/memoryVerse').get();
     const verses = (snap.exists && Array.isArray(snap.get('verses'))) ? snap.get('verses') : [];
     const today = nzDayKey();
-    const starting = verses.filter((v) => v && (v.text || '').trim() && v.startDate === today);
-    if (starting.length === 0) {
-      logger.info('오늘 시작하는 구절 없음 → 푸시 생략');
+    const shown = verses.filter((v) => v && (v.text || '').trim() && isActiveOn(v, today)).sort(newestFirst)[0];
+    if (!shown) {
+      logger.info('이번 주 표시되는 구절 없음 → 푸시 생략');
       return;
     }
-    await pushVerses(db, starting);
+    await pushVerses(db, [shown]);
   }
 );
 

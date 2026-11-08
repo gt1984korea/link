@@ -99,8 +99,8 @@ Deployment is normally automatic: pushing to `main` triggers `.github/workflows/
   iOS only delivers push to the **installed PWA** (home-screen app), not Safari tabs. `functions/index.js` (Node 22, deployed separately, needs
   the **Blaze** plan) holds `notifyNewVerse` (an `onDocumentUpdated('site/memoryVerse')` trigger
   that diffs the `verses`/`news` arrays and multicasts to all tokens, pruning invalid ones — verse pushes skip
-  future-dated verses (`startDate` > today NZ); `verseStartPush` (`onSchedule`, daily 07:00 NZ) announces
-  verses starting today, and `systemConfig/verseNotify.ids` dedupes so each verse is pushed once) and
+  future-dated verses (`startDate` > today NZ); `verseStartPush` (`onSchedule`, every Monday 07:00 NZ) announces
+  the verse shown this week (newest `createdAt` among active), and `systemConfig/verseNotify.ids` dedupes so each verse is pushed once) and
   `pushTokenCount` (an `onRequest` HTTP fn exposed at `/api/push-count` via a hosting rewrite, so
   `admin.html` can show the subscriber count without `list` access). Setup steps in `PUSH_SETUP.md`.
 - **중보기도(intercessory prayer)** lives on a **separate page `prayer.html`** (served at `/prayer`
