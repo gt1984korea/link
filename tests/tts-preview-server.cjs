@@ -19,6 +19,7 @@ const initializeApp=()=>({}), getFirestore=()=>({}),getStorage=()=>({});
 const doc=()=>({}),collection=()=>({}),storageRef=()=>({});
 const getDoc=async()=>({exists:()=>true,data:()=>window.__testDoc});
 const setDoc=async(ref,data)=>{if(window.__failSave)throw Error('테스트 저장 오류');Object.assign(window.__testDoc,structuredClone(data));};
+const runTransaction=async(db,fn)=>fn({get:getDoc,set:setDoc});
 const serverTimestamp=()=>null,deleteField=()=>null,deleteDoc=async()=>{},deleteObject=async()=>{};
 const onSnapshot=()=>()=>{},uploadBytes=async()=>{},getDownloadURL=async()=>'/test.wav';
 const liveFetch=window.fetch;
@@ -38,7 +39,7 @@ const server=http.createServer((req,res)=>{
     html=html.replace('<script type="module">','<script type="module">'+fixture);
     res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end(html);
   }
-  const allowed = new Set(['/tts-client.js','/church_cross.png','/icon-192.png','/icon-512.png']);
+  const allowed = new Set(['/tts-client.js','/verse-bulk.js','/church_cross.png','/icon-192.png','/icon-512.png']);
   if(!allowed.has(url.pathname)){res.writeHead(404);return res.end();}
   res.setHeader('Content-Type',url.pathname.endsWith('.js')?'text/javascript':'image/png');
   fs.createReadStream(path.join(root,url.pathname)).pipe(res);

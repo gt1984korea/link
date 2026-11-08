@@ -235,6 +235,42 @@
     .btn-danger { background: #fff; color: var(--danger); border-color: #f3c7c7; }
     .btn-danger:hover { background: #fff5f5; }
 
+    /* 여러 주 구절 대량 등록 */
+    .bulk-step {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 700; color: var(--text);
+      margin: 22px 0 8px;
+    }
+    #bulkCard h2 + .bulk-step { margin-top: 4px; }
+    .bulk-step-no {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      font-size: 12px; color: #fff; background: var(--brand);
+    }
+    .bulk-summary { font-size: 13px; color: var(--text-2); margin: 0 0 10px; line-height: 1.5; }
+    .bulk-summary .warn { color: #92660b; font-weight: 700; }
+    .bulk-row { padding: 12px; }
+    .bulk-row .vrow-top { margin-bottom: 10px; }
+    .bulk-del {
+      margin-left: auto;
+      font-family: inherit; font-size: 12px; font-weight: 700;
+      color: var(--danger); background: none; border: 0; border-radius: 6px;
+      padding: 4px 6px; cursor: pointer;
+    }
+    .bulk-del:hover { background: #fff5f5; }
+    .bulk-row .date-row { gap: 6px; }
+    .bulk-row input[type="date"] { padding: 9px 8px; font-size: 14px; }
+    .bulk-row .date-sep { padding-bottom: 9px; }
+    .bulk-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .bulk-settings select {
+      width: 100%; padding: 12px; font: inherit;
+      border: 1px solid var(--line); border-radius: 10px; background: #fff;
+    }
+    @media (max-width: 480px) {
+      .bulk-settings { grid-template-columns: 1fr; }
+      .bulk-row input[type="date"] { font-size: 13px; padding: 9px 6px; }
+    }
+
     /* 배경 관리 목록 아이템 */
     .bg-item {
       display: flex;
@@ -584,30 +620,44 @@
     <!-- 대량 등록: 받은 텍스트를 붙여넣어 여러 주 구절을 미리 등록 -->
     <section class="card hidden" id="bulkCard">
       <h2>여러 주 구절 한 번에 등록</h2>
+
+      <h3 class="bulk-step"><span class="bulk-step-no">1</span>받은 텍스트 붙여넣기</h3>
       <p class="hint" style="margin-top:0">
-        받은 내용을 그대로 붙여넣고 "나눠 보기"를 누르세요. 날짜(예: 11/2~11/8, 11월 2일)가 있는 줄이나 빈 줄에서 구절을 나눕니다.
-        출처(예: 요한복음 3:16, 시편 23편 1절)는 자동으로 분리됩니다. 날짜가 없으면 앞 구절 다음 주로 채웁니다.
+        날짜(11/2~11/8, 11월 2일)가 있는 줄이나 빈 줄에서 구절을 나눕니다. 출처(요한복음 3:16, 시편 23편 1절)는 자동으로 분리되고,
+        날짜가 없으면 앞 구절 다음 주로 채웁니다.
       </p>
-      <label for="bulkInput">받은 텍스트</label>
-      <textarea id="bulkInput" placeholder="11/2~11/8 요한복음 3:16&#10;하나님이 세상을 이처럼 사랑하사…&#10;&#10;11/9~11/15 시편 23:1&#10;여호와는 나의 목자시니…"></textarea>
-      <label for="bulkMode">읽어주기 방식 (전체 적용)</label>
-      <select id="bulkMode" style="width:100%; padding:12px; font:inherit; border:1px solid var(--line); border-radius:10px;">
-        <option value="voxcpm2">자동 낭독</option>
-        <option value="recording">업로드한 녹음</option>
-      </select>
-      <label for="bulkVoice">낭독 톤 (전체 적용)</label>
-      <select id="bulkVoice" style="width:100%; padding:12px; font:inherit; border:1px solid var(--line); border-radius:10px;">
-        <option value="calm">차분하고 중후한 남성</option>
-        <option value="warm">따뜻하고 부드러운 남성</option>
-        <option value="clear">또렷하고 힘 있는 남성</option>
-      </select>
+      <textarea id="bulkInput" aria-label="받은 텍스트" placeholder="11/2~11/8 요한복음 3:16&#10;하나님이 세상을 이처럼 사랑하사…&#10;&#10;11/9~11/15 시편 23:1&#10;여호와는 나의 목자시니…"></textarea>
       <div class="row">
         <button class="btn btn-ghost" id="btnBulkParse" type="button">나눠 보기</button>
       </div>
-      <div id="bulkPreview" class="vlist" style="margin-top:14px"></div>
-      <div class="row hidden" id="bulkActions">
-        <button class="btn btn-ghost" id="btnBulkClear" type="button">비우기</button>
-        <button class="btn btn-primary" id="btnBulkSave" type="button">등록</button>
+
+      <div id="bulkReview" class="hidden">
+        <h3 class="bulk-step"><span class="bulk-step-no">2</span>나눈 결과 확인·수정</h3>
+        <p class="bulk-summary" id="bulkSummary"></p>
+        <div id="bulkPreview" class="vlist"></div>
+
+        <h3 class="bulk-step"><span class="bulk-step-no">3</span>등록</h3>
+        <div class="bulk-settings">
+          <div>
+            <label for="bulkMode" style="margin-top:0">읽어주기 방식 (전체 적용)</label>
+            <select id="bulkMode">
+              <option value="voxcpm2">자동 낭독</option>
+              <option value="recording">업로드한 녹음</option>
+            </select>
+          </div>
+          <div id="bulkVoiceWrap">
+            <label for="bulkVoice" style="margin-top:0">낭독 톤 (전체 적용)</label>
+            <select id="bulkVoice">
+              <option value="calm">차분하고 중후한 남성</option>
+              <option value="warm">따뜻하고 부드러운 남성</option>
+              <option value="clear">또렷하고 힘 있는 남성</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" id="bulkActions">
+          <button class="btn btn-ghost" id="btnBulkClear" type="button">비우기</button>
+          <button class="btn btn-primary" id="btnBulkSave" type="button">등록</button>
+        </div>
       </div>
       <div class="status" id="bulkStatus" role="status" aria-live="polite"></div>
     </section>
@@ -1401,7 +1451,7 @@
 
     /* ── 여러 주 구절 대량 등록 ── */
     const bulkInput = $('bulkInput'), bulkPreview = $('bulkPreview'), bulkStatus = $('bulkStatus');
-    const bulkActions = $('bulkActions'), btnBulkSave = $('btnBulkSave');
+    const bulkReview = $('bulkReview'), bulkSummary = $('bulkSummary'), btnBulkSave = $('btnBulkSave');
     let bulkRows = [];
 
     // 등록을 막는 문제(본문·기간)와, 확인만 받는 경고(겹침·긴 기간)를 나눠 계산합니다.
@@ -1422,23 +1472,34 @@
     // 입력 중에도 DOM을 다시 만들지 않고 경고만 갱신합니다(포커스·클릭 유지).
     let bulkRowEls = [];
     function refreshBulkWarnings() {
+      let flagged = 0;
       bulkRowEls.forEach(({ box, warnEl }, i) => {
         const r = bulkRows[i];
         const msgs = bulkErrors(r).concat(bulkWarnings(r, i));
+        if (msgs.length) flagged++;
         box.classList.toggle('dirty', msgs.length > 0);
         warnEl.hidden = !msgs.length;
         warnEl.textContent = msgs.length ? '⚠ ' + msgs.join(' · ') : '';
       });
+      // 요약: 개수 · 전체 기간 · 확인이 필요한 구절 수
+      const starts = bulkRows.map(r => r.startDate).filter(Boolean).sort();
+      const ends = bulkRows.map(r => r.endDate).filter(Boolean).sort();
+      bulkSummary.textContent = `${bulkRows.length}개 구절` + (starts.length ? ` · ${fmtRange(starts[0], ends[ends.length - 1])}` : '');
+      if (flagged) {
+        const w = document.createElement('span');
+        w.className = 'warn'; w.textContent = ` · ⚠ 확인 필요 ${flagged}개`;
+        bulkSummary.appendChild(w);
+      }
     }
 
     function renderBulk() {
       bulkPreview.textContent = '';
       bulkRowEls = [];
-      bulkActions.classList.toggle('hidden', bulkRows.length === 0);
+      bulkReview.classList.toggle('hidden', bulkRows.length === 0);
       btnBulkSave.textContent = `${bulkRows.length}개 등록`;
       bulkRows.forEach((r, i) => {
         const box = document.createElement('div');
-        box.className = 'vrow';
+        box.className = 'vrow bulk-row';
         const top = document.createElement('div');
         top.className = 'vrow-top';
         const no = document.createElement('span');
@@ -1450,6 +1511,11 @@
           guessBadge.className = 'badge dirty'; guessBadge.textContent = '날짜 자동 채움';
           top.appendChild(guessBadge);
         }
+        const del = document.createElement('button');
+        del.className = 'bulk-del'; del.type = 'button'; del.textContent = '✕ 빼기';
+        del.setAttribute('aria-label', `${i + 1}번 구절 빼기`);
+        del.addEventListener('click', () => { bulkRows.splice(i, 1); renderBulk(); });
+        top.appendChild(del);
         box.appendChild(top);
 
         const dates = document.createElement('div');
@@ -1484,13 +1550,6 @@
         warnEl.className = 'hint'; warnEl.style.color = 'var(--danger)';
         box.appendChild(warnEl);
 
-        const act = document.createElement('div');
-        act.className = 'vrow-actions';
-        const del = document.createElement('button');
-        del.className = 'btn btn-danger'; del.type = 'button'; del.textContent = '빼기';
-        del.addEventListener('click', () => { bulkRows.splice(i, 1); renderBulk(); });
-        act.appendChild(del);
-        box.appendChild(act);
         bulkPreview.appendChild(box);
         bulkRowEls.push({ box, warnEl });
       });
@@ -1507,7 +1566,10 @@
         ? `${bulkRows.length}개 구절로 나눴습니다. 날짜·출처·본문을 확인하고 등록하세요.`
         : '구절을 찾지 못했습니다. 텍스트를 확인하세요.';
       renderBulk();
+      if (bulkRows.length) bulkReview.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+    // 업로드한 녹음 방식에서는 낭독 톤이 쓰이지 않으므로 숨깁니다.
+    $('bulkMode').addEventListener('change', () => { $('bulkVoiceWrap').hidden = $('bulkMode').value !== 'voxcpm2'; });
     $('btnBulkClear').addEventListener('click', () => {
       bulkRows = []; bulkInput.value = ''; bulkStatus.textContent = ''; renderBulk();
     });
